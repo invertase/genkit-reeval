@@ -8,9 +8,15 @@ const store = new FileSessionStore('.genkit/sessions');
 const lookupOrder = ai.defineTool(
   {
     name: 'lookupOrder',
-    description: 'Looks up the status, delivery ETA, total and refund eligibility of an order by its id, for example A-1001.',
+    description: 'Looks up the status, delivery ETA, tracking code, total and refund eligibility of an order by its id, for example A-1001.',
     inputSchema: z.object({ orderId: z.string().describe('The order id, for example A-1001') }),
-    outputSchema: z.object({ status: z.string(), eta: z.string(), total: z.number(), refundable: z.boolean() }),
+    outputSchema: z.object({
+      status: z.string(),
+      eta: z.string(),
+      tracking: z.string().nullable(),
+      total: z.number(),
+      refundable: z.boolean(),
+    }),
   },
   async ({ orderId }) => {
     const order = ORDERS[orderId];
@@ -39,10 +45,10 @@ const approveRefund = ai.defineInterrupt({
 /** Answers order status questions. */
 export const orderAgent = ai.defineAgent({
   name: 'orderAgent',
-  description: 'Answers questions about an order: its status, delivery date and total.',
+  description: 'Answers questions about an order: its status, delivery date, tracking code and total.',
   system:
     'You are the Northwind Supplies order desk. Answer questions about orders using the lookupOrder tool. ' +
-    'Quote the status and ETA exactly as the tool returns them. If an order is not found, say so.',
+    'Quote the status, ETA and tracking code exactly as the tool returns them. If an order is not found, say so.',
   tools: [lookupOrder],
   maxTurns: 4,
 });

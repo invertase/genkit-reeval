@@ -1,5 +1,5 @@
 {
-  "A-1001": { "status": "shipped", "eta": "2026-10-22", "total": 149.99, "refundable": true },
-  "A-1002": { "status": "processing", "eta": "2026-10-25", "total": 59.5, "refundable": true },
-  "A-1003": { "status": "delivered", "eta": "2026-10-18", "total": 20, "refundable": false }
+  "A-1001": { "status": "shipped", "eta": "2026-10-22", "tracking": "NW-7F3K2Q", "total": 149.99, "refundable": true },
+  "A-1002": { "status": "processing", "eta": "2026-10-25", "tracking": null, "total": 59.5, "refundable": true },
+  "A-1003": { "status": "delivered", "eta": "2026-10-18", "tracking": "NW-5D1MZT", "total": 20, "refundable": false }
 }

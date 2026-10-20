@@ -27,9 +27,9 @@ export const summarizeTicket = ai.defineFlow(
 const getOrderStatus = ai.defineTool(
   {
     name: 'getOrderStatus',
-    description: 'Looks up the shipping status and delivery ETA of an order by its id, for example A-1001.',
+    description: 'Looks up the shipping status, delivery ETA and tracking code of an order by its id, for example A-1001.',
     inputSchema: z.object({ orderId: z.string().describe('The order id, for example A-1001') }),
-    outputSchema: z.object({ status: z.string(), eta: z.string() }).nullable(),
+    outputSchema: z.object({ status: z.string(), eta: z.string(), tracking: z.string().nullable() }).nullable(),
   },
   async ({ orderId }) => ORDERS[orderId.trim().toUpperCase()] ?? null,
 );
@@ -41,7 +41,7 @@ export const orderStatus = ai.defineFlow(
     const { text } = await ai.generate({
       system:
         'You are the Northwind Supplies support assistant. Answer questions about orders using the getOrderStatus tool. ' +
-        'Quote the status and ETA exactly as the tool returns them. If an order is not found, say so.',
+        'Quote the status, ETA and tracking code exactly as the tool returns them. If an order is not found, say so.',
       prompt: question,
       tools: [getOrderStatus],
     });

@@ -7,7 +7,7 @@ const prompt = (symptom: string) =>
   `You are on the support-desk Genkit app in this directory. Bug report: ${symptom}
 Find the root cause and fix it in the app's source. Then write \`answer.json\` in the project root: { "file": "<path of the file that had the bug>", "snippet": "<the exact broken text you replaced, copied verbatim, one line is enough>", "cause": "<one sentence>", "evidence": "<what shows this is the cause>" }. Don't change \`package.json\` or add dependencies.`
 
-const verify = fs.readFileSync(new URL('./verify.ts', import.meta.url), 'utf8')
+const verify = fs.readFileSync(new URL('./verify.mts', import.meta.url), 'utf8')
 
 const parseAnswer = (text: string | null): unknown => {
   try {
@@ -57,8 +57,10 @@ evaluate.each(BUGS)(
     const answerText = await c.readFile('answer.json')
     expect.soft(diagnosisErrors(parseAnswer(answerText), bug), 'names the cause').toEqual([])
 
-    await c.writeFile('~/.verify.ts', verify)
-    await expect.soft(c.exec(`node_modules/.bin/tsx ~/.verify.ts ${bug.name}`), 'flow works').toSucceed()
+    await c.writeFile('~/.verify.mts', verify)
+    await expect
+      .soft(c.exec(`node_modules/.bin/tsx --test --test-name-pattern '^${bug.name}$' ~/.verify.mts`), 'flow works')
+      .toSucceed()
 
     const fixed = (await c.readFile(bug.file)) ?? ''
     expect.soft(bug.keeps.filter((keep) => !keep.test(fixed)).map(String), 'keeps the flow').toEqual([])

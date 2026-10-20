@@ -4,6 +4,7 @@ import orders from './orders.json' with { type: 'json' };
 export interface Order {
   status: string;
   eta: string;
+  tracking: string | null;
   total: number;
   refundable: boolean;
 }

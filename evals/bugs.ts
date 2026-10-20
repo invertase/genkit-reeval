@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url'
 
 /** One seeded bug: swapping `from` for `to` in `file` breaks exactly one flow or agent scenario. */
 export type Bug = {
-  /** kebab-case; the eval name and the key in `verify.ts` */
+  /** kebab-case; the eval name and the key in `verify.mts` */
   name: string
   /** `flow` bugs make up the flows study, `agent` bugs the agents study */
   kind: 'flow' | 'agent'
@@ -17,12 +17,6 @@ export type Bug = {
   symptom: string
   /** must still match `file` after the fix (anti-cheat) */
   keeps: RegExp[]
-  /**
-   * What `verify.ts` calls the app with; every string in it appears literally there. For agent
-   * bugs, `turns` are sent in order to `flow`, each later turn with the previous `sessionId`; a
-   * string turn is a `message`, an object turn is the rest of the input (e.g. `respond`).
-   */
-  verifyInput: unknown
 }
 
 /** Seeded bugs for the support-desk app, flows first, then agents. */
@@ -37,9 +31,6 @@ export const BUGS: Bug[] = [
       'Since this week summarizeTicket returns the tags as one comma-separated string such as "shipping, damage" instead of a list of tags. ' +
       'The triage dashboard reads tags as a list and now shows nothing. It happens for every ticket, for example one about a cracked monitor that arrived damaged.',
     keeps: [/name: 'summarizeTicket'/, /priority: z\.enum\(\['low', 'medium', 'high'\]\)/],
-    verifyInput: {
-      text: 'My order A-1002 arrived with a cracked monitor and the box was soaked. I need a replacement before Monday for a client demo.',
-    },
   },
   {
     name: 'tool-not-wired',
@@ -51,7 +42,6 @@ export const BUGS: Bug[] = [
       'I ask the orderStatus flow "Where is order A-1001?" and it replies that it cannot look up orders, or it makes up a vague answer. ' +
       'The order is in our system and is marked shipped. I expected the reply to give the real status and delivery date.',
     keeps: [/name: 'orderStatus'/, /name: 'getOrderStatus'/, /tools:\s*\[[^\]]*getOrderStatus/],
-    verifyInput: { question: 'Where is order A-1001?' },
   },
   {
     name: 'prompt-var-typo',
@@ -63,7 +53,6 @@ export const BUGS: Bug[] = [
       'The greet flow for customer "Ada" returns a generic welcome like "Welcome to Northwind Supplies!" that never uses her name. ' +
       'Other customers get the same nameless greeting. I expected a one-sentence welcome that addresses the customer by name.',
     keeps: [/\{\{\s*customerName\s*\}\}/, /customerName: string/],
-    verifyInput: { customerName: 'Ada' },
   },
   {
     name: 'truncated-output',
@@ -75,10 +64,6 @@ export const BUGS: Bug[] = [
       'The replies that draftReply writes for customer tickets are far too short and end abruptly, usually right after the greeting. ' +
       'I expected a complete reply that explains the next steps and signs off from the support team.',
     keeps: [/name: 'draftReply'/, /finishReason: response\.finishReason/],
-    verifyInput: {
-      ticket:
-        'Hi, I ordered three boxes of A4 paper two weeks ago (order A-1002) and the tracking page still says processing. Can you tell me what is going on and when it will ship?',
-    },
   },
   {
     name: 'history-dropped',
@@ -91,13 +76,6 @@ export const BUGS: Bug[] = [
       'I tell it my name is Ada, then ask "What is my name?" and it says it does not know. ' +
       'I expected it to remember what I said earlier.',
     keeps: [/name: 'chat'/, /history\.map|\.\.\.history|messages:[^\n]*history/],
-    verifyInput: {
-      history: [
-        { role: 'user', text: 'My name is Ada.' },
-        { role: 'model', text: 'Nice to meet you, Ada. How can I help?' },
-      ],
-      message: 'What is my name?',
-    },
   },
   {
     name: 'order-id-case',
@@ -110,7 +88,6 @@ export const BUGS: Bug[] = [
       'One customer asked the orderStatus flow "where is order a-1001?" and got that answer, but A-1001 is in our system and has shipped. ' +
       'I expected the reply to give the status and delivery date.',
     keeps: [/name: 'orderStatus'/, /name: 'getOrderStatus'/, /tools:\s*\[[^\]]*getOrderStatus/, /ORDERS/],
-    verifyInput: { question: 'where is order a-1001?' },
   },
   {
     name: 'delegation-dropped',
@@ -123,7 +100,6 @@ export const BUGS: Bug[] = [
       'It says it cannot process refunds or just asks me for more details, and no refund approval request ever shows up. ' +
       'Questions about where an order is still get answered correctly. Refunds worked through this chat before.',
     keeps: [/name: 'triage'/, /agents: \[[^\]]*'orderAgent'/, /name: 'refundAgent'/, /name: 'supportTurn'/],
-    verifyInput: { flow: 'supportTurn', turns: ['I want a refund for order A-1001, it arrived broken.'] },
   },
   {
     name: 'approval-ignored',
@@ -136,10 +112,6 @@ export const BUGS: Bug[] = [
       'and the supervisor declined it as a duplicate claim. The customer still got the refund. ' +
       'A refund that a supervisor declines must never go out.',
     keeps: [/name: 'refundAgent'/, /name: 'refundTurn'/, /name: 'approveRefund'/, /tools: \[[^\]]*approveRefund[^\]]*issueRefund[^\]]*\]/, /chat\.resume\(/],
-    verifyInput: {
-      flow: 'refundTurn',
-      turns: ['I want a refund for order A-1001, it arrived broken.', { respond: { approved: false, note: 'duplicate claim' } }],
-    },
   },
   {
     name: 'session-not-loaded',
@@ -152,7 +124,6 @@ export const BUGS: Bug[] = [
       'The assistant acts as if it never saw the first message and asks which order they mean. ' +
       'We send the same session id with the follow-up, but every message behaves like a brand new conversation.',
     keeps: [/name: 'triage'/, /name: 'supportTurn'/, /triage\.loadChat\(|triage\.chat\(\{[^}]*sessionId/],
-    verifyInput: { flow: 'supportTurn', turns: ['My order is A-1001.', 'What is its status?'] },
   },
   {
     name: 'max-turns',
@@ -165,7 +136,6 @@ export const BUGS: Bug[] = [
       'For "I want a refund for order A-1001, it arrived broken" the desk returns an error instead of asking a person to approve. ' +
       'It used to look up the order and then ask for approval. Now no refund request gets that far.',
     keeps: [/name: 'refundAgent'/, /name: 'refundTurn'/, /tools: \[[^\]]*approveRefund[^\]]*issueRefund[^\]]*\]/],
-    verifyInput: { flow: 'refundTurn', turns: ['I want a refund for order A-1001, it arrived broken.'] },
   },
   {
     name: 'tool-choice-none',
@@ -178,7 +148,6 @@ export const BUGS: Bug[] = [
       'The assistant never consults the order desk, although it used to give the real status and delivery date. ' +
       'It happens on every order question.',
     keeps: [/name: 'triage'/, /use: \[\s*agents\(/, /name: 'supportTurn'/],
-    verifyInput: { flow: 'supportTurn', turns: ['Where is order A-1001?'] },
   },
   {
     name: 'tool-output-drift',
@@ -190,7 +159,6 @@ export const BUGS: Bug[] = [
       'This week the support chat started failing on some orders. A customer asked "Where is order A-1001?" and the assistant said it could not retrieve the order details, ' +
       'although A-1001 is in our system and has shipped. Questions about other orders, such as A-1002, still get the real status and delivery date.',
     keeps: [/"A-1001": \{[^}]*"eta": "2026-10-22"/],
-    verifyInput: { flow: 'supportTurn', turns: ['Where is order A-1001?'] },
   },
 ]
 
@@ -221,16 +189,10 @@ export function diagnosisErrors(answer: unknown, bug: Bug): string[] {
 
 const count = (haystack: string, needle: string) => haystack.split(needle).length - 1
 
-const strings = (value: unknown): string[] =>
-  typeof value === 'string'
-    ? [value]
-    : typeof value === 'object' && value !== null
-      ? Object.values(value).flatMap(strings)
-      : []
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const appDir = new URL('./app/', import.meta.url)
-  const verify = readFileSync(new URL('./verify.ts', import.meta.url), 'utf8')
+  const verify = readFileSync(new URL('./verify.mts', import.meta.url), 'utf8')
   const errors: string[] = []
   for (const bug of BUGS) {
     const source = readFileSync(new URL(bug.file, appDir), 'utf8')
@@ -249,10 +211,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       }
     }
     if (/genkit|trace|mcp|\bcli\b/i.test(bug.symptom)) errors.push(`${bug.name}: symptom mentions tooling`)
-    if (!verify.includes(`'${bug.name}':`)) errors.push(`${bug.name}: no check keyed '${bug.name}' in verify.ts`)
-    for (const s of strings(bug.verifyInput)) {
-      if (!verify.includes(s)) errors.push(`${bug.name}: verifyInput string not in verify.ts: ${JSON.stringify(s)}`)
-    }
+    if (!verify.includes(`test('${bug.name}'`)) errors.push(`${bug.name}: no test('${bug.name}') in verify.mts`)
   }
   if (errors.length > 0) {
     console.error(errors.join('\n'))

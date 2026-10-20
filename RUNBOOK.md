@@ -43,7 +43,7 @@ pnpm canary     # expect 12 failed, non-zero exit
 
 Each cell is a container that runs `npm install` and one Gemini call, so allow a few minutes each at concurrency 8. The judge runs with `fakeJudge()` here: no key, no model call.
 
-If the oracle fails a bug, the check is wrong, not the fix: read `failing_attempts`. If the canary passes a bug, the bug does not reproduce with the real model. Two are most at risk: `order-id-case` (Gemini may upper-case `a-1001` before calling the tool) and `truncated-output` (if the model's reply fits in 24 tokens). Re-run `pnpm canary <bug>` three times; a stable pass means the cell measures nothing, so redesign the bug in `evals/bugs.ts` and `evals/verify.ts` or drop it (the pooled lift needs at least 6 cases).
+If the oracle fails a bug, the check is wrong, not the fix: read `failing_attempts`. If the canary passes a bug, the bug does not reproduce with the real model. Two are most at risk: `order-id-case` (Gemini may upper-case `a-1001` before calling the tool) and `truncated-output` (if the model's reply fits in 24 tokens). Re-run `pnpm canary <bug>` three times; a stable pass means the cell measures nothing, so redesign the bug in `evals/bugs.ts` and `evals/verify.mts` or drop it (the pooled lift needs at least 6 cases).
 
 ## Smoke
 
