@@ -60,7 +60,7 @@ The app starts without the feature. The prompt names the export, the call shape 
 |---|---|---|
 | `build-order-desk` | no `src/agents.ts`; `src/index.ts` exports the flows only | `orderAgent.chat().send('Where is order A-1001?')`; the reply has A-1001's status, ETA or tracking code |
 | `build-refund-desk` | no `src/agents.ts`; `src/index.ts` exports the flows only | `refundAgent` interrupts on `approveRefund`; a decline issues no refund and ends with `finishReason: 'stop'`; an approval issues one refund for A-1001 |
-| `build-triage` | `src/agents.ts` has `orderAgent` and `refundAgent` only, without the `agents()` import | `triage` calls `delegate_to_refundAgent` on a refund request; `triage.loadChat({ sessionId })` continues a conversation and the second turn knows the order |
+| `build-triage` | `src/agents.ts` has `orderAgent` and `refundAgent` only, without the `agents()` import | `triage` hands a refund request to a tool named for the refund desk (`delegate_to_refundAgent` with the middleware); `triage.loadChat({ sessionId })` continues a conversation and the second turn knows the order |
 
 Pass is all three checks: `typechecks` (`tsc --noEmit` in the sandbox), `agent works` (a hidden `node:test` file, `evals/verify-build.mts`, against real Gemini) and `keeps the flows` (the five flows are still exported from `src/index.ts`). One judge asks whether the agent used the agents API rather than hand-rolled `ai.generate` loops. One pairwise question asks which arm's `src/agents.ts` is more idiomatic. Both are recorded, never counted toward pass.
 
