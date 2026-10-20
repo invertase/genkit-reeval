@@ -1,5 +1,6 @@
 /* Mean score of the evidence-based diagnosis judge.
-   For the summary judge, filter on 'Does the agent''s final message%' instead. */
+   For the summary judge, filter on 'Does the agent''s final message%' instead;
+   for the build tasks' agents-API judge, on 'Did the agent build the feature%'. */
 SELECT c.harness, c.environment AS arm, COUNT(*) AS judged, ROUND(AVG(j.score), 2) AS evidence_score
 FROM judgements j
 JOIN attempts t ON t.run_id = j.run_id AND t.key = j.attempt_key
