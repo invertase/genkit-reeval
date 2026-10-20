@@ -1,6 +1,6 @@
 # Genkit agent tooling study
 
-Does Genkit's agent tooling (`GENKIT.md`, the `genkit mcp` server, the `developing-genkit-js` skill) help a coding agent fix a bug in a Genkit app?
+Does Genkit's agent tooling (`GENKIT.md`, the `genkit mcp` server, the `developing-genkit-js` skill) help a coding agent fix a bug in a Genkit app, or build a feature with Genkit's agents API?
 Does it make the fix faster or cheaper, or neither?
 
 The study has not run yet; this README will carry the results. It runs on [reeval](https://github.com/invertase/reeval), Invertase's eval runner for coding agents.
@@ -50,6 +50,20 @@ Each bug swaps one healthy snippet for one broken one in one file: six in the fl
 
 `tryTriage` and `tryRefundDesk` wrap one agent turn in a flow because `run_flow` and `genkit flow:run` cannot reach `/agent/` actions. The checks call the agents in-process.
 
+## Build tasks
+
+Genkit's agents API is newer than the models' training data. `ai.chat()` is gone. `ai.defineAgent`, `ai.defineInterrupt`, `FileSessionStore`, `loadChat` and `agents()` delegation from `@genkit-ai/middleware` 0.10.0 replace it. An agent that writes from memory writes the old API. In smoke runs, Claude Code fixed every bug in every arm, so the bugs separate the arms on effort, not on pass rate. This family asks the agent to build agents instead. Tooling that carries the current API should show here in pass rate.
+
+The app starts without the feature. The prompt names the export, the call shape the check uses and, for the refund desk, the approval step's name and schemas. It never names Genkit or its tooling. `evals/tasks.ts` is the source of truth; it derives each start state from the healthy `src/agents.ts`.
+
+| Task | Start state | What the check drives |
+|---|---|---|
+| `build-order-desk` | no `src/agents.ts`; `src/index.ts` exports the flows only | `orderAgent.chat().send('Where is order A-1001?')`; the reply has A-1001's status, ETA or tracking code |
+| `build-refund-desk` | no `src/agents.ts`; `src/index.ts` exports the flows only | `refundAgent` interrupts on `approveRefund`; a decline issues no refund and ends with `finishReason: 'stop'`; an approval issues one refund for A-1001 |
+| `build-triage` | `src/agents.ts` has `orderAgent` and `refundAgent` only, without the `agents()` import | `triage` calls `delegate_to_refundAgent` on a refund request; `triage.loadChat({ sessionId })` continues a conversation and the second turn knows the order |
+
+Pass is all three checks: `typechecks` (`tsc --noEmit` in the sandbox), `agent works` (a hidden `node:test` file, `evals/verify-build.mts`, against real Gemini) and `keeps the flows` (the five flows are still exported from `src/index.ts`). One judge asks whether the agent used the agents API rather than hand-rolled `ai.generate` loops. One pairwise question asks which arm's `src/agents.ts` is more idiomatic. Both are recorded, never counted toward pass.
+
 ## What we already know
 
 The two advice channels disagree about running the CLI. `GENKIT.md` tells the agent not to run `genkit` commands and to use the `start_runtime` MCP tool. The skill tells it to run `genkit flow:run` and `genkit trace:get`.
@@ -66,25 +80,25 @@ So the `rules` arm is told to use a tool it does not have and not to run the CLI
 
 ## Scale and what reeval reports
 
-12 bugs x 4 arms x 4 agents (Claude Code, Antigravity, Cursor, Codex) x 5 attempts = 960 attempts. reeval reports:
+15 cases (12 bugs and 3 build tasks) x 4 arms x 4 agents (Claude Code, Antigravity, Cursor, Codex) x 5 attempts = 1200 attempts. reeval reports:
 
-- One pooled lift in pass rate over `control` per arm, paired by bug, with a 95% interval.
+- One pooled lift in pass rate over `control` per family and arm, paired by case, with a 95% interval.
 - Tokens, agent time and tool calls as ratios to `control`, with Mann-Whitney verdicts.
 - Adoption of the MCP tools and the CLI, read from the transcript.
-- Two LLM judges (was the diagnosis evidence-based; does the final message describe the change), recorded but never counted toward pass.
+- Three LLM judges (was the diagnosis evidence-based; does the final message describe the change; did the build use the agents API), recorded but never counted toward pass.
 
-Cost: reeval estimates about 6 hours at concurrency 8. Expect hundreds of millions of input tokens across four vendors, mostly cached. The `full` profile carries a `budget` cap, so a run that plans more than it allows is refused before it starts.
+Cost: reeval estimates about 7.5 hours at concurrency 8. Expect hundreds of millions of input tokens across four vendors, mostly cached. The `full` profile carries a `budget` cap, so a run that plans more than it allows is refused before it starts.
 
 ## Results
 
 Not run yet. Each cell holds `rules / mcp / skill`. `x` is the arm's median over the `control` median.
 
-| Harness | Fix rate (control / rules / mcp / skill) | Tokens x | Time x | Tools x | Adoption |
-|---|---|---|---|---|---|
-| claude-code |  |  |  |  |  |
-| antigravity |  |  |  |  |  |
-| cursor |  |  |  |  |  |
-| codex |  |  |  |  |  |
+| Harness | Fix rate (control / rules / mcp / skill) | Build rate (control / rules / mcp / skill) | Tokens x | Time x | Tools x | Adoption |
+|---|---|---|---|---|---|---|
+| claude-code |  |  |  |  |  |  |
+| antigravity |  |  |  |  |  |  |
+| cursor |  |  |  |  |  |  |
+| codex |  |  |  |  |  |  |
 
 ## Run it
 
@@ -99,4 +113,4 @@ pnpm reeval run --profile smoke
 pnpm reeval run --profile full claude-code
 ```
 
-`pnpm oracle` swaps the agent for a fake one that applies the known fix; it must pass 12/12. `pnpm canary` leaves the bug in place; it must fail 12/12. `RUNBOOK.md` has the full sequence, sizes and queries. `FINDINGS.md` lists what building the study taught us about the tooling.
+`pnpm oracle` swaps the agent for a fake one that applies the known fix or writes the healthy agents; it must pass 15/15. `pnpm canary` leaves the bug or the start state in place; it must fail 15/15. `RUNBOOK.md` has the full sequence, sizes and queries. `FINDINGS.md` lists what building the study taught us about the tooling.

@@ -19,6 +19,6 @@ export default defineConfig({
   analysis: { model: 'google/gemini-3.8-flash' },
   profiles: {
     smoke: { limit: { runs: 1, harness: ['claude-code:claude-sonnet-5'] } },
-    full: { defaults: { runs: 5 }, record: 'always', budget: { attempts: 1000, duration: '8h' } },
+    full: { defaults: { runs: 5 }, record: 'always', budget: { attempts: 1300, duration: '8h' } },
   },
 })
