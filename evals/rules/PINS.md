@@ -37,7 +37,7 @@ What `init:ai-tools --tool claude` installs around it, which the eval reproduces
 
 - `GENKIT.md` at the project root, plus a `<genkit_prompts hash="71cd594d">` block appended to
   `CLAUDE.md` that reads `Genkit Framework Instructions:\n - @./GENKIT.md`. The eval gives the
-  content as `rules: file('./genkit/GENKIT.md')`, so the harness places it as `CLAUDE.md` /
+  content as `rules: file('./rules/GENKIT.md')`, so the harness places it as `CLAUDE.md` /
   `AGENTS.md` / `.cursor/rules` directly. Same text, one hop fewer.
 - `.mcp.json` with `{ "command": "genkit", "args": ["mcp", "--no-update-notification"] }`. The
   eval's `mcp.stdio` adds `--project-root /reeval/workspace`, because the harness may start the
@@ -45,7 +45,7 @@ What `init:ai-tools --tool claude` installs around it, which the eval reproduces
 
 ## Advice conflict
 
-The `GENKIT.md` rules (the `rules` and `mcp` arms) and the `cli` arm's skill give opposite
+The `GENKIT.md` rules (the `rules` and `mcp` arms) and the `skill` arm's skill give opposite
 instructions about running the CLI. Quoted verbatim.
 
 `GENKIT.md` (CLI 1.44.1), "Important Guidelines":
@@ -85,7 +85,7 @@ instructions about running the CLI. Quoted verbatim.
 > **Non-interactive use (agents/CI):** add the global `--non-interactive` flag before `--` so the CLI uses defaults and never blocks on a prompt (e.g. the first-run analytics notice): `genkit start --non-interactive -- npx tsx src/index.ts` (works with `flow:run` too).
 
 So the `rules` and `mcp` arms are told not to run `genkit flow:run` and to lean on the MCP
-server's `start_runtime` (which only `mcp` has); the `cli` arm is told to run
+server's `start_runtime` (which only `mcp` has); the `skill` arm is told to run
 `genkit flow:run ... --non-interactive` and `genkit trace:get <id> --format json` itself. Tool adoption is read from the transcript, so this
 is a finding to report, not something to normalise away.
 

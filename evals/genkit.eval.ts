@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import { evaluate, expect, type Turn } from 'reeval'
 import { BUGS, diagnosisErrors } from './bugs.ts'
-import { cli, control, mcp, rules } from './environments.ts'
+import { control, mcp, rules, skill } from './environments.ts'
 
 const prompt = (symptom: string) =>
   `You are on the support-desk Genkit app in this directory. Bug report: ${symptom}
@@ -46,7 +46,20 @@ const SUMMARY_QUESTION = "Does the agent's final message accurately describe the
 // One family of 12 cases: the arms get one lift, paired by bug.
 evaluate.each(BUGS)(
   'fixes a broken Genkit app: $name',
-  { compare: { baseline: control, variants: [rules, mcp, cli], gate } },
+  {
+    compare: {
+      baseline: control,
+      variants: [rules, mcp, skill],
+      gate,
+      questions: [
+        {
+          question:
+            "Which attempt's answer.json evidence describes something observed by running the app (an output, an error, a trace) rather than inferred from reading the code?",
+          across: 'environment',
+        },
+      ],
+    },
+  },
   async (c, bug) => {
     await c.sandbox() // 0.9.0 does not start it on readFile: invertase/reeval#384
     const healthy = (await c.readFile(bug.file)) ?? ''

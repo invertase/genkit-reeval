@@ -1,6 +1,6 @@
 import { z } from 'genkit/beta';
 import { ai } from './ai.js';
-import { ORDERS } from './db.js';
+import { lookupOrder } from './tools.js';
 
 const TicketSummarySchema = z.object({
   title: z.string().describe('Short title for the ticket, under ten words'),
@@ -24,26 +24,16 @@ export const summarizeTicket = ai.defineFlow(
   },
 );
 
-const getOrderStatus = ai.defineTool(
-  {
-    name: 'getOrderStatus',
-    description: 'Looks up the shipping status, delivery ETA and tracking code of an order by its id, for example A-1001.',
-    inputSchema: z.object({ orderId: z.string().describe('The order id, for example A-1001') }),
-    outputSchema: z.object({ status: z.string(), eta: z.string(), tracking: z.string().nullable() }).nullable(),
-  },
-  async ({ orderId }) => ORDERS[orderId.trim().toUpperCase()] ?? null,
-);
-
 /** Answers a customer's question about an order using the orders database. */
 export const orderStatus = ai.defineFlow(
   { name: 'orderStatus', inputSchema: z.object({ question: z.string() }), outputSchema: z.string() },
   async ({ question }) => {
     const { text } = await ai.generate({
       system:
-        'You are the Northwind Supplies support assistant. Answer questions about orders using the getOrderStatus tool. ' +
+        'You are the Northwind Supplies support assistant. Answer questions about orders using the lookupOrder tool. ' +
         'Quote the status, ETA and tracking code exactly as the tool returns them. If an order is not found, say so.',
       prompt: question,
-      tools: [getOrderStatus],
+      tools: [lookupOrder],
     });
     return text;
   },

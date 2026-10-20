@@ -1,11 +1,28 @@
 // Placed in the sandbox after the agent's turn and run as
 // `tsx --test --test-name-pattern '^<bug>$' ~/.verify.mts`. Node builtins only: nothing else is copied in.
 import assert from 'node:assert/strict'
+import { readdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { test } from 'node:test'
 
 type App = typeof import('./app/src/index.ts')
+type Db = typeof import('./app/src/db.ts')
 const app: App = await import(path.resolve(process.cwd(), 'src/index.ts'))
+const db: Db = await import(path.resolve(process.cwd(), 'src/db.ts'))
+
+/** Names of the tools the agent called in `sessionId`, read from the FileSessionStore snapshots under .genkit/sessions. */
+const toolCalls = async (sessionId: string | undefined): Promise<string[]> => {
+  const dir = path.resolve(process.cwd(), '.genkit/sessions/global')
+  const names = new Set<string>()
+  for (const file of (await readdir(dir)).filter((name) => name.endsWith('.json'))) {
+    const snapshot = JSON.parse(await readFile(path.join(dir, file), 'utf8'))
+    if (snapshot.sessionId !== sessionId) continue
+    for (const message of snapshot.state?.messages ?? []) {
+      for (const part of message.content ?? []) if (part.toolRequest) names.add(part.toolRequest.name)
+    }
+  }
+  return [...names]
+}
 
 const TRACKING = 'NW-7F3K2Q' // only the orders database knows A-1001's tracking code
 const REFUND = 'I want a refund for order A-1001, it arrived broken.'
@@ -55,14 +72,15 @@ test('order-id-case', async () => {
 
 test('delegation-dropped', async () => {
   const out = await app.supportTurn({ message: REFUND })
-  assert.ok(out.toolCalls.includes('delegate_to_refundAgent'), `triage did not delegate: ${JSON.stringify(out.toolCalls)}`)
+  const calls = await toolCalls(out.sessionId)
+  assert.ok(calls.includes('delegate_to_refundAgent'), out.error ?? `triage did not delegate: ${JSON.stringify(calls)}`)
 })
 
 test('approval-ignored', async () => {
   const asked = await app.refundTurn({ message: REFUND })
   assert.equal(asked.finishReason, 'interrupted', asked.error ?? 'no approval interrupt')
   const declined = await app.refundTurn({ sessionId: asked.sessionId, respond: { approved: false, note: 'duplicate claim' } })
-  assert.ok(!declined.toolCalls.includes('issueRefund'), 'issueRefund ran after the refund was declined')
+  assert.deepEqual(db.REFUNDS, {}, 'a refund was issued after it was declined')
   assert.equal(declined.finishReason, 'stop', declined.error ?? 'declined turn did not finish')
 })
 
@@ -80,7 +98,8 @@ test('max-turns', async () => {
 
 test('tool-choice-none', async () => {
   const out = await app.supportTurn({ message: 'Where is order A-1001?' })
-  assert.ok(out.toolCalls.includes('delegate_to_orderAgent'), `triage did not delegate: ${JSON.stringify(out.toolCalls)}`)
+  const calls = await toolCalls(out.sessionId)
+  assert.ok(calls.includes('delegate_to_orderAgent'), out.error ?? `triage did not delegate: ${JSON.stringify(calls)}`)
 })
 
 test('tool-output-drift', async () => {

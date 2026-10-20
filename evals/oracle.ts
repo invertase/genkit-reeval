@@ -50,7 +50,7 @@ if (!bug || rest.length > 0) {
   fail(`expected exactly 1 seeded bug in ${process.cwd()}, found ${seeded.length}: ${seeded.map((b) => b.name).join(', ') || 'none'}`)
 }
 
-const decoy = BUGS[(BUGS.indexOf(bug) + 1) % BUGS.length]
+const decoy = BUGS.find((b) => b.file !== bug.file)
 if (!decoy) fail('no decoy bug')
 const named = cheat ? decoy : bug
 const cause = CAUSES[named.name]

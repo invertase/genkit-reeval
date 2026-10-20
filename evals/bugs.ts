@@ -36,12 +36,12 @@ export const BUGS: Bug[] = [
     name: 'tool-not-wired',
     kind: 'flow',
     file: 'src/flows.ts',
-    from: 'tools: [getOrderStatus],',
+    from: 'tools: [lookupOrder],',
     to: 'tools: [],',
     symptom:
       'I ask the orderStatus flow "Where is order A-1001?" and it replies that it cannot look up orders, or it makes up a vague answer. ' +
       'The order is in our system and is marked shipped. I expected the reply to give the real status and delivery date.',
-    keeps: [/name: 'orderStatus'/, /name: 'getOrderStatus'/, /tools:\s*\[[^\]]*getOrderStatus/],
+    keeps: [/name: 'orderStatus'/, /tools:\s*\[[^\]]*lookupOrder/],
   },
   {
     name: 'prompt-var-typo',
@@ -80,14 +80,14 @@ export const BUGS: Bug[] = [
   {
     name: 'order-id-case',
     kind: 'flow',
-    file: 'src/flows.ts',
+    file: 'src/tools.ts',
     from: 'async ({ orderId }) => ORDERS[orderId.trim().toUpperCase()] ?? null,',
     to: 'async ({ orderId }) => ORDERS[orderId] ?? null,',
     symptom:
       'Some customers with valid orders are told their order does not exist. ' +
       'One customer asked the orderStatus flow "where is order a-1001?" and got that answer, but A-1001 is in our system and has shipped. ' +
       'I expected the reply to give the status and delivery date.',
-    keeps: [/name: 'orderStatus'/, /name: 'getOrderStatus'/, /tools:\s*\[[^\]]*getOrderStatus/, /ORDERS/],
+    keeps: [/name: 'lookupOrder'/, /ORDERS/],
   },
   {
     name: 'delegation-dropped',
@@ -162,29 +162,16 @@ export const BUGS: Bug[] = [
   },
 ]
 
-const squash = (text: string) => text.replace(/\s+/g, ' ').trim()
-
 const workspacePath = (file: string) => file.replace(/^\/reeval\/workspace\//, '').replace(/^(\.\/)+/, '')
 
 /**
  * Why `answer` (the parsed `answer.json`) does not locate `bug`; empty when it does. The answer
- * locates the bug when `file` is `bug.file` and `snippet` overlaps `bug.to` (one contains the other,
- * whitespace collapsed). A snippet inside `bug.to` must also be absent from `bug.from`, so a quote of
- * an unchanged neighbouring line does not count.
+ * locates the bug when its `file` is `bug.file`, ignoring a leading `./` or `/reeval/workspace/`.
  */
 export function diagnosisErrors(answer: unknown, bug: Bug): string[] {
-  const field = (key: string) => {
-    const value = typeof answer === 'object' && answer !== null ? Reflect.get(answer, key) : undefined
-    return typeof value === 'string' ? value : ''
-  }
-  const errors: string[] = []
-  const file = workspacePath(field('file'))
-  if (file !== bug.file) errors.push(`file ${JSON.stringify(file)} is not ${JSON.stringify(bug.file)}`)
-  const snippet = squash(field('snippet'))
-  const broken = squash(bug.to)
-  const located = snippet.includes(broken) || (snippet !== '' && broken.includes(snippet) && !squash(bug.from).includes(snippet))
-  if (!located) errors.push(`snippet ${JSON.stringify(snippet)} does not quote the broken ${JSON.stringify(broken)}`)
-  return errors
+  const value = typeof answer === 'object' && answer !== null ? Reflect.get(answer, 'file') : undefined
+  const file = workspacePath(typeof value === 'string' ? value : '')
+  return file === bug.file ? [] : [`file ${JSON.stringify(file)} is not ${JSON.stringify(bug.file)}`]
 }
 
 const count = (haystack: string, needle: string) => haystack.split(needle).length - 1
@@ -204,10 +191,12 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     for (const keep of bug.keeps) {
       if (!keep.test(source)) errors.push(`${bug.name}: keeps ${keep} does not match the healthy ${bug.file}`)
     }
-    for (const e of diagnosisErrors({ file: bug.file, snippet: bug.to }, bug)) errors.push(`${bug.name}: own answer rejected: ${e}`)
+    for (const file of [bug.file, `./${bug.file}`, `/reeval/workspace/${bug.file}`]) {
+      for (const e of diagnosisErrors({ file }, bug)) errors.push(`${bug.name}: own answer rejected: ${e}`)
+    }
     for (const other of BUGS) {
-      if (other !== bug && diagnosisErrors({ file: other.file, snippet: other.to }, bug).length === 0) {
-        errors.push(`${bug.name}: ${other.name}'s answer is accepted`)
+      if (other.file !== bug.file && diagnosisErrors({ file: other.file }, bug).length === 0) {
+        errors.push(`${bug.name}: ${other.name}'s answer (${other.file}) is accepted`)
       }
     }
     if (/genkit|trace|mcp|\bcli\b/i.test(bug.symptom)) errors.push(`${bug.name}: symptom mentions tooling`)

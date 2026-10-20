@@ -6,7 +6,7 @@ We wrote this before any real run. Each item says how we established it:
 - **scripted model**: seen when the app ran with a scripted or test model, not with an agent.
 - **live**: seen in a real study run. No item is live yet.
 
-Pins and full quotes are in `evals/genkit/PINS.md`.
+Pins and full quotes are in `evals/rules/PINS.md`.
 
 ## 1. Two channels give conflicting advice
 

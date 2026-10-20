@@ -4,7 +4,7 @@ Run everything from the repo root. `pnpm reeval` is the pinned `reeval@0.9.0`. O
 
 ## Sizes
 
-12 bugs x 4 arms (`control`, `rules`, `mcp`, `cli`) x 4 harnesses = 192 cells. `evals/genkit.eval.ts` is one `evaluate.each` over the 12 bugs, so the arms get one lift paired by bug.
+12 bugs x 4 arms (`control`, `rules`, `mcp`, `skill`) x 4 harnesses = 192 cells. `evals/genkit.eval.ts` is one `evaluate.each` over the 12 bugs, so the arms get one lift paired by bug.
 
 | Command | Cells | Attempts | reeval's estimate |
 |---|---|---|---|
@@ -26,11 +26,7 @@ pnpm reeval doctor             # every line ✓
 pnpm reeval image build        # four images, one install layer each: npm i -g genkit-cli@1.44.1
 ```
 
-`GOOGLE_GENERATIVE_AI_API_KEY` serves the app in the sandbox (brokered as `GEMINI_API_KEY`), the judge and `reeval analyze`. `GEMINI_API_KEY` is for the Antigravity harness. If `doctor` or a plan says an image is "not built yet" while `docker images` lists it, Docker Desktop has lost the tag reference; re-tag and retry:
-
-```bash
-docker images --format '{{.ID}} {{.Repository}}:{{.Tag}}' | grep -E 'reeval-(sandbox|install)' | while read id ref; do docker tag "$id" "$ref"; done
-```
+`GOOGLE_GENERATIVE_AI_API_KEY` serves the app in the sandbox (brokered as `GEMINI_API_KEY`), the judge and `reeval analyze`. `GEMINI_API_KEY` is for the Antigravity harness. If a plan reports an image as not built while `docker images` lists it, see invertase/reeval issue (the lead will add the number).
 
 ## Oracle and canary
 
@@ -58,7 +54,7 @@ One bug, four arms, one attempt each; then the `mcp` arm on Codex for all 12 bug
 - `control`: setup ran `npm install` and the two `genkit` warm-up steps; the agent's diff shows only its fix (the bug is seeded before the first turn).
 - `rules`: `CLAUDE.md` holds `GENKIT.md`; no server, no skill.
 - `mcp`: the `genkit` server starts and the agent reaches `mcp__genkit__*` tools, directly or after `ToolSearch`. If it never sees a genkit tool, the arm measures `rules`: stop and find out why. `pnpm reeval query "SELECT tool, COUNT(*) FROM tool_calls WHERE run_id = '<run id>' AND (tool LIKE 'mcp__genkit__%' OR tool = 'ToolSearch') GROUP BY tool"`.
-- `cli`: the skill is placed and read (`pnpm reeval query skill_reads`).
+- `skill`: the skill is placed and read (`pnpm reeval query skill_reads`).
 - Every arm: `grep -r reeval_secret .reeval/debug/<run>` finds the placeholder and the real key appears nowhere.
 - Codex `mcp`: Codex may not pass the sandbox proxy to stdio MCP servers. If `run_flow` results show 401 or `fetch failed`, the server cannot reach Gemini; record it as a harness limitation.
 - Antigravity: the harness and the app both use `GEMINI_API_KEY`. Check an Antigravity attempt starts and the app still sees a placeholder.
@@ -105,7 +101,7 @@ FROM cell_checks k
 JOIN cells c ON c.run_id = k.run_id AND c.eval_key = k.eval_key AND c.key = k.cell_key
 WHERE k.run_id = '<run id>' AND k.label = 'flow works'
 GROUP BY c.harness, arm
-ORDER BY c.harness, CASE c.environment WHEN 'control' THEN 0 WHEN 'rules' THEN 1 WHEN 'mcp' THEN 2 ELSE 3 END
+ORDER BY c.harness, CASE c.environment WHEN 'control' THEN 0 WHEN 'rules' THEN 1 WHEN 'mcp' THEN 2 WHEN 'skill' THEN 3 END
 ```
 
 Adoption, as the share of attempts with at least one MCP call or one `genkit` subcommand (check `SELECT DISTINCT tool, target FROM tool_calls WHERE tool LIKE '%genkit%' OR target LIKE '%genkit%'` first; names differ by harness):
@@ -124,7 +120,7 @@ LEFT JOIN (
 ) a ON a.run_id = t.run_id AND a.attempt_key = t.key
 WHERE t.run_id = '<run id>'
 GROUP BY c.harness, arm
-ORDER BY c.harness, CASE c.environment WHEN 'control' THEN 0 WHEN 'rules' THEN 1 WHEN 'mcp' THEN 2 ELSE 3 END
+ORDER BY c.harness, CASE c.environment WHEN 'control' THEN 0 WHEN 'rules' THEN 1 WHEN 'mcp' THEN 2 WHEN 'skill' THEN 3 END
 ```
 
 Effort (mean of per-bug ratios; per-bug verdicts are in `effort`):

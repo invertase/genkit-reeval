@@ -1,6 +1,6 @@
 import { defineEnvironment } from 'reeval'
 
-/** What the eval holds fixed; see evals/genkit/PINS.md for the sources. */
+/** What the eval holds fixed; see evals/rules/PINS.md for the sources. */
 export const PINS = {
   genkitCli: '1.44.1',
   skillSha: 'd02d49da3a77687914715188d495999170bbf48b',
@@ -22,10 +22,10 @@ export const control = defineEnvironment('control', ({ directory, secret }) => (
 
 /** `control` plus `GENKIT.md` as the project rules, and nothing else. */
 export const rules = control.extendEnvironment('rules', ({ file }) => ({
-  rules: file('./genkit/GENKIT.md'),
+  rules: file('./rules/GENKIT.md'),
 }))
 
-/** `rules` plus the `genkit mcp` server: together, what `genkit init:ai-tools` installs. */
+/** `rules` plus the `genkit mcp` server, which together are what `genkit init:ai-tools` installs. */
 export const mcp = rules.extendEnvironment('mcp', ({ mcp, secret }) => ({
   mcp: {
     genkit: mcp.stdio('genkit', ['mcp', '--no-update-notification', '--project-root', '/reeval/workspace'], {
@@ -37,7 +37,7 @@ export const mcp = rules.extendEnvironment('mcp', ({ mcp, secret }) => ({
 }))
 
 /** `control` plus the pinned `developing-genkit-js` skill. */
-export const cli = control.extendEnvironment('cli', ({ skill }) => ({
+export const skill = control.extendEnvironment('skill', ({ skill }) => ({
   skills: [
     skill.git('github:genkit-ai/skills', {
       ref: PINS.skillSha,

@@ -1,29 +1,10 @@
 import { agents } from '@genkit-ai/middleware';
-import { AgentError, FileSessionStore, z, type AgentChat } from 'genkit/beta';
+import { AgentError, FileSessionStore, z, type AgentChat, type AgentResponse } from 'genkit/beta';
 import { ai } from './ai.js';
-import { createRefund, ORDERS } from './db.js';
+import { createRefund } from './db.js';
+import { lookupOrder } from './tools.js';
 
 const store = new FileSessionStore('.genkit/sessions');
-
-const lookupOrder = ai.defineTool(
-  {
-    name: 'lookupOrder',
-    description: 'Looks up the status, delivery ETA, tracking code, total and refund eligibility of an order by its id, for example A-1001.',
-    inputSchema: z.object({ orderId: z.string().describe('The order id, for example A-1001') }),
-    outputSchema: z.object({
-      status: z.string(),
-      eta: z.string(),
-      tracking: z.string().nullable(),
-      total: z.number(),
-      refundable: z.boolean(),
-    }),
-  },
-  async ({ orderId }) => {
-    const order = ORDERS[orderId];
-    if (!order) throw new Error(`Order ${orderId} not found`);
-    return order;
-  },
-);
 
 const issueRefund = ai.defineTool(
   {
@@ -83,63 +64,42 @@ const TurnInputSchema = z.object({
     .describe("Answers the session's pending approveRefund interrupt."),
 });
 
-const AgentTurnSchema = z.object({
+const TurnSchema = z.object({
   text: z.string(),
   finishReason: z.string(),
-  sessionId: z.string(),
+  sessionId: z.string().optional(),
   interrupts: z.array(z.object({ name: z.string(), input: z.unknown() })),
-  toolCalls: z.array(z.string()),
-  error: z.string().optional(),
+  error: z.string().optional().describe('Why the agent failed the turn, for example by running out of turns.'),
 });
 
-/** One agent turn as `supportTurn` and `refundTurn` report it. */
-export type AgentTurn = z.infer<typeof AgentTurnSchema>;
+const toTurn = ({ text, finishReason, sessionId, interrupts }: AgentResponse): z.infer<typeof TurnSchema> => ({
+  text,
+  finishReason,
+  sessionId,
+  interrupts: interrupts.map(({ name, input }) => ({ name, input })),
+});
 
-/** The session's stored messages, which carry the tool traffic that `chat.messages` leaves out. */
-const stored = async (chat: AgentChat) =>
-  chat.sessionId ? ((await store.getSnapshot({ sessionId: chat.sessionId }))?.state?.messages ?? []) : [];
-
-/** Sends a message or answers the pending interrupt, and reports the turn instead of throwing on agent failure. */
-const runTurn = async (chat: AgentChat, { message, respond }: z.infer<typeof TurnInputSchema>): Promise<AgentTurn> => {
-  const before = (await stored(chat)).length;
-  const report = async (turn: Partial<AgentTurn>): Promise<AgentTurn> => ({
-    text: '',
-    finishReason: 'unknown',
-    sessionId: chat.sessionId ?? '',
-    interrupts: [],
-    toolCalls: (await stored(chat))
-      .slice(before)
-      .flatMap((m) => m.content.flatMap((p) => (p.toolRequest ? [p.toolRequest.name] : []))),
-    ...turn,
-  });
-
+/** Sends the message, or answers the pending approveRefund interrupt, and reports agent failures in `error` instead of throwing. */
+const runTurn = async (chat: AgentChat, { message, respond }: z.infer<typeof TurnInputSchema>) => {
   try {
     if (respond) {
-      const pending = (await stored(chat))
-        .filter((m) => m.role === 'model')
-        .at(-1)
-        ?.content.find((p) => p.toolRequest && p.metadata?.interrupt);
-      if (!pending?.toolRequest) throw new Error('No pending approveRefund interrupt in this session');
-      const { name, ref } = pending.toolRequest;
+      const pending = chat.messages.at(-1)?.content.find((p) => p.toolRequest && p.metadata?.interrupt)?.toolRequest;
+      if (!pending) throw new Error('No pending approveRefund interrupt in this session');
+      const { name, ref } = pending;
       const res = await chat.resume({ respond: [{ toolResponse: { name, ref, output: respond } }] });
-      return await report({ text: res.text, finishReason: res.finishReason });
+      return toTurn(res);
     }
     if (!message) throw new Error('Provide a message, or respond to a pending interrupt');
-    const res = await chat.send(message);
-    return await report({
-      text: res.text,
-      finishReason: res.finishReason,
-      interrupts: res.interrupts.map(({ name, input }) => ({ name, input })),
-    });
+    return toTurn(await chat.send(message));
   } catch (error) {
     if (!(error instanceof AgentError)) throw error;
-    return report({ finishReason: 'failed', error: error.message });
+    return { ...toTurn(error.response), error: error.message };
   }
 };
 
 /** Runs one customer turn through the triage agent. Agents are not flows, so this is how the CLI reaches them. */
 export const supportTurn = ai.defineFlow(
-  { name: 'supportTurn', inputSchema: TurnInputSchema, outputSchema: AgentTurnSchema },
+  { name: 'supportTurn', inputSchema: TurnInputSchema, outputSchema: TurnSchema },
   async (input) => {
     const chat = input.sessionId ? await triage.loadChat({ sessionId: input.sessionId }) : triage.chat();
     return runTurn(chat, input);
@@ -148,7 +108,7 @@ export const supportTurn = ai.defineFlow(
 
 /** Runs one turn on the refund desk, which pauses on approveRefund until a human answers. */
 export const refundTurn = ai.defineFlow(
-  { name: 'refundTurn', inputSchema: TurnInputSchema, outputSchema: AgentTurnSchema },
+  { name: 'refundTurn', inputSchema: TurnInputSchema, outputSchema: TurnSchema },
   async (input) => {
     const chat = input.sessionId ? await refundAgent.loadChat({ sessionId: input.sessionId }) : refundAgent.chat();
     return runTurn(chat, input);
