@@ -1,5 +1,5 @@
-// Oracle: the control arm passes all three checks when the bug is fixed and named, so the eval can pass.
-// Canary (`--profile canary`): an unfixed bug with a wrong answer fails every cell, so the checks bite.
+// Oracle: the control arm passes all three checks when the bug is fixed and named or the agents are built, so every eval can pass.
+// Canary (`--profile canary`): an unfixed bug with a wrong answer, or an unbuilt task, fails every cell, so the checks bite.
 import { readFileSync } from 'node:fs'
 import { defineConfig } from 'reeval'
 import { fakeHarness } from 'reeval/harness'
@@ -13,6 +13,9 @@ const source = (file: string) => readFileSync(new URL(file, import.meta.url), 'u
 const oracleFiles = {
   '~/.oracle/oracle.ts': source('./evals/oracle.ts'),
   '~/.oracle/bugs.ts': source('./evals/bugs.ts'),
+  '~/.oracle/tasks.ts': source('./evals/tasks.ts'),
+  '~/.oracle/app/src/agents.ts': source('./evals/app/src/agents.ts'),
+  '~/.oracle/app/src/index.ts': source('./evals/app/src/index.ts'),
 }
 const oracle = (args = '') =>
   fakeHarness({

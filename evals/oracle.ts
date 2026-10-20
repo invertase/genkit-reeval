@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { BUGS, diagnosisErrors } from './bugs.ts'
+import { HEALTHY, isBuildStart } from './tasks.ts'
 
 const CAUSES: Record<string, string> = {
   'schema-drift':
@@ -42,6 +43,16 @@ const readOrEmpty = (file: string) => {
   } catch {
     return ''
   }
+}
+
+const agentsFile = path.resolve(process.cwd(), 'src/agents.ts')
+if (isBuildStart(fs.existsSync(agentsFile) ? fs.readFileSync(agentsFile, 'utf8') : null)) {
+  if (!cheat) {
+    fs.writeFileSync(agentsFile, HEALTHY.agents)
+    fs.writeFileSync(path.resolve(process.cwd(), 'src/index.ts'), HEALTHY.index)
+  }
+  console.log(cheat ? 'left the build task undone' : 'built the agents')
+  process.exit(0)
 }
 
 const seeded = BUGS.filter((b) => readOrEmpty(b.file).split(b.to).length - 1 === 1)
