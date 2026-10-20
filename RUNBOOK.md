@@ -110,4 +110,4 @@ pnpm reeval query "$(sed "s/<run id>/$RUN/g" queries/fix-rate.sql)"
 | `queries/effort.sql` | the `x` ratios, per family | mean of per-case ratios; per-case verdicts are in `effort` |
 | `queries/judge.sql` | mean evidence score | swap the `LIKE` for the summary judge |
 
-For a flows-vs-agents breakdown, add `e.name` (the bug) to a `SELECT` with `JOIN evals e ON e.run_id = c.run_id AND e.key = c.eval_key`, or read `lift` per bug. The 12 bugs and 3 build tasks are listed in the README; `evals/bugs.ts` and `evals/tasks.ts` are the sources of truth.
+For a flows-vs-agents breakdown, add `e.name` (the bug) to a `SELECT` with `JOIN evals e ON e.run_id = c.run_id AND e.key = c.eval_key`, or read `lift` per bug. The 12 bugs and 3 build tasks are listed in `STUDY.md`; `evals/bugs.ts` and `evals/tasks.ts` are the sources of truth.
