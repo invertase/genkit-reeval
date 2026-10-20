@@ -15,6 +15,7 @@ export default defineConfig({
     codex({ model: 'gpt-5.6-luna' }),
   ],
   timeout: '15m',
+  judge: { model: 'google/gemini-3.8-flash', threshold: 0.7 },
   analysis: { model: 'google/gemini-3.8-flash' },
   profiles: {
     smoke: { limit: { runs: 1, harness: ['claude-code:claude-sonnet-5'] } },

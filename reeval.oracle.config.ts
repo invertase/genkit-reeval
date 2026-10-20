@@ -3,6 +3,7 @@
 import { readFileSync } from 'node:fs'
 import { defineConfig } from 'reeval'
 import { fakeHarness } from 'reeval/harness'
+import { fakeJudge } from 'reeval/judge'
 import { sandbox } from './reeval.config.ts'
 
 // Read by evals/study.ts at registration: reeval does not expose the config or profile to an eval.
@@ -24,6 +25,8 @@ export default defineConfig({
   include: ['evals/**/*.eval.ts'],
   harness: oracle(),
   sandbox,
+  // The judge code path runs in the oracle too, with no key and no model call.
+  judge: { model: fakeJudge() },
   defaultProfile: { local: 'oracle', ci: 'oracle' },
   profiles: {
     oracle: { limit: controlOnly },

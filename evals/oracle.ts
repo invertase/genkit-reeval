@@ -55,7 +55,8 @@ if (!decoy) fail('no decoy bug')
 const named = cheat ? decoy : bug
 const cause = CAUSES[named.name]
 if (!cause) fail(`no cause sentence for ${named.name}; add it to CAUSES in oracle.ts`)
-const answer = { file: named.file, snippet: named.to, cause }
+const evidence = `${named.file} contains ${JSON.stringify(named.to)}; the working text is ${JSON.stringify(named.from)}.`
+const answer = { file: named.file, snippet: named.to, cause, evidence }
 const errors = diagnosisErrors(answer, bug)
 if (cheat ? errors.length === 0 : errors.length > 0) {
   fail(`${cheat ? 'cheat' : 'oracle'} answer for ${bug.name} is ${cheat ? 'accepted' : `rejected: ${errors.join('; ')}`}`)
