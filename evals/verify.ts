@@ -6,10 +6,8 @@ type AgentTurn = {
   text: string
   finishReason: string
   sessionId: string
-  snapshotId: string
   interrupts: { name: string; input: unknown }[]
   toolCalls: string[]
-  messageCount: number
   error?: string
 }
 type Turn = (input: {
@@ -62,12 +60,14 @@ const CHECKS: Record<string, (app: App) => Promise<string>> = {
       text: 'My order A-1002 arrived with a cracked monitor and the box was soaked. I need a replacement before Monday for a client demo.',
     })
     const priority = prop(out, 'priority')
-    const title = prop(out, 'title')
+    const tags = prop(out, 'tags')
     if (priority !== 'low' && priority !== 'medium' && priority !== 'high') {
       fail(`priority must be low, medium or high, got ${JSON.stringify(priority)}`)
     }
-    if (typeof title !== 'string' || title.trim() === '') fail(`title must be a non-empty string, got ${JSON.stringify(title)}`)
-    return 'summarizeTicket returned a valid priority and title'
+    if (!Array.isArray(tags) || tags.length === 0 || !tags.every((t) => typeof t === 'string')) {
+      fail(`tags must be a non-empty list of strings, got ${JSON.stringify(tags)}`)
+    }
+    return `summarizeTicket returned priority ${priority} and ${tags.length} tags`
   },
 
   'tool-not-wired': async (app) => {

@@ -29,8 +29,8 @@ Genkit gives agents guidance through two channels: `GENKIT.md`, which `genkit in
 
 ## 3. Flows API
 
-- **`constrained: false` sends no schema text by default** (from source). With `output: { schema, constrained: false }`, the model gets no description of the schema unless `instructions` is set, because the `json` format has `defaultInstructions: false`. The `schema-drift` bug depends on this: the model follows the system prompt's `P0/P1/P2`, and only validation sees the schema.
-- **`gemini-2.5-flash` thinks by default** (from source). Thinking tokens count against `maxOutputTokens`, so a small limit can return empty text instead of a short answer. The app sets `thinkingBudget: 0` on every call so that `truncated-output` gives truncated text. We have not yet seen the empty-text case live.
+- **`gemini-2.5-flash` thinks by default** (from source). Thinking tokens count against `maxOutputTokens`, so a small limit can return empty text instead of a short answer. The app turns thinking off once, in the model reference passed to `genkit()`, so that `truncated-output` gives truncated text. We have not yet seen the empty-text case live.
+- **`constrained: false` sends no schema text by default** (from source). With `output: { schema, constrained: false }` the model gets no description of the schema unless `instructions` is set, because the `json` format has `defaultInstructions: false`. The app does not rely on it; an agent that reaches for it to loosen validation will find the model answering blind.
 
 ## 4. Results
 

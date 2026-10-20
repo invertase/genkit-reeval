@@ -1,9 +1,4 @@
 ---
-model: googleai/gemini-2.5-flash
-config:
-  temperature: 0
-  thinkingConfig:
-    thinkingBudget: 0
 input:
   schema:
     customerName: string

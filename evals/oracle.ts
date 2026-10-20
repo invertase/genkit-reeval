@@ -4,7 +4,7 @@ import { BUGS, diagnosisErrors } from './bugs.ts'
 
 const CAUSES: Record<string, string> = {
   'schema-drift':
-    "The summarizeTicket prompt asks the model for a P0/P1/P2 priority but outputSchema.priority is enum(['low','medium','high']), so the structured output fails schema validation.",
+    'TicketSummarySchema declares tags as z.string() instead of z.array(z.string()), so summarizeTicket returns one comma-separated string where the dashboard expects a list.',
   'tool-not-wired':
     'getOrderStatus is defined but not passed in the tools array of the orderStatus generate call, so the model never calls the tool and cannot read the order status.',
   'prompt-var-typo':
@@ -26,7 +26,7 @@ const CAUSES: Record<string, string> = {
   'tool-choice-none':
     "triage sets toolChoice: 'none', so the model is not allowed to call tools and never delegates to orderAgent or refundAgent.",
   'tool-output-drift':
-    'The warehouse export stores A-1001 total as the string "149.99", which fails lookupOrder outputSchema total: z.number(), so orderAgent fails on that order.',
+    'orders.json stores A-1001 total as the string "149.99", which fails lookupOrder outputSchema total: z.number(), so orderAgent fails on that order.',
 }
 
 function fail(message: string): never {

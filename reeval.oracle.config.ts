@@ -6,7 +6,7 @@ import { fakeHarness } from 'reeval/harness'
 import { fakeJudge } from 'reeval/judge'
 import { sandbox } from './reeval.config.ts'
 
-// Read by evals/study.ts at registration: reeval does not expose the config or profile to an eval.
+// Read by evals/genkit.eval.ts at registration: reeval does not expose the config or profile to an eval.
 process.env.GENKIT_EVAL_GATE = 'all'
 
 const source = (file: string) => readFileSync(new URL(file, import.meta.url), 'utf8')

@@ -6,8 +6,7 @@
     "eval": "reeval run",
     "oracle": "reeval run --config reeval.oracle.config.ts",
     "canary": "reeval run --config reeval.oracle.config.ts --profile canary",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
-    "try-flows": "tsx evals/scripts/try-flows.ts"
+    "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "license": "Apache-2.0",
   "packageManager": "pnpm@10.18.3",
