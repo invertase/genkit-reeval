@@ -4,20 +4,21 @@ Run everything from the repo root. `pnpm reeval` is the pinned `reeval@0.9.0`. O
 
 ## Sizes
 
-15 cases x 4 arms (`control`, `rules`, `mcp`, `skill`) x 4 harnesses = 240 cells. There are two families. `evals/genkit.eval.ts` is one `evaluate.each` over the 12 bugs. `evals/build.eval.ts` is one `evaluate.each` over the 3 build tasks. Each family gets one lift per arm, paired by case.
+15 cases x 4 arms (`control`, `rules`, `mcp`, `skill`) x 5 harnesses = 300 cells. There are two families. `evals/genkit.eval.ts` is one `evaluate.each` over the 12 bugs. `evals/build.eval.ts` is one `evaluate.each` over the 3 build tasks. Each family gets one lift per arm, paired by case.
 
 | Command | Cells | Attempts | reeval's estimate at concurrency 8 |
 |---|---|---|---|
-| `pnpm reeval run --dry-run` | 240 | 240 | 90 min |
+| `pnpm reeval run --dry-run` | 300 | 300 | 113 min |
 | `... --profile smoke` | 60 | 60 | 23 min |
 | `... --profile smoke schema-drift` | 4 | 4 | 3 min |
 | `... --profile smoke build-triage` | 4 | 4 | 3 min |
-| `... --profile full` | 240 | 1200 | 7.5 h |
-| `... --profile full claude-code` | 60 | 300 | 113 min |
+| `... --profile full` | 300 | 1500 | 9.5 h |
+| `... --profile full claude-code:claude-sonnet-5` | 60 | 300 | 113 min |
+| `... --profile full claude-code:claude-haiku-5-5` | 60 | 300 | 113 min |
 | `... codex:gpt-5.6-luna/mcp` | 15 | 15 | 6 min |
 | `pnpm oracle`, `pnpm canary` | 15 | 15 | minutes (see below) |
 
-The estimate is a flat 3 minutes per attempt. The `full` profile's budget allows 1300 attempts and 8 hours. `smoke` keeps one harness (`claude-code:claude-sonnet-5`) and one attempt per cell; `full` runs 5 attempts per cell and records the run. Positional filters match an eval name (a bug) or a cell key (`<harness>/<arm>/<sandbox>`) and combine with OR, so `schema-drift codex` is wider than either alone.
+The estimate is a flat 3 minutes per attempt. The `full` profile's budget allows 1600 attempts and 12 hours. `smoke` keeps one harness (`claude-code:claude-sonnet-5`) and one attempt per cell; `full` runs 5 attempts per cell and records the run. Positional filters match an eval name (a bug) or a cell key (`<harness>/<arm>/<sandbox>`) and combine with OR, so `schema-drift codex` is wider than either alone.
 
 ## Keys and images
 
@@ -70,10 +71,11 @@ Then the whole smoke profile: `pnpm reeval run --profile smoke` (60 attempts).
 
 ## Full
 
-One harness at a time, so a rate limit or a crash costs one harness (300 attempts, ~113 min each):
+One harness at a time, so a rate limit or a crash costs one harness (300 attempts, ~113 min each). `claude-code` alone matches both Claude Code harnesses, so name the model:
 
 ```bash
-pnpm reeval run --profile full claude-code
+pnpm reeval run --profile full claude-code:claude-sonnet-5
+pnpm reeval run --profile full claude-code:claude-haiku-5-5
 pnpm reeval run --profile full antigravity
 pnpm reeval run --profile full cursor
 pnpm reeval run --profile full codex

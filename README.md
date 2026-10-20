@@ -80,14 +80,14 @@ So the `rules` arm is told to use a tool it does not have and not to run the CLI
 
 ## Scale and what reeval reports
 
-15 cases (12 bugs and 3 build tasks) x 4 arms x 4 agents (Claude Code, Antigravity, Cursor, Codex) x 5 attempts = 1200 attempts. reeval reports:
+15 cases (12 bugs and 3 build tasks) x 4 arms x 5 agents (Claude Code on Sonnet 5 and on Haiku 5.5, Antigravity, Cursor, Codex) x 5 attempts = 1500 attempts. Haiku is there because tooling should matter most to the agent that cannot hold the whole app in its head. reeval reports:
 
 - One pooled lift in pass rate over `control` per family and arm, paired by case, with a 95% interval.
 - Tokens, agent time and tool calls as ratios to `control`, with Mann-Whitney verdicts.
 - Adoption of the MCP tools and the CLI, read from the transcript.
 - Three LLM judges (was the diagnosis evidence-based; does the final message describe the change; did the build use the agents API), recorded but never counted toward pass.
 
-Cost: reeval estimates about 7.5 hours at concurrency 8. Expect hundreds of millions of input tokens across four vendors, mostly cached. The `full` profile carries a `budget` cap, so a run that plans more than it allows is refused before it starts.
+Cost: reeval estimates about 9.5 hours at concurrency 8. Expect hundreds of millions of input tokens across four vendors, mostly cached. The `full` profile carries a `budget` cap, so a run that plans more than it allows is refused before it starts.
 
 ## Results
 
@@ -95,7 +95,8 @@ Not run yet. Each cell holds `rules / mcp / skill`. `x` is the arm's median over
 
 | Harness | Fix rate (control / rules / mcp / skill) | Build rate (control / rules / mcp / skill) | Tokens x | Time x | Tools x | Adoption |
 |---|---|---|---|---|---|---|
-| claude-code |  |  |  |  |  |  |
+| claude-code (sonnet 5) |  |  |  |  |  |  |
+| claude-code (haiku 5.5) |  |  |  |  |  |  |
 | antigravity |  |  |  |  |  |  |
 | cursor |  |  |  |  |  |  |
 | codex |  |  |  |  |  |  |
@@ -110,7 +111,7 @@ pnpm reeval image build
 pnpm oracle
 pnpm canary
 pnpm reeval run --profile smoke
-pnpm reeval run --profile full claude-code
+pnpm reeval run --profile full claude-code:claude-sonnet-5
 ```
 
 `pnpm oracle` swaps the agent for a fake one that applies the known fix or writes the healthy agents; it must pass 15/15. `pnpm canary` leaves the bug or the start state in place; it must fail 15/15. `RUNBOOK.md` has the full sequence, sizes and queries. `FINDINGS.md` lists what building the study taught us about the tooling.

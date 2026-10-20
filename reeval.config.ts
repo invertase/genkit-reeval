@@ -10,6 +10,7 @@ export default defineConfig({
   sandbox,
   harness: [
     claudeCode({ model: 'claude-sonnet-5' }),
+    claudeCode({ model: 'claude-haiku-5-5' }),
     antigravity({ model: 'gemini-3.8-flash-medium' }),
     cursor({ model: 'composer-2.5', params: { fast: 'true' } }),
     codex({ model: 'gpt-5.6-luna' }),
@@ -19,6 +20,6 @@ export default defineConfig({
   analysis: { model: 'google/gemini-3.8-flash' },
   profiles: {
     smoke: { limit: { runs: 1, harness: ['claude-code:claude-sonnet-5'] } },
-    full: { defaults: { runs: 5 }, record: 'always', budget: { attempts: 1300, duration: '8h' } },
+    full: { defaults: { runs: 5 }, record: 'always', budget: { attempts: 1600, duration: '12h' } },
   },
 })
