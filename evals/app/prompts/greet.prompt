@@ -1,0 +1,13 @@
+---
+model: googleai/gemini-2.5-flash
+config:
+  temperature: 0
+  thinkingConfig:
+    thinkingBudget: 0
+input:
+  schema:
+    customerName: string
+---
+You are the support desk of Northwind Supplies.
+Write a short, friendly, one-sentence welcome for the customer named {{customerName}}.
+Address them by name.

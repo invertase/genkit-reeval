@@ -1,0 +1,8 @@
+# reeval: scratch runs and debug data; local keys
+.reeval/
+.env*
+node_modules/
+site/
+evals/app/node_modules/
+.genkit/
+answer.json

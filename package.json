@@ -1,0 +1,22 @@
+{
+  "name": "genkit-reeval",
+  "version": "1.0.0",
+  "description": "Does Genkit agent tooling help coding agents fix a broken Genkit app? A reeval study.",
+  "scripts": {
+    "eval": "reeval run",
+    "oracle": "reeval run --config reeval.oracle.config.ts",
+    "canary": "reeval run --config reeval.oracle.config.ts --profile canary",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "try-flows": "tsx evals/scripts/try-flows.ts"
+  },
+  "license": "Apache-2.0",
+  "packageManager": "pnpm@10.18.3",
+  "devDependencies": {
+    "genkit-cli": "1.44.1",
+    "reeval": "0.9.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  },
+  "type": "module",
+  "private": true
+}
