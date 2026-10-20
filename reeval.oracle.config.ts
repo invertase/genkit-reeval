@@ -1,26 +1,32 @@
 // Oracle: the control arm passes all three checks when the bug is fixed and named, so the eval can pass.
 // Canary (`--profile canary`): an unfixed bug with a wrong answer fails every cell, so the checks bite.
-import { join } from 'node:path'
+import { readFileSync } from 'node:fs'
 import { defineConfig } from 'reeval'
 import { fakeHarness } from 'reeval/harness'
-import { fakeSandbox } from 'reeval/sandbox'
+import { sandbox } from './reeval.config.ts'
 
-process.env.GENKIT_EVAL_ORACLE = '1'
+// Read by evals/study.ts at registration: reeval does not expose the config or profile to an eval.
+process.env.GENKIT_EVAL_GATE = 'all'
 
-const tsx = join(import.meta.dirname, 'node_modules/.bin/tsx')
-const oracle = `${JSON.stringify(tsx)} ${JSON.stringify(join(import.meta.dirname, 'evals/oracle.ts'))}`
+const source = (file: string) => readFileSync(new URL(file, import.meta.url), 'utf8')
+const oracleFiles = {
+  '~/.oracle/oracle.ts': source('./evals/oracle.ts'),
+  '~/.oracle/bugs.ts': source('./evals/bugs.ts'),
+}
+const oracle = (args = '') =>
+  fakeHarness({
+    script: [[{ write: oracleFiles }, { exec: `node_modules/.bin/tsx ~/.oracle/oracle.ts${args}` }]],
+    text: 'Fixed it.',
+  })
 const controlOnly = { compare: false } as const
 
 export default defineConfig({
   include: ['evals/**/*.eval.ts'],
-  harness: fakeHarness({ script: [[{ exec: oracle }]], text: 'Fixed it.' }),
-  sandbox: fakeSandbox(),
+  harness: oracle(),
+  sandbox,
   defaultProfile: { local: 'oracle', ci: 'oracle' },
   profiles: {
     oracle: { limit: controlOnly },
-    canary: {
-      defaults: { harness: fakeHarness({ script: [[{ exec: `${oracle} --cheat` }]] }) },
-      limit: controlOnly,
-    },
+    canary: { defaults: { harness: oracle(' --cheat') }, limit: controlOnly },
   },
 })

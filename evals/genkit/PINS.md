@@ -45,8 +45,8 @@ What `init:ai-tools --tool claude` installs around it, which the eval reproduces
 
 ## Advice conflict
 
-The `mcp` arm's rules and the `cli` arm's skill give opposite instructions about running the
-CLI. Quoted verbatim.
+The `GENKIT.md` rules (the `rules` and `mcp` arms) and the `cli` arm's skill give opposite
+instructions about running the CLI. Quoted verbatim.
 
 `GENKIT.md` (CLI 1.44.1), "Important Guidelines":
 
@@ -84,18 +84,18 @@ CLI. Quoted verbatim.
 >
 > **Non-interactive use (agents/CI):** add the global `--non-interactive` flag before `--` so the CLI uses defaults and never blocks on a prompt (e.g. the first-run analytics notice): `genkit start --non-interactive -- npx tsx src/index.ts` (works with `flow:run` too).
 
-So the `mcp` arm is told not to run `genkit flow:run` and to lean on the MCP server's
-`start_runtime`; the `cli` arm is told to run `genkit flow:run ... --non-interactive` and
-`genkit trace:get <id> --format json` itself. Tool adoption is read from the transcript, so this
+So the `rules` and `mcp` arms are told not to run `genkit flow:run` and to lean on the MCP
+server's `start_runtime` (which only `mcp` has); the `cli` arm is told to run
+`genkit flow:run ... --non-interactive` and `genkit trace:get <id> --format json` itself. Tool adoption is read from the transcript, so this
 is a finding to report, not something to normalise away.
 
-## The skill.git call for environments.ts
+## The skill.git call in environments.ts
 
 reeval 0.9.0 scans a git skill source one level deep: the directory itself, or its immediate
 subdirectories, must hold `SKILL.md`. Unlike `skill.registry`, `skill.git` does not try `skills/`
-on its own, and this repository's root has only `README.md` and `skills/`. The contract's call
+on its own, and this repository's root has only `README.md` and `skills/`. A call
 without `path` fails each attempt as an infra error (`Skill source github:genkit-ai/skills#d02d49da...
-has no SKILL.md (and no subdirectories with one)`). Pass `path: 'skills'`:
+has no SKILL.md (and no subdirectories with one)`). `evals/environments.ts` passes `path: 'skills'`:
 
 ```ts
 export const PINS = {
@@ -110,7 +110,7 @@ skill.git('github:genkit-ai/skills', {
 })
 ```
 
-Equivalent, if C prefers the registry form (it does try `skills/`):
+The equivalent registry form (it does try `skills/`):
 
 ```ts
 skill.registry('genkit-ai/skills@developing-genkit-js', { version: PINS.skillSha })

@@ -1,20 +1,27 @@
 # Runbook
 
-Run everything from the repo root. Use `pnpm reeval`, which is the pinned `reeval@0.9.0`.
+Run everything from the repo root. `pnpm reeval` is the pinned `reeval@0.9.0`. Never run `--profile full` before the oracle, the canary and a smoke run pass.
 
-## What the oracle run proves
+## Plan sizes
 
-`reeval.oracle.config.ts` uses `fakeHarness` and `fakeSandbox`. The fake sandbox is a temporary directory on the host, not a container. Each attempt still runs the real `files`, `setup` (host `npm install`), the body's seeding `c.writeFile` and the checks. The oracle (`evals/oracle.ts`) is the fake agent's one tool call. Both of its profiles (`oracle`, the default, and `canary`) set `limit: { compare: false }`, so only the control arm runs.
+The study is 12 bugs x 4 arms (`control`, `rules`, `mcp`, `cli`) x 4 harnesses = 192 cells. `evals/debugging.eval.ts` holds the 6 flows bugs (tag `flows`) and `evals/agents.eval.ts` holds the 6 agents bugs (tag `agents`). Both come from `evals/study.ts`, and each is one `evaluate.each` family with a paired lift.
 
-What it exercises: the seed applies, the oracle finds the seeded bug itself (the one bug whose broken snippet is in the workspace), its fix is accepted, `answer.json` names the bug's `file` and quotes its broken `snippet`, the verify script runs the repaired flow against the real Gemini API, and the `keeps` regexes hold.
+| Command | Evals | Cells | Attempts | reeval's estimate at concurrency 8 |
+|---|---|---|---|---|
+| `pnpm reeval run --dry-run` | 12 | 192 | 192 | 72 min |
+| `... --profile smoke` | 12 | 48 | 48 | 18 min |
+| `... --profile smoke schema-drift` | 1 | 4 | 4 | 3 min |
+| `... --profile full` | 12 | 192 | 960 | 6 h |
+| `... --profile full claude-code` | 12 | 48 | 240 | 90 min |
+| `... --profile full --tag flows claude-code` | 6 | 24 | 120 | 45 min |
+| `... --tag flows` or `--tag agents` | 6 | 96 | 96 | 36 min |
+| `pnpm oracle --dry-run`, `pnpm canary --dry-run` | 12 | 12 | 12 | see (d) |
 
-What it does not exercise: the `mcp` and `cli` environments, Docker, the egress gateway, key brokering, the `genkit` CLI warm-up steps (skipped in oracle mode), a real harness, the MCP server, the skill placement.
+reeval's estimate is about 3 minutes per attempt. It is not a measurement.
 
-The oracle config's `sandbox: fakeSandbox()` replaces the Docker sandbox from `reeval.config.ts`. It also sets `GENKIT_EVAL_ORACLE=1`, which makes `environments.ts` skip the `genkit` warm-up steps (the fake sandbox is the host, so they would write to the host's genkit config) and pass `GOOGLE_GENERATIVE_AI_API_KEY` to the app as `GEMINI_API_KEY` unbrokered (a fake sandbox has no gateway to swap a placeholder). So the oracle and canary runs need a real key and make a few Gemini calls.
+`smoke` keeps one harness (`claude-code:claude-sonnet-5`) and one attempt per cell. `full` sets 5 attempts per cell and `record: 'always'`, so a full run is recorded without `--record`.
 
-The study has `gate: 'none'`, but with `GENKIT_EVAL_ORACLE=1` it sets `gate: 'all'`, which gates the control cell. So `pnpm oracle` exits non-zero when any cell fails, and `pnpm canary` exits non-zero when its cells fail, which is the expected result.
-
-The oracle config sits at the repo root, so it shares the project root with `reeval.config.ts`: reeval reads the root `.env.local` and writes the root `.reeval/`.
+Filters: a positional filter is a substring of an eval path, an eval name or a cell key (`<harness>/<arm>/<sandbox>`). Two positional filters combine with OR: `schema-drift codex` plans 60 cells, not 4. `--tag` combines with AND. To pick one harness and one arm, use one cell-key filter, such as `codex:gpt-5.6-luna/mcp`.
 
 ## (a) Keys and doctor
 
@@ -22,23 +29,23 @@ The oracle config sits at the repo root, so it shares the project root with `ree
 cp env.example .env.local
 ```
 
-Fill `ANTHROPIC_API_KEY`, `CURSOR_API_KEY`, `OPENAI_API_KEY` and `GOOGLE_GENERATIVE_AI_API_KEY`. `GEMINI_API_KEY` is for Antigravity; set it to the same Gemini key. `.env.local` is gitignored.
+Fill `ANTHROPIC_API_KEY`, `CURSOR_API_KEY`, `OPENAI_API_KEY` and `GOOGLE_GENERATIVE_AI_API_KEY`. Set `GEMINI_API_KEY` to the same Gemini key, for Antigravity. `.env.local` is gitignored.
+
+`GOOGLE_GENERATIVE_AI_API_KEY` has three users: the app in the sandbox (brokered as `GEMINI_API_KEY`), the judge (`google/gemini-3.8-flash`, threshold 0.7) and `reeval analyze`. The judge and `analyze` run on the host.
 
 ```bash
 pnpm reeval doctor
 ```
 
-Expect every line `✓` except `- judge` (no judge model: the eval does not use `c.judge`). Doctor lists images and keys per harness. A `✗ key` line names the variable to set.
+Expect every line `✓`. Doctor checks Docker, the images and each harness's and the judge's key. A `✗ key` line names the variable to set.
 
 ## (b) Images
-
-The four images may already exist. Check without building:
 
 ```bash
 pnpm reeval image build --dry-run
 ```
 
-Build them, one harness at a time (a filter is a substring of the cell key, so a harness id picks its images):
+Build any image that is not `ready`, one harness at a time:
 
 ```bash
 pnpm reeval image build claude-code
@@ -47,85 +54,125 @@ pnpm reeval image build cursor
 pnpm reeval image build codex
 ```
 
-Expect `✓ docker: reeval-sandbox:<harness>-<version>` then the install layer (`npm i -g genkit-cli@1.44.1`). The install command list is part of the image key: do not edit it in `evals/environments.ts` without rebuilding.
+Every harness image gets one install layer, `npm i -g genkit-cli@1.44.1`. The install command list is part of the image key. If you change `sandbox` in `reeval.config.ts`, rebuild: the oracle config imports the same `sandbox`.
 
-## (c) Oracle and canary
+## (c) Live checks on the host
+
+These run the healthy app against real Gemini on the host, with the key from `.env.local`. They need no Docker and no agent.
+
+```bash
+pnpm try-flows
+npx tsx evals/scripts/try-agents.ts
+```
+
+- `pnpm try-flows` runs the 6 healthy flows, including `orderStatus` with the lowercase id `a-1001`. Expect `6/6 flows passed` and exit code 0.
+- `try-agents.ts` runs 6 agent scenarios: delegation, the refund interrupt, approve and decline, a two-turn session, and a refund through `triage`. Expect `all scenarios passed` and exit code 0.
+
+A failure here is a problem with the app, the key or Gemini, not with the eval. Fix it before (d).
+
+## (d) Oracle and canary
 
 ```bash
 pnpm oracle --ui plain
 pnpm canary --ui plain
 ```
 
-Each plans 12 evals, 12 cells (the control arm per bug, flows and agents studies) and runs in about a minute plus the host `npm install`.
+`reeval.oracle.config.ts` runs the real Docker sandbox from `reeval.config.ts` with a fake agent (`fakeHarness`). Each command plans 12 evals and 12 cells: the `control` arm for each bug, flows and agents. The fake agent uses the cursor image. Its one turn writes `evals/oracle.ts` and `evals/bugs.ts` to `~/.oracle/` in the container and runs the oracle with the app's `tsx`.
 
-- Oracle: every cell passes all three checks. In the summary, every cell shows `1/1`, `flow works 1/1`. Expect 12/12 and exit code 0.
-- Canary: the cheat leaves the bug in place and writes another bug's `file` and `snippet`. `names the cause` and `flow works` fail on every cell, `keeps the flow` passes. Expect 0/12, failure lines for `names the cause` (`file ... is not ...` or `snippet ... does not quote the broken ...`) and `flow works` (`expected command to succeed`), and a non-zero exit code. For the canary, a non-zero exit code is the correct result.
+The oracle config also sets:
 
-Stop and fix the eval if the oracle fails anywhere (non-zero exit), or the canary passes anywhere (exit code 0, or any cell above 0/1). A `flow works` failure in the oracle usually means a bad key, a Gemini rate limit or a non-deterministic verify script. Re-run that bug: `pnpm oracle <bug>`.
+- `GENKIT_EVAL_GATE=all` before the evals load. `evals/study.ts` then sets `gate: 'all'` on the control cell, so the exit code reports the result. The study itself has `gate: 'none'`.
+- `judge: { model: fakeJudge() }`. Both `c.judge` calls run, score 1 and are recorded, with no key and no model call.
 
-## (d) Dry run
+What the oracle exercises: the image and its `genkit` CLI, `npm install` and the two `genkit` warm-up steps in the container, the seed, the oracle's fix, `answer.json` (the bug's `file` and its broken `snippet`), the verify script against real Gemini through the egress gateway with a brokered key, the `keeps` regexes, and the judge plumbing.
 
-```bash
-pnpm reeval run --dry-run
-pnpm reeval run --dry-run --json | head
-```
+What it does not exercise: the `rules`, `mcp` and `cli` environments, a real agent, the MCP server, the skill placement and the real judge model.
 
-Expect `12 evals · 144 cells · 144 attempts` (12 bugs x 3 arms x 4 harnesses), four images `ready`, and `brokered: GEMINI_API_KEY → generativelanguage.googleapis.com; mcp.genkit.env.GEMINI_API_KEY → ...`. With `--profile smoke`: 36 cells. With `--profile full`: 720 attempts. Each study plans as one row, `6 cases · paired lift`.
+Time: reeval estimates 2 seconds. That is wrong. Each cell is a container that runs `npm install`, the warm-up steps and the verify script's Gemini calls. Expect several minutes per command. Docker must run, and the cursor image from (b) must exist.
 
-Filter by study with a tag: `--tag flows` plans 6 evals, 72 cells; `--tag agents` plans 6 evals, 72 cells. Both studies share `evals/study.ts`.
+Expected results (not yet confirmed on this tree):
+
+- Oracle: every cell passes all three checks. The summary shows `1/1` and `flow works 1/1` on every cell, 12/12, and exit code 0.
+- Canary: the cheat leaves the bug in place and names another bug's `file` and `snippet`. `names the cause` and `flow works` fail on every cell, and `keeps the flow` passes. The summary shows 0/12, failure lines for `names the cause` (`file ... is not ...` or `snippet ... does not quote the broken ...`) and `flow works` (`expected command to succeed`), and a non-zero exit code. For the canary, a non-zero exit code is the correct result.
+
+Stop if the oracle fails anywhere or the canary passes anywhere. A `flow works` failure in the oracle usually means a bad key, a Gemini rate limit or a verify script that is not deterministic. Re-run one bug with `pnpm oracle <bug>`.
+
+The canary also shows that each bug reproduces with real Gemini: the bug stays in place, so `flow works` must fail. Two bugs are most at risk:
+
+- `order-id-case`: Gemini can upper-case `a-1001` itself before it calls `getOrderStatus`. The broken tool then finds the order, and `flow works` passes.
+- `schema-drift`: the bug relies on `output: { constrained: false }`, which sends the model the `instructions` text but no schema. If Gemini answers `low/medium/high` anyway, `flow works` passes.
+
+If the canary's `flow works` passes for one of these, run `pnpm canary <bug>` three more times. One pass in four is noise. A stable pass means the bug does not reproduce, and the cell measures nothing. Redesign the bug in `evals/bugs.ts` and `evals/verify.ts` before the smoke run (ask first: that changes the study), or drop it. A family with 5 cases gets an `insufficient` pooled lift, because reeval needs 6.
 
 ## (e) Smoke run
 
 ```bash
 pnpm reeval run --profile smoke schema-drift -v
-```
-
-One bug, three arms, Claude Code only, one attempt each (3 attempts). Confirm in the `-v` output and in `.reeval/debug/<run>/` (`debug.log` per attempt, plus `trace.ndjson` for failing attempts, or all with `-vv`):
-
-1. `control`: setup ran `npm install` and the two `genkit` warm-up commands. The body seeded the bug with `c.writeFile` before the turn. The agent's diff does not show the seed, only the agent's fix.
-2. `mcp` arm: the MCP server `genkit` starts; the transcript has `mcp__genkit__...` tool calls (for example `mcp__genkit__run_flow`, `mcp__genkit__start_runtime`); `CLAUDE.md` holds the `GENKIT.md` text.
-3. `cli` arm: the skill is placed and loaded. Look for a `Skill` call or a read of `skills/developing-genkit-js/SKILL.md`. Query it: `pnpm reeval query skill_reads`.
-4. In every arm: `GEMINI_API_KEY` in the container is a `reeval_secret_...` placeholder, not the key. Check with `grep -r reeval_secret .reeval/debug/<run>` and make sure the real key appears nowhere.
-5. `pnpm reeval query check_discrimination` lists exactly three labels: `names the cause`, `flow works`, `keeps the flow`.
-
-Then smoke one agent bug, with the agents-specific checks:
-
-```bash
 pnpm reeval run --profile smoke --tag agents approval-ignored -v
 ```
 
-- `mcp` arm: does the agent try `mcp__genkit__run_flow` on `supportTurn` or `refundTurn`? Those work (they are flows). Does it try to reach an `/agent/` action, and what error comes back? Query: `SELECT tool, target FROM tool_calls WHERE tool LIKE '%run_flow%'`.
-- `get_trace` on an agent turn: does the tool result fit, or is it truncated? Compare the size of the `mcp__genkit__get_trace` result in the transcript with the trace on disk under `evals/app/.genkit/`. Do the same for `genkit trace:get --format json` piped in the `cli` arm (it truncates at 64 KB).
-- The interrupt span looks like an error (`status.code: 2`). Check whether an agent reads it as the bug.
+Each is one bug, four arms, Claude Code only, one attempt per arm. Read the `-v` output and `.reeval/debug/<run>/` (`debug.log` per attempt, `trace.ndjson` for failing attempts, or for all attempts with `-vv`). Check each arm:
 
-Open questions to settle here:
+1. `control`: setup ran `npm install` and the two `genkit` warm-up commands. The seed was written before the turn, so the agent's diff shows only the fix.
+2. `rules`: `CLAUDE.md` holds the `GENKIT.md` text. There is no MCP server and no skill.
+3. `mcp`: the `genkit` MCP server starts, and `CLAUDE.md` holds the `GENKIT.md` text. Claude Code can defer MCP tools behind `ToolSearch`. Check that the `mcp__genkit__*` tools reach the agent, directly or after a `ToolSearch` call:
 
-- **MCP env.** Does the stdio `genkit mcp` server inherit the sandbox's environment and proxy, so the app it spawns (`start_runtime`) reaches Gemini? The server gets an explicit `GEMINI_API_KEY` placeholder in `env`. If a flow run through MCP fails with a 401 or a network error, this is the cause. Compare an `mcp` attempt's flow output with the same flow run by `c.exec`.
-- **Antigravity key.** The Antigravity harness uses `GEMINI_API_KEY` for itself and brokers it to the adapter. The environment also sets `GEMINI_API_KEY` for the app. Check that an Antigravity attempt starts and that the app inside still gets its own placeholder. If they collide, set the app's variable under another name and change the app to read it (a contract change: ask first).
+   ```bash
+   pnpm reeval query "SELECT tool, COUNT(*) AS calls FROM tool_calls WHERE run_id = '<run id>' AND (tool LIKE 'mcp__genkit__%' OR tool = 'ToolSearch') GROUP BY tool"
+   ```
+
+   If the agent never sees a `genkit` tool, the `mcp` arm measures `rules`. Stop and find out why.
+4. `cli`: the skill is placed and read. Look for a `Skill` call or a read of `skills/developing-genkit-js/SKILL.md`, or run `pnpm reeval query skill_reads`.
+5. Every arm: `GEMINI_API_KEY` in the container is a `reeval_secret_...` placeholder. Run `grep -r reeval_secret .reeval/debug/<run>` and make sure the real key appears nowhere.
+6. `pnpm reeval query check_discrimination` lists three labels: `names the cause`, `flow works`, `keeps the flow`.
+7. `pnpm reeval query judgements` has two rows per attempt, one per question. Each row has a `score`.
+
+For the agents bug, also check:
+
+- `mcp`: does the agent call `mcp__genkit__run_flow` on `supportTurn` or `refundTurn`? Those work, because they are flows. Does it try an `/agent/` action, and what error comes back? Query `SELECT tool, target FROM tool_calls WHERE run_id = '<run id>' AND tool LIKE '%run_flow%'`.
+- Trace size: compare the `mcp__genkit__get_trace` result in the transcript with the trace on disk under `.genkit/` in the workspace. In the `cli` arm, a piped `genkit trace:get --format json` truncates at 64 KB.
+- The interrupt span looks like an error (`status.code: 2`). Check whether the agent takes it for the bug.
+
+Then smoke the `mcp` arm on Codex:
+
+```bash
+pnpm reeval run --tag flows codex:gpt-5.6-luna/mcp -v
+```
+
+That is 6 cells, 6 attempts. Codex may not pass the sandbox's proxy environment to stdio MCP servers. If it does not, the `genkit mcp` server starts the app (`start_runtime`) with no route to Gemini, and `run_flow` results show a 401, `fetch failed` or a connection error. Compare with the same flow run by the verify script. If the server cannot reach Gemini, the Codex `mcp` row measures a broken server: record that as a harness limitation in `FINDINGS.md` and in the results.
+
+Two more questions for the smoke:
+
+- MCP environment on other harnesses: the server gets an explicit `GEMINI_API_KEY` placeholder in `env`. Do the same comparison for an `mcp` attempt on each harness.
+- Antigravity key: the Antigravity harness uses `GEMINI_API_KEY` for itself, and the environment also sets `GEMINI_API_KEY` for the app. Check that an Antigravity attempt starts and that the app still gets its own placeholder. If they collide, give the app's variable another name (a change to the app: ask first).
+
+When both bugs look right, run the whole smoke profile (48 attempts):
+
+```bash
+pnpm reeval run --profile smoke
+```
 
 ## (f) Full runs
 
-One harness at a time, so a rate limit or a crash costs one harness:
+Run one harness at a time, so a rate limit or a crash costs one harness:
 
 ```bash
-pnpm reeval run --profile full claude-code --record
-pnpm reeval run --profile full antigravity --record
-pnpm reeval run --profile full cursor --record
-pnpm reeval run --profile full codex --record
+pnpm reeval run --profile full claude-code
+pnpm reeval run --profile full antigravity
+pnpm reeval run --profile full cursor
+pnpm reeval run --profile full codex
 ```
 
-Each is 12 bugs x 3 arms x 5 attempts = 180 attempts, 15 minutes at most each. To split further, run one study per harness:
+Each is 12 bugs x 4 arms x 5 attempts = 240 attempts, about 90 minutes by reeval's estimate. `full` records every run (`record: 'always'`), so no `--record` flag is needed. To split further, run one study per harness (120 attempts each):
 
 ```bash
-pnpm reeval run --profile full --tag flows claude-code --record
-pnpm reeval run --profile full --tag agents claude-code --record
+pnpm reeval run --profile full --tag flows claude-code
+pnpm reeval run --profile full --tag agents claude-code
 ```
 
-Each study is 90 attempts per harness. Memory: default concurrency is 8 and reeval caps it by Docker memory (doctor shows 7.7 GB). Every attempt runs `npm install` for the app and a Genkit process, so lower it if you see `oom_kills` or killed processes: add `--concurrency 4`. Check `pnpm reeval query "SELECT harness, SUM(oom_kills) FROM failing_attempts GROUP BY harness"`.
+Memory: concurrency is 8 by default, and reeval caps it by Docker memory. Every attempt runs `npm install` and a Genkit process. If you see OOM kills, add `--concurrency 4`. Check with `pnpm reeval query "SELECT harness, SUM(oom_kills) FROM failing_attempts GROUP BY harness"`.
 
-Interrupted run: `pnpm reeval run --resume`. Five attempts per side is the minimum for effort verdicts (they need 4).
-
-Optional: add `questions: ['Which arm found the cause from the trace?']` to the `compare` in `evals/study.ts`. It asks a language model about pairs of attempts after the run (uses `analysis.model`). It never changes pass or fail.
+An interrupted run continues with `pnpm reeval run --resume`. Five attempts per side is enough for effort verdicts, which need at least 4.
 
 ## (g) Results
 
@@ -135,80 +182,144 @@ pnpm reeval query lift
 pnpm reeval query effort
 pnpm reeval query check_discrimination
 pnpm reeval query skill_reads
-pnpm reeval query contrasts
-pnpm reeval query context_use
+pnpm reeval query judgements
 ```
 
-`family_lift`: one lift per study and arm, paired by bug. `lift`: per-bug points with `lo` and `hi` (a 95% interval; `within_noise = 1` when it spans 0). `effort`: `tokens_ratio`, `agent_s_ratio`, `tools_ratio` and their verdicts. `check_discrimination`: which of the three checks tell the arms apart. `contrasts` (mcp against cli) and `context_use` (calls by class) are in the reeval docs but not in 0.9.0: the query then lists the views that exist. Skip them in that case.
+- `family_lift`: one pooled lift per study and arm against `control`, paired by bug. To compare `mcp` with `rules`, read the difference of their two rows. That difference has no interval of its own.
+- `lift`: per-bug points with `lo` and `hi` (a 95% interval; `within_noise = 1` when it spans 0).
+- `effort`: `tokens_ratio`, `agent_s_ratio`, `tools_ratio` and the verdicts `tokens_verdict`, `time_verdict` and `verdict`.
+- `check_discrimination`: which of the three checks tell the arms apart.
+- `judgements`: one row per judge call, with `question`, `score` (the judge's P(yes)), `verdict` against `threshold` 0.7, and `input_path` (the attempt's `judge-input.json`).
 
-Every query below reads one run. Find its id, then paste it in place of `<run id>`:
+The two judge questions are recorded, not gated. The study never asserts a verdict, so pass, lift and fix rate stay on the three checks:
+
+- `evidence-based diagnosis`: did the agent find the cause from evidence of running the app (flow output, a trace, an observed error), and cite it in the `evidence` field of `answer.json`? The judge gets the seeded bug as ground truth and the agent's tool calls. The question starts `Did the agent establish the root cause`.
+- `honest summary`: does the final message describe the change accurately? The question starts `Does the agent's final message`.
+
+Two side effects of a recorded judge in reeval 0.9.0: an attempt that fails a check and has a judge score below 0.7 shows `error_kind = 'judge'` in `failing_attempts` (read `first_failed_check` for the real cause), and a judge call that still fails after its retries fails the attempt as a `judge` error.
+
+Each query below reads one run. Find the run id and paste it in place of `'<run id>'`. A query without the `run_id` filter adds every run in `.reeval/history.db` together.
 
 ```bash
 pnpm reeval query "SELECT run_id, profile, started_at, attempts FROM runs ORDER BY started_at DESC LIMIT 5"
 ```
 
-A query without the `run_id` filter adds every run in `.reeval/history.db` together.
+Run each block with `pnpm reeval query "<sql>"` (add `--json` for JSON). `cells.environment` holds the bare arm name: `control`, `rules`, `mcp` or `cli`. The `study` column comes from the eval file.
 
-Adoption, per harness and arm (attempts that made at least one call of the kind). Tool names differ by harness: first run `SELECT DISTINCT tool FROM tool_calls WHERE tool LIKE '%genkit%'` and widen the patterns if a harness names MCP tools another way.
+Fix rate: the pass rate of the `flow works` check alone, from `cell_checks`. It is not the attempt pass rate, which needs all three checks and which `lift` and `family_lift` pool.
 
 ```sql
-SELECT c.harness,
-       CASE WHEN c.environment LIKE '%-mcp' THEN 'mcp'
-            WHEN c.environment LIKE '%-cli' THEN 'cli' ELSE 'control' END AS arm,
+SELECT CASE e.file WHEN 'evals/agents.eval.ts' THEN 'agents' ELSE 'flows' END AS study,
+       c.harness, c.environment AS arm,
+       SUM(k.pass) AS fixed, SUM(k.pass + k.fail) AS counted,
+       SUM(k.error) AS error, SUM(k.not_run) AS not_run
+FROM cell_checks k
+JOIN cells c ON c.run_id = k.run_id AND c.eval_key = k.eval_key AND c.key = k.cell_key
+JOIN evals e ON e.run_id = c.run_id AND e.key = c.eval_key
+WHERE k.run_id = '<run id>' AND k.label = 'flow works'
+GROUP BY study, c.harness, arm
+ORDER BY study, c.harness,
+         CASE c.environment WHEN 'control' THEN 0 WHEN 'rules' THEN 1 WHEN 'mcp' THEN 2 WHEN 'cli' THEN 3 END
+```
+
+A non-zero `error` or `not_run` means the check gave no result. Investigate those attempts in `failing_attempts` before you report the rate.
+
+Adoption: the share of attempts with at least one call of each kind. It starts from `attempts` with a `LEFT JOIN`, so attempts with no tool calls count in the denominator. A CLI call is a shell command that contains a `genkit` subcommand, not the bare word `genkit`.
+
+```sql
+SELECT CASE e.file WHEN 'evals/agents.eval.ts' THEN 'agents' ELSE 'flows' END AS study,
+       c.harness, c.environment AS arm,
        COUNT(*) AS attempts,
-       SUM(a.mcp_calls > 0) AS used_mcp,
-       SUM(a.cli_calls > 0) AS used_cli
-FROM (
+       SUM(COALESCE(a.mcp_calls, 0) > 0) AS used_mcp,
+       SUM(COALESCE(a.cli_calls, 0) > 0) AS used_cli
+FROM attempts t
+JOIN cells c ON c.run_id = t.run_id AND c.eval_key = t.eval_key AND c.key = t.cell_key
+JOIN evals e ON e.run_id = c.run_id AND e.key = c.eval_key
+LEFT JOIN (
   SELECT run_id, attempt_key,
          SUM(tool LIKE 'mcp__genkit__%') AS mcp_calls,
-         SUM(tool NOT LIKE 'mcp__%' AND target LIKE '%genkit %') AS cli_calls
+         SUM(tool NOT LIKE 'mcp__%' AND (target LIKE '%genkit flow:%' OR target LIKE '%genkit trace:%'
+             OR target LIKE '%genkit start%' OR target LIKE '%genkit docs:%' OR target LIKE '%genkit mcp%')) AS cli_calls
   FROM tool_calls
   WHERE run_id = '<run id>'
   GROUP BY run_id, attempt_key
-) a
-JOIN attempts t ON t.run_id = a.run_id AND t.key = a.attempt_key
+) a ON a.run_id = t.run_id AND a.attempt_key = t.key
+WHERE t.run_id = '<run id>'
+GROUP BY study, c.harness, arm
+ORDER BY study, c.harness,
+         CASE c.environment WHEN 'control' THEN 0 WHEN 'rules' THEN 1 WHEN 'mcp' THEN 2 WHEN 'cli' THEN 3 END
+```
+
+Tool and command names differ by harness. Before you trust the counts, run `SELECT DISTINCT tool FROM tool_calls WHERE tool LIKE '%genkit%'` and `SELECT DISTINCT target FROM tool_calls WHERE target LIKE '%genkit%'`. A global flag before the subcommand (`genkit --non-interactive flow:run`) does not match the patterns: widen them if the agents use that form.
+
+Effort, per study, harness and arm (the mean of per-bug ratios, so a rough summary; per-bug verdicts are in `effort`):
+
+```sql
+SELECT CASE e.file WHEN 'evals/agents.eval.ts' THEN 'agents' ELSE 'flows' END AS study,
+       f.harness, f.environment AS arm,
+       ROUND(AVG(f.tokens_ratio), 2) AS tokens_x, ROUND(AVG(f.agent_s_ratio), 2) AS time_x,
+       ROUND(AVG(f.tools_ratio), 2) AS tools_x
+FROM effort f
+JOIN evals e ON e.run_id = f.run_id AND e.key = f.eval_key
+WHERE f.run_id = '<run id>' AND f.role = 'variant'
+GROUP BY study, f.harness, arm
+ORDER BY study, f.harness,
+         CASE f.environment WHEN 'rules' THEN 1 WHEN 'mcp' THEN 2 WHEN 'cli' THEN 3 END
+```
+
+Mean `evidence-based diagnosis` score per study, harness and arm:
+
+```sql
+SELECT CASE e.file WHEN 'evals/agents.eval.ts' THEN 'agents' ELSE 'flows' END AS study,
+       c.harness, c.environment AS arm,
+       COUNT(*) AS judged, ROUND(AVG(j.score), 2) AS evidence_score,
+       SUM(j.verdict = 'pass') AS at_or_above_0_7
+FROM judgements j
+JOIN attempts t ON t.run_id = j.run_id AND t.key = j.attempt_key
 JOIN cells c ON c.run_id = t.run_id AND c.eval_key = t.eval_key AND c.key = t.cell_key
-GROUP BY c.harness, arm
-ORDER BY c.harness, arm
+JOIN evals e ON e.run_id = c.run_id AND e.key = c.eval_key
+WHERE j.run_id = '<run id>' AND j.question LIKE 'Did the agent establish the root cause%'
+GROUP BY study, c.harness, arm
+ORDER BY study, c.harness,
+         CASE c.environment WHEN 'control' THEN 0 WHEN 'rules' THEN 1 WHEN 'mcp' THEN 2 WHEN 'cli' THEN 3 END
 ```
 
-Run it with `pnpm reeval query "<sql>"` (or `--json`).
-
-Pass and fix rate are different numbers. An attempt passes only when all three checks pass, and `lift` and `family_lift` pool that pass. The fix rate is the pass rate of the `flow works` check alone. It comes from the `cell_checks` table (one row per run, eval, cell and check label, with `pass`, `fail`, `error` and `not_run` counts). Fix rate per harness and arm:
-
-```sql
-SELECT c.harness,
-       CASE WHEN c.environment LIKE '%-mcp' THEN 'mcp'
-            WHEN c.environment LIKE '%-cli' THEN 'cli' ELSE 'control' END AS arm,
-       SUM(k.pass) AS fixed, SUM(k.pass + k.fail) AS counted, SUM(k.error) AS error, SUM(k.not_run) AS not_run
-FROM cell_checks k
-JOIN cells c ON c.run_id = k.run_id AND c.eval_key = k.eval_key AND c.key = k.cell_key
-WHERE k.run_id = '<run id>' AND k.label = 'flow works'
-GROUP BY c.harness, arm ORDER BY c.harness, arm
-```
-
-A non-zero `error` or `not_run` means the check did not give a result (an infrastructure error or an earlier hard failure). Investigate those attempts in `failing_attempts` before you report the rate.
-
-Effort per harness and arm:
-
-```sql
-SELECT harness, CASE WHEN environment LIKE '%-mcp' THEN 'mcp' ELSE 'cli' END AS arm,
-       ROUND(AVG(tokens_ratio), 2) AS tokens_x, ROUND(AVG(agent_s_ratio), 2) AS time_x,
-       ROUND(AVG(tools_ratio), 2) AS tools_x
-FROM effort WHERE run_id = '<run id>' AND role = 'variant' GROUP BY harness, arm
-```
-
-The effort query averages per-bug ratios: a rough summary. Per-bug verdicts are in `effort`.
+For the `honest summary` judge, change the filter to `j.question LIKE 'Does the agent''s final message%'`.
 
 Explain and publish:
 
 ```bash
-pnpm reeval analyze --save          # one LLM call (analysis.model google/gemini-3.8-flash), citations checked
+pnpm reeval analyze --save
 pnpm reeval studio build --out site
 ```
 
-`site/` is gitignored and holds every transcript and diff. Keys are masked, but read the transcripts before you publish it.
+`analyze` makes one LLM call (`analysis.model`, `google/gemini-3.8-flash`) and checks its citations. `site/` is gitignored and holds every transcript and diff. Keys are masked, but read the transcripts before you publish the site.
 
-## (h) Fill the README table
+## (h) Fill the README tables
 
-Fill the flows and agents tables separately: add `AND k.eval_key LIKE '%agents.eval%'` (or `NOT LIKE`) to the fix-rate query, and `AND eval_key LIKE ...` to the effort query. For each harness: `fix rate` is `fixed / counted` for `control` and the arm from the fix-rate query. `Tokens x`, `Agent time x` and `Tool calls x` come from the effort query (a `·` tokens ratio means that harness reports no usage). Mark a ratio with a verdict other than `effect` as within noise: check `tokens_verdict`, `time_verdict` and `verdict` in `effort`. `MCP adoption` and `CLI adoption` are `used_mcp / attempts` and `used_cli / attempts` from the adoption query. `Skill read` is the number of `cli` attempts in `skill_reads` over attempts. Commit the filled table with the recorded runs' run id in the commit message.
+There is one table per study (flows, agents) and one row per harness. Each cell holds the values for `rules / mcp / cli`.
+
+- Fix rate: `fixed / counted` from the fix-rate query, for `control`, `rules`, `mcp` and `cli`.
+- Tokens x, Time x, Tools x: `tokens_x`, `time_x` and `tools_x` from the effort query. A `·` tokens ratio means that the harness reports no usage. Mark a ratio as within noise when its verdict in `effort` is not `effect`.
+- Adoption: from the adoption query, `used_cli / attempts` for `rules` and `cli`, and `used_mcp / attempts` for `mcp`. Note the `cli` arm's skill reads from `skill_reads`.
+
+Copy the evidence scores and the items that the runs confirm into the Results section of `FINDINGS.md`. Commit the filled tables with the run ids in the commit message.
+
+## Appendix: the 12 bugs
+
+The source of truth is `evals/bugs.ts`: the exact broken text, the bug report the agent gets, and the `keeps` regexes. The bug report never names the tooling.
+
+| Bug | Kind | File | The bug | The trace or run output shows |
+|---|---|---|---|---|
+| `schema-drift` | flow | `src/index.ts` | The prompt asks for `P0/P1/P2` priorities. | The raw model output next to "Schema validation failed": the schema allows `low/medium/high`. |
+| `tool-not-wired` | flow | `src/index.ts` | `getOrderStatus` is not in `generate({ tools })`. | No tool span. |
+| `prompt-var-typo` | flow | `prompts/greet.prompt` | `{{custmerName}}` instead of `{{customerName}}`. | The rendered prompt has an empty name. |
+| `truncated-output` | flow | `src/index.ts` | `maxOutputTokens: 24` on `draftReply`. | `finishReason: 'length'`. |
+| `history-dropped` | flow | `src/index.ts` | `chat` sends `messages: []`. | A one-message model request. |
+| `order-id-case` | flow | `src/index.ts` | `getOrderStatus` no longer upper-cases the id. | The tool span's input is `a-1001` and its output is `null`. |
+| `delegation-dropped` | agent | `src/agents.ts` | `agents()` lists only `orderAgent`. | No `delegate_to_refundAgent` tool, so triage answers a refund request itself. |
+| `approval-ignored` | agent | `src/agents.ts` | The resume sends `{ approved: true }` instead of the human's answer. | The `approveRefund` tool response says `approved: true` while the human sent `approved: false`, and `issueRefund` runs. |
+| `session-not-loaded` | agent | `src/agents.ts` | `supportTurn` never calls `loadChat`. | The second turn gets a new `sessionId`, and its model request has no earlier messages. |
+| `max-turns` | agent | `src/agents.ts` | `maxTurns: 1` on `refundAgent`. | `finishReason: 'failed'` and an `ABORTED` "Exceeded maximum tool call iterations" error before the interrupt. |
+| `tool-choice-none` | agent | `src/agents.ts` | `toolChoice: 'none'` on `triage`. | The model request lists the delegate tools but carries `toolChoice: 'none'`, so `toolCalls` is empty. |
+| `tool-output-drift` | agent | `src/db.ts` | A-1001's `total` is the string `"149.99"`. | The `lookupOrder` span fails "Schema validation failed ... total: must be number", and triage gets "Error calling agent 'orderAgent'". |

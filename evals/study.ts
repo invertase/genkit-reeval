@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import { evaluate, expect, group } from 'reeval'
 import { diagnosisErrors, type Bug } from './bugs.ts'
-import { cli, control, mcp } from './environments.ts'
+import { cli, control, mcp, rules } from './environments.ts'
 
 const prompt = (symptom: string) =>
   `You are on the support-desk Genkit app in this directory. Bug report: ${symptom}
@@ -17,11 +17,11 @@ const parseAnswer = (text: string | null): unknown => {
   }
 }
 
-// The oracle config gates the control cell so a failing oracle or a passing canary sets the exit code.
-const gate = process.env.GENKIT_EVAL_ORACLE === '1' ? 'all' : 'none'
+// Set by reeval.oracle.config.ts: gates the control cell so a failing oracle or a passing canary sets the exit code.
+const gate = process.env.GENKIT_EVAL_GATE === 'all' ? 'all' : 'none'
 
 /**
- * Registers one three-arm `evaluate.each` family over `bugs` under a group, so the arms get one
+ * Registers one four-arm `evaluate.each` family over `bugs` under a group, so the arms get one
  * lift paired by bug. `tag` is added next to `genkit` so `--tag flows` and `--tag agents` select
  * a study. The pooled lift reads `insufficient` below 6 cases (with runs > 1) or 6 discordant
  * cases (at runs 1).
@@ -30,7 +30,7 @@ export const study = (title: string, bugs: Bug[], tag: string) =>
   group(title, () => {
     evaluate.each(bugs)(
       '$name',
-      { tags: ['genkit', tag], compare: { baseline: control, variants: [mcp, cli], gate } },
+      { tags: ['genkit', tag], compare: { baseline: control, variants: [rules, mcp, cli], gate } },
       async (c, bug) => {
         const healthy = (await c.readFile(bug.file)) ?? ''
         const count = healthy.split(bug.from).length - 1

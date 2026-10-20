@@ -6,3 +6,4 @@ site/
 evals/app/node_modules/
 .genkit/
 answer.json
+.claude/worktrees/
