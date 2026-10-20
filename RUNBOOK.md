@@ -43,7 +43,7 @@ pnpm canary     # expect 15 failed, non-zero exit
 
 Each cell is a container that copies the baked `node_modules` in and makes a few Gemini calls, so allow a minute or two each at concurrency 8. The judge runs with `fakeJudge()` here: no key, no model call.
 
-If the oracle fails a bug, the check is wrong, not the fix: read `failing_attempts`. One exception: a Gemini stream error such as `Error aggregating stream chunks` is the model, not the check; the checks retry it once, and if it still shows, rerun that bug alone with `pnpm oracle <bug>`. If the canary passes a bug, the bug does not reproduce with the real model. Two are most at risk: `order-id-case` (Gemini may upper-case `a-1001` before calling the tool) and `stop-sequence` (if the model writes the whole reply on one line). Re-run `pnpm canary <bug>` three times; a stable pass means the cell measures nothing, so redesign the bug in `evals/bugs.ts` and `evals/verify.mts` or drop it (the pooled lift needs at least 6 cases).
+If the oracle fails a bug, the check is wrong, not the fix: read `failing_attempts`. If the canary passes a bug, the bug does not reproduce with the real model. Two are most at risk: `order-id-case` (Gemini may upper-case `a-1001` before calling the tool) and `stop-sequence` (if the model writes the whole reply on one line). Re-run `pnpm canary <bug>` three times; a stable pass means the cell measures nothing, so redesign the bug in `evals/bugs.ts` and `evals/verify.mts` or drop it (the pooled lift needs at least 6 cases).
 
 ## Smoke
 

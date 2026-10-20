@@ -9,20 +9,6 @@ type Db = typeof import('./app/src/db.ts')
 const app: App = await import(path.resolve(process.cwd(), 'src/index.ts'))
 const db: Db = await import(path.resolve(process.cwd(), 'src/db.ts'))
 
-const TRANSIENT = /aggregating stream chunks|\b(429|503)\b|fetch failed|ECONNRESET/
-/** Gemini drops a stream now and then; one retry keeps the check about the fix, not the model's uptime. */
-const retrying = (body: () => Promise<void>) => async () => {
-  try {
-    await body()
-  } catch (error) {
-    if (!(error instanceof Error && TRANSIENT.test(error.message))) throw error
-    await body()
-  }
-}
-const clearRefunds = () => {
-  for (const id of Object.keys(db.REFUNDS)) delete db.REFUNDS[id]
-}
-
 /** Triage paraphrases the order desk, so any one field of the order proves the lookup reached it. */
 const ORDER_FACTS: Record<string, RegExp> = {
   'A-1001': /shipped|2026-10-22|NW-7F3K2Q/i,
@@ -41,13 +27,12 @@ const refundDecided = async (approved: boolean) => {
   return chat.resume({ respond: [interrupt.respond({ approved, note: approved ? 'confirmed damage' : 'duplicate claim' })] })
 }
 
-test('build-order-desk', retrying(async () => {
+test('build-order-desk', async () => {
   const res = await app.orderAgent.chat().send('Where is order A-1001?')
   assertKnowsOrder(res.text, 'A-1001', 'the reply')
-}))
+})
 
-test('build-refund-desk', retrying(async () => {
-  clearRefunds()
+test('build-refund-desk', async () => {
   const declined = await refundDecided(false)
   assert.deepEqual(db.REFUNDS, {}, 'a refund was issued after it was declined')
   assert.equal(declined.finishReason, 'stop', `declined turn ended with ${declined.finishReason}: ${JSON.stringify(declined.text)}`)
@@ -56,9 +41,9 @@ test('build-refund-desk', retrying(async () => {
   const refunds = Object.values(db.REFUNDS)
   assert.equal(refunds.length, 1, `approved refund issued ${refunds.length} refunds: ${JSON.stringify(db.REFUNDS)}`)
   assert.equal(refunds[0]?.orderId, 'A-1001', `refunded the wrong order: ${JSON.stringify(db.REFUNDS)}`)
-}))
+})
 
-test('build-triage', retrying(async () => {
+test('build-triage', async () => {
   const refund = await app.triage.chat().send(REFUND)
   assert.ok(refund.sessionId, 'triage returned no session id')
   const snapshot = await app.triage.getSnapshot({ sessionId: refund.sessionId })
@@ -71,4 +56,4 @@ test('build-triage', retrying(async () => {
   const second = await chat.send('What is its status?')
   assert.equal(second.sessionId, first.sessionId, 'the session changed between turns')
   assertKnowsOrder(second.text, 'A-1001', 'the second turn')
-}))
+})
