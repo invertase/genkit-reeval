@@ -48,6 +48,7 @@ evaluate.each(BUGS)(
   'fixes a broken Genkit app: $name',
   { compare: { baseline: control, variants: [rules, mcp, cli], gate } },
   async (c, bug) => {
+    await c.sandbox() // 0.9.0 does not start it on readFile: invertase/reeval#384
     const healthy = (await c.readFile(bug.file)) ?? ''
     if (healthy.split(bug.from).length !== 2) throw new Error(`${bug.name}: healthy snippet not found once in ${bug.file}`)
     await c.writeFile(bug.file, healthy.replace(bug.from, () => bug.to))
