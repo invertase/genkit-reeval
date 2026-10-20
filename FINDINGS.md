@@ -4,9 +4,9 @@ We wrote this before any real run. Each item says how we established it:
 
 - **from source**: read in the pinned packages (`genkit` 1.42.0, `@genkit-ai/middleware` 0.10.0, `genkit-cli` 1.44.1) or in the docs.
 - **scripted model**: seen when the app ran with a scripted or test model, not with an agent.
-- **live**: seen in a real study run. No item is live yet.
+- **live**: seen in a real agent run in the sandbox.
 
-Section 4 lists everything the study holds fixed and where each pin came from.
+Section 5 lists everything the study holds fixed and where each pin came from.
 
 ## 1. Two channels give conflicting advice
 
@@ -71,7 +71,17 @@ So the `rules` and `mcp` arms are told not to run `genkit flow:run` and to lean 
 - **`gemini-2.5-flash` thinks by default** (from source). Thinking tokens count against `maxOutputTokens`, so a small limit can return empty text instead of a short answer. The app turns thinking off once, in the model reference passed to `genkit()`, so a short reply is text and not empty. We have not yet seen the empty-text case live.
 - **`constrained: false` sends no schema text by default** (from source). With `output: { schema, constrained: false }` the model gets no description of the schema unless `instructions` is set, because the `json` format has `defaultInstructions: false`. The app does not rely on it; an agent that reaches for it to loosen validation will find the model answering blind.
 
-## 4. Pins
+## 4. The MCP server
+
+Seen in the Antigravity smoke of the `mcp` arm (12 bugs, one attempt each, 2026-10-20). The agent reached for the server on one bug, `prompt-model-override`, and ran it into the ground in nine calls.
+
+- **`list_flows` needs a runtime first** (live). The first call answers "No runtimes found. Make sure your app is running using the `start_runtime` MCP tool or the CLI". The agent then called `start_runtime` with `npm run dev` and `list_flows` worked. `genkit flow:run` starts the runtime for you; the MCP tools do not.
+- **`run_flow` wants its input as a JSON string** (live). The agent's first call passed `name` and an object `input` and got `Invalid arguments for tool run_flow: Required at flowName; Expected string, received object at input`. The second call, with `flowName` and `input: "{\"text\": ...}"`, ran the flow and returned the result and a trace id.
+- **`run_flow` reproduces the bug** (live). Running `greet` returned the app's own error, `404 Not Found models/gemini-1.5-flash is not found`, which names the cause.
+- **`restart_runtime` killed the server for the rest of the attempt** (live). After `restart_runtime` answered "Done.", the next `run_flow` failed with `connection closed: calling "tools/call": client is closing: invalid character '>' looking for beginning of value`, and every later call failed with `server name genkit failed to load`. The stray `>` matches the first character of npm's `> support-desk@1.0.0 dev` banner, which suggests the restarted runtime's stdout reached the MCP stdio transport. Not confirmed from source yet.
+- **Antigravity never ran the CLI** (live). Across the 12 bugs, zero `genkit` commands in 309 shell calls, in line with `GENKIT.md`'s instruction not to run them. It read source and wrote repro scripts instead.
+
+## 5. Pins
 
 Everything the study holds fixed, with where it came from. `evals/rules/GENKIT.md` is the one vendored artifact; `evals/environments.ts` carries the two pins the code needs.
 
@@ -96,6 +106,6 @@ What `genkit init:ai-tools --tool claude` installs around `GENKIT.md`, and how t
 
 The skill is fetched with `skill.git('github:genkit-ai/skills', { ref, path: 'skills', only: ['developing-genkit-js'] })`. The `path` is required: reeval 0.9.0 looks for `SKILL.md` in the source directory or one level below it, and this repository keeps its skills under `skills/`. Without it every attempt fails as an infra error ("has no SKILL.md"). reeval's default skill exclude list removes nothing from this skill, so every `references/*.md` reaches the agent.
 
-## 5. Results
+## 6. Results
 
 To fill after the runs: which advice the agents followed, what each channel cost or saved, and which of the items above cost the arms time.
