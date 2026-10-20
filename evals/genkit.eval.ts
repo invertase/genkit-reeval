@@ -1,6 +1,6 @@
 import fs from 'node:fs'
-import { evaluate, expect, group, type Turn } from 'reeval'
-import { BUGS, diagnosisErrors, type Bug } from './bugs.ts'
+import { evaluate, expect, type Turn } from 'reeval'
+import { BUGS, diagnosisErrors } from './bugs.ts'
 import { cli, control, mcp, rules } from './environments.ts'
 
 const prompt = (symptom: string) =>
@@ -43,42 +43,36 @@ const EVIDENCE_QUESTION =
 
 const SUMMARY_QUESTION = "Does the agent's final message accurately describe the change it made?"
 
-/** One four-arm family per study, paired by bug. The pooled lift needs at least 6 cases. */
-const study = (title: string, tag: string, bugs: Bug[]) =>
-  group(title, () => {
-    evaluate.each(bugs)(
-      '$name',
-      { tags: ['genkit', tag], compare: { baseline: control, variants: [rules, mcp, cli], gate } },
-      async (c, bug) => {
-        const healthy = (await c.readFile(bug.file)) ?? ''
-        if (healthy.split(bug.from).length !== 2) throw new Error(`${bug.name}: healthy snippet not found once in ${bug.file}`)
-        await c.writeFile(bug.file, healthy.replace(bug.from, () => bug.to))
+// One family of 12 cases: the arms get one lift, paired by bug.
+evaluate.each(BUGS)(
+  'fixes a broken Genkit app: $name',
+  { compare: { baseline: control, variants: [rules, mcp, cli], gate } },
+  async (c, bug) => {
+    const healthy = (await c.readFile(bug.file)) ?? ''
+    if (healthy.split(bug.from).length !== 2) throw new Error(`${bug.name}: healthy snippet not found once in ${bug.file}`)
+    await c.writeFile(bug.file, healthy.replace(bug.from, () => bug.to))
 
-        const turn = await c.send(prompt(bug.symptom))
+    const turn = await c.send(prompt(bug.symptom))
 
-        const answerText = await c.readFile('answer.json')
-        expect.soft(diagnosisErrors(parseAnswer(answerText), bug), 'names the cause').toEqual([])
+    const answerText = await c.readFile('answer.json')
+    expect.soft(diagnosisErrors(parseAnswer(answerText), bug), 'names the cause').toEqual([])
 
-        await c.writeFile('~/.verify.ts', verify)
-        await expect.soft(c.exec(`node_modules/.bin/tsx ~/.verify.ts ${bug.name}`), 'flow works').toSucceed()
+    await c.writeFile('~/.verify.ts', verify)
+    await expect.soft(c.exec(`node_modules/.bin/tsx ~/.verify.ts ${bug.name}`), 'flow works').toSucceed()
 
-        const fixed = (await c.readFile(bug.file)) ?? ''
-        expect.soft(bug.keeps.filter((keep) => !keep.test(fixed)).map(String), 'keeps the flow').toEqual([])
+    const fixed = (await c.readFile(bug.file)) ?? ''
+    expect.soft(bug.keeps.filter((keep) => !keep.test(fixed)).map(String), 'keeps the flow').toEqual([])
 
-        // Recorded in `judgements`, never asserted: pass and lift stay on the three checks.
-        await c.judge(EVIDENCE_QUESTION, {
-          on: {
-            bug: { name: bug.name, file: bug.file, healthy: bug.from, broken: bug.to },
-            answer: answerText,
-            finalMessage: turn.text,
-            toolCalls: toolLog(turn),
-          },
-          include: [bug.file, 'answer.json'],
-        })
-        await c.judge(SUMMARY_QUESTION)
+    // Recorded in `judgements`, never asserted: pass and lift stay on the three checks.
+    await c.judge(EVIDENCE_QUESTION, {
+      on: {
+        bug: { name: bug.name, file: bug.file, healthy: bug.from, broken: bug.to },
+        answer: answerText,
+        finalMessage: turn.text,
+        toolCalls: toolLog(turn),
       },
-    )
-  })
-
-study('fixes a broken Genkit flow', 'flows', BUGS.filter((b) => b.kind === 'flow'))
-study('fixes a broken Genkit agent', 'agents', BUGS.filter((b) => b.kind === 'agent'))
+      include: [bug.file, 'answer.json'],
+    })
+    await c.judge(SUMMARY_QUESTION)
+  },
+)

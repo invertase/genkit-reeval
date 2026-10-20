@@ -4,7 +4,7 @@ Run everything from the repo root. `pnpm reeval` is the pinned `reeval@0.9.0`. O
 
 ## Sizes
 
-12 bugs x 4 arms (`control`, `rules`, `mcp`, `cli`) x 4 harnesses = 192 cells. `evals/genkit.eval.ts` holds two `evaluate.each` families of 6 bugs, tagged `flows` and `agents`, each with one lift paired by bug.
+12 bugs x 4 arms (`control`, `rules`, `mcp`, `cli`) x 4 harnesses = 192 cells. `evals/genkit.eval.ts` is one `evaluate.each` over the 12 bugs, so the arms get one lift paired by bug.
 
 | Command | Cells | Attempts | reeval's estimate |
 |---|---|---|---|
@@ -13,10 +13,10 @@ Run everything from the repo root. `pnpm reeval` is the pinned `reeval@0.9.0`. O
 | `... --profile smoke schema-drift` | 4 | 4 | 3 min |
 | `... --profile full` | 192 | 960 | 6 h |
 | `... --profile full claude-code` | 48 | 240 | 90 min |
-| `... --tag flows` or `--tag agents` | 96 | 96 | 36 min |
+| `... codex:gpt-5.6-luna/mcp` | 12 | 12 | 36 min |
 | `pnpm oracle`, `pnpm canary` | 12 | 12 | minutes (see below) |
 
-The estimate is a flat 3 minutes per attempt. `smoke` keeps one harness (`claude-code:claude-sonnet-5`) and one attempt per cell; `full` runs 5 attempts per cell and records the run. Positional filters match an eval path, an eval name or a cell key (`<harness>/<arm>/<sandbox>`) and combine with OR; `--tag` combines with AND. To pick one harness and one arm, use a cell key such as `codex:gpt-5.6-luna/mcp`.
+The estimate is a flat 3 minutes per attempt. `smoke` keeps one harness (`claude-code:claude-sonnet-5`) and one attempt per cell; `full` runs 5 attempts per cell and records the run. Positional filters match an eval name (a bug) or a cell key (`<harness>/<arm>/<sandbox>`) and combine with OR, so `schema-drift codex` is wider than either alone.
 
 ## Keys and images
 
@@ -43,17 +43,17 @@ pnpm canary     # expect 12 failed, non-zero exit
 
 Each cell is a container that runs `npm install` and one Gemini call, so allow a few minutes each at concurrency 8. The judge runs with `fakeJudge()` here: no key, no model call.
 
-If the oracle fails a bug, the check is wrong, not the fix: read `failing_attempts`. If the canary passes a bug, the bug does not reproduce with the real model. Two are most at risk: `order-id-case` (Gemini may upper-case `a-1001` before calling the tool) and `truncated-output` (if the model's reply fits in 24 tokens). Re-run `pnpm canary <bug>` three times; a stable pass means the cell measures nothing, so redesign the bug in `evals/bugs.ts` and `evals/verify.ts` or drop it. A family with fewer than 6 cases gets an `insufficient` pooled lift.
+If the oracle fails a bug, the check is wrong, not the fix: read `failing_attempts`. If the canary passes a bug, the bug does not reproduce with the real model. Two are most at risk: `order-id-case` (Gemini may upper-case `a-1001` before calling the tool) and `truncated-output` (if the model's reply fits in 24 tokens). Re-run `pnpm canary <bug>` three times; a stable pass means the cell measures nothing, so redesign the bug in `evals/bugs.ts` and `evals/verify.ts` or drop it (the pooled lift needs at least 6 cases).
 
 ## Smoke
 
 ```bash
 pnpm reeval run --profile smoke schema-drift -v
 pnpm reeval run --profile smoke approval-ignored -v
-pnpm reeval run --tag flows codex:gpt-5.6-luna/mcp -v
+pnpm reeval run codex:gpt-5.6-luna/mcp -v
 ```
 
-One bug, four arms, one attempt each; then the `mcp` arm on Codex. Check in the `-v` output and `.reeval/debug/<run>/`:
+One bug, four arms, one attempt each; then the `mcp` arm on Codex for all 12 bugs. Check in the `-v` output and `.reeval/debug/<run>/`:
 
 - `control`: setup ran `npm install` and the two `genkit` warm-up steps; the agent's diff shows only its fix (the bug is seeded before the first turn).
 - `rules`: `CLAUDE.md` holds `GENKIT.md`; no server, no skill.
@@ -78,12 +78,12 @@ pnpm reeval run --profile full cursor
 pnpm reeval run --profile full codex
 ```
 
-`--tag flows` or `--tag agents` halves each. Default concurrency is 8, capped by Docker memory; every attempt runs `npm install` and a Genkit process, so add `--concurrency 4` on OOM kills (`SELECT harness, SUM(oom_kills) FROM failing_attempts GROUP BY harness`). `pnpm reeval run --resume` continues an interrupted run.
+Default concurrency is 8, capped by Docker memory; every attempt runs `npm install` and a Genkit process, so add `--concurrency 4` on OOM kills (`SELECT harness, SUM(oom_kills) FROM failing_attempts GROUP BY harness`). `pnpm reeval run --resume` continues an interrupted run.
 
 ## Results
 
 ```bash
-pnpm reeval query family_lift          # one pooled lift per study and arm, paired by bug
+pnpm reeval query family_lift          # one pooled lift per arm, paired by bug
 pnpm reeval query lift                 # per bug, with a 95% interval
 pnpm reeval query effort               # tokens, agent time, tool calls as ratios, with verdicts
 pnpm reeval query check_discrimination # which check tells the arms apart
@@ -94,31 +94,27 @@ pnpm reeval studio build --out site    # static site with every transcript and d
 
 Pass is all three checks, which is what `lift` and `family_lift` pool. Fix rate is the `flow works` check alone. The two judges are recorded, never asserted; a failed attempt with a low verdict shows `error_kind = 'judge'` in `failing_attempts`, so read `first_failed_check` for the real cause.
 
-Each query below reads one run: find it with `SELECT run_id, profile, started_at, attempts FROM runs ORDER BY started_at DESC LIMIT 5` and paste it in place of `'<run id>'`. `cells.environment` is the bare arm name. The study comes from the eval's tags.
+Each query below reads one run: find it with `SELECT run_id, profile, started_at, attempts FROM runs ORDER BY started_at DESC LIMIT 5` and paste it in place of `'<run id>'`. `cells.environment` is the bare arm name. For a flows-vs-agents breakdown, add `e.name` (the bug) to a `SELECT` with `JOIN evals e ON e.run_id = c.run_id AND e.key = c.eval_key`, or read `lift` per bug.
 
-Fix rate per study, harness and arm:
+Fix rate per harness and arm:
 
 ```sql
-SELECT CASE WHEN e.tags LIKE '%agents%' THEN 'agents' ELSE 'flows' END AS study,
-       c.harness, c.environment AS arm,
+SELECT c.harness, c.environment AS arm,
        SUM(k.pass) AS fixed, SUM(k.pass + k.fail) AS counted, SUM(k.error) AS error, SUM(k.not_run) AS not_run
 FROM cell_checks k
 JOIN cells c ON c.run_id = k.run_id AND c.eval_key = k.eval_key AND c.key = k.cell_key
-JOIN evals e ON e.run_id = c.run_id AND e.key = c.eval_key
 WHERE k.run_id = '<run id>' AND k.label = 'flow works'
-GROUP BY study, c.harness, arm
-ORDER BY study, c.harness, CASE c.environment WHEN 'control' THEN 0 WHEN 'rules' THEN 1 WHEN 'mcp' THEN 2 ELSE 3 END
+GROUP BY c.harness, arm
+ORDER BY c.harness, CASE c.environment WHEN 'control' THEN 0 WHEN 'rules' THEN 1 WHEN 'mcp' THEN 2 ELSE 3 END
 ```
 
 Adoption, as the share of attempts with at least one MCP call or one `genkit` subcommand (check `SELECT DISTINCT tool, target FROM tool_calls WHERE tool LIKE '%genkit%' OR target LIKE '%genkit%'` first; names differ by harness):
 
 ```sql
-SELECT CASE WHEN e.tags LIKE '%agents%' THEN 'agents' ELSE 'flows' END AS study,
-       c.harness, c.environment AS arm, COUNT(*) AS attempts,
+SELECT c.harness, c.environment AS arm, COUNT(*) AS attempts,
        SUM(COALESCE(a.mcp_calls, 0) > 0) AS used_mcp, SUM(COALESCE(a.cli_calls, 0) > 0) AS used_cli
 FROM attempts t
 JOIN cells c ON c.run_id = t.run_id AND c.eval_key = t.eval_key AND c.key = t.cell_key
-JOIN evals e ON e.run_id = c.run_id AND e.key = c.eval_key
 LEFT JOIN (
   SELECT run_id, attempt_key,
          SUM(tool LIKE 'mcp__genkit__%') AS mcp_calls,
@@ -127,32 +123,29 @@ LEFT JOIN (
   FROM tool_calls WHERE run_id = '<run id>' GROUP BY run_id, attempt_key
 ) a ON a.run_id = t.run_id AND a.attempt_key = t.key
 WHERE t.run_id = '<run id>'
-GROUP BY study, c.harness, arm
-ORDER BY study, c.harness, CASE c.environment WHEN 'control' THEN 0 WHEN 'rules' THEN 1 WHEN 'mcp' THEN 2 ELSE 3 END
+GROUP BY c.harness, arm
+ORDER BY c.harness, CASE c.environment WHEN 'control' THEN 0 WHEN 'rules' THEN 1 WHEN 'mcp' THEN 2 ELSE 3 END
 ```
 
 Effort (mean of per-bug ratios; per-bug verdicts are in `effort`):
 
 ```sql
-SELECT CASE WHEN e.tags LIKE '%agents%' THEN 'agents' ELSE 'flows' END AS study,
-       f.harness, f.environment AS arm,
-       ROUND(AVG(f.tokens_ratio), 2) AS tokens_x, ROUND(AVG(f.agent_s_ratio), 2) AS time_x, ROUND(AVG(f.tools_ratio), 2) AS tools_x
-FROM effort f JOIN evals e ON e.run_id = f.run_id AND e.key = f.eval_key
-WHERE f.run_id = '<run id>' AND f.role = 'variant'
-GROUP BY study, f.harness, arm
+SELECT harness, environment AS arm,
+       ROUND(AVG(tokens_ratio), 2) AS tokens_x, ROUND(AVG(agent_s_ratio), 2) AS time_x, ROUND(AVG(tools_ratio), 2) AS tools_x
+FROM effort
+WHERE run_id = '<run id>' AND role = 'variant'
+GROUP BY harness, arm
 ```
 
 Mean `evidence-based diagnosis` score (for the summary judge, filter on `'Does the agent''s final message%'`):
 
 ```sql
-SELECT CASE WHEN e.tags LIKE '%agents%' THEN 'agents' ELSE 'flows' END AS study,
-       c.harness, c.environment AS arm, COUNT(*) AS judged, ROUND(AVG(j.score), 2) AS evidence_score
+SELECT c.harness, c.environment AS arm, COUNT(*) AS judged, ROUND(AVG(j.score), 2) AS evidence_score
 FROM judgements j
 JOIN attempts t ON t.run_id = j.run_id AND t.key = j.attempt_key
 JOIN cells c ON c.run_id = t.run_id AND c.eval_key = t.eval_key AND c.key = t.cell_key
-JOIN evals e ON e.run_id = c.run_id AND e.key = c.eval_key
 WHERE j.run_id = '<run id>' AND j.question LIKE 'Did the agent establish the root cause%'
-GROUP BY study, c.harness, arm
+GROUP BY c.harness, arm
 ```
 
 Fill the README tables from these: fix rate from the first query, `x` ratios from the third, adoption from the second.

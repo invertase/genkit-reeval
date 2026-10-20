@@ -17,7 +17,7 @@ Does Genkit's agent tooling help a coding agent find and fix a bug in a Genkit a
 
 12 seeded bugs (6 flows API, 6 agents API) x 4 arms x 4 agents x 5 attempts per cell = 960 attempts, about 6 hours at concurrency 8 (reeval's estimate). [reeval](https://github.com/invertase/reeval) reports:
 
-- Pooled lift in pass rate over `control`, paired by bug, with a 95% interval, per family and arm.
+- Lift in pass rate over `control` per arm, pooled across the 12 bugs and paired by bug, with a 95% interval.
 - Tokens, agent time and tool calls as ratios to `control`, with Mann-Whitney verdicts.
 - Tool adoption, read from the transcript.
 - A recorded LLM judge, never gated: did the diagnosis come from running the app?
@@ -25,17 +25,6 @@ Does Genkit's agent tooling help a coding agent find and fix a bug in a Genkit a
 ## Results
 
 Not run yet. Each cell holds `rules / mcp / cli`. `x` is the arm's median over the `control` median.
-
-Flows API:
-
-| Harness | Fix rate (control / rules / mcp / cli) | Tokens x | Time x | Tools x | Adoption |
-|---|---|---|---|---|---|
-| claude-code |  |  |  |  |  |
-| antigravity |  |  |  |  |  |
-| cursor |  |  |  |  |  |
-| codex |  |  |  |  |  |
-
-Agents API:
 
 | Harness | Fix rate (control / rules / mcp / cli) | Tokens x | Time x | Tools x | Adoption |
 |---|---|---|---|---|---|
