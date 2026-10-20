@@ -36,19 +36,19 @@ Each bug swaps one healthy snippet for one broken one in one file: six in the fl
 | Bug | File | What is wrong | What a trace or run shows |
 |---|---|---|---|
 | `schema-drift` | `src/flows.ts` | `tags` schema is a string, not a list | the structured output has `tags: "a, b"` |
-| `tool-not-wired` | `src/flows.ts` | `getOrderStatus` not in `generate({ tools })` | no tool span |
 | `prompt-var-typo` | `prompts/greet.prompt` | `{{custmerName}}` | the rendered prompt has an empty name |
-| `truncated-output` | `src/flows.ts` | `maxOutputTokens: 24` on `draftReply` | `finishReason: 'length'` |
-| `history-dropped` | `src/flows.ts` | `chat` sends `messages: []` | a one-message model request |
-| `order-id-case` | `src/flows.ts` | the tool no longer upper-cases the id | tool input `a-1001`, output `null` |
+| `prompt-model-override` | `prompts/greet.prompt` | front matter pins `googleai/gemini-1.5-flash` | the `greet` generate span fails; its request names a model the app never configured |
+| `order-id-case` | `src/tools.ts` | `lookupOrder` no longer trims and upper-cases the id | tool input `a-1001`, output `null` |
+| `tool-requests-returned` | `src/flows.ts` | `returnToolRequests: true` on `orderStatus` | the generate span ends on a `toolRequest` part; no tool span; empty text |
+| `stop-sequence` | `src/flows.ts` | `stopSequences: ['\n']` on `draftReply` | `finishReason: 'stop'` after one line; the request config carries the stop sequence |
 | `delegation-dropped` | `src/agents.ts` | `agents()` lists only `orderAgent` | no `delegate_to_refundAgent` tool in the request |
-| `approval-ignored` | `src/agents.ts` | the resume hardcodes `approved: true` | the tool response says approved while the human said no; `issueRefund` runs |
-| `session-not-loaded` | `src/agents.ts` | `supportTurn` ignores `sessionId` | the second turn gets a new session and no history |
-| `max-turns` | `src/agents.ts` | `maxTurns: 1` on `refundAgent` | `finishReason: 'failed'`, `ABORTED` before the interrupt |
-| `tool-choice-none` | `src/agents.ts` | `toolChoice: 'none'` on `triage` | the request carries `toolChoice: 'none'`; no delegation |
+| `session-not-loaded` | `src/agents.ts` | `triage` has no `store` | `loadChat` throws: a persistent store is required |
+| `tool-choice-required` | `src/agents.ts` | `toolChoice: 'required'` on `refundAgent` | every request carries `toolChoice: 'required'`; after the decline, tool calls until `maxTurns`, then `AgentError` `ABORTED` |
+| `max-delegations-zero` | `src/agents.ts` | `maxDelegations: 0` on `triage` | the `delegate_to_*` tool answers "Delegation limit reached (0)"; no sub-agent span |
+| `max-turns-zero` | `src/agents.ts` | `maxTurns: 0` on `triage` | `send` throws `AgentError` `ABORTED` on the first delegation |
 | `tool-output-drift` | `src/orders.json` | A-1001 `total` is a string | `lookupOrder` fails schema validation; triage reports an agent error |
 
-The agents are wrapped in flows (`supportTurn`, `refundTurn`) because `run_flow` and `genkit flow:run` cannot reach `/agent/` actions.
+`tryTriage` and `tryRefundDesk` wrap one agent turn in a flow because `run_flow` and `genkit flow:run` cannot reach `/agent/` actions. The checks call the agents in-process.
 
 ## What we already know
 

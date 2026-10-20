@@ -18,7 +18,7 @@ Genkit gives agents guidance through two channels: `GENKIT.md`, which `genkit in
 
 ## 2. Agents API
 
-- **MCP and `flow:run` cannot reach agents** (from source). `run_flow`, `list_flows` and `genkit flow:run` address `/flow/<name>` actions only. An agent is a `/agent/<name>` action, so this study wraps each agent in a flow (`supportTurn`, `refundTurn`).
+- **MCP and `flow:run` cannot reach agents** (from source). `run_flow`, `list_flows` and `genkit flow:run` address `/flow/<name>` actions only. An agent is a `/agent/<name>` action, so this app wraps one agent turn in a flow (`tryTriage`, `tryRefundDesk`), as the skill's own `agents.md` advises.
 - **`agents()` flattens a sub-agent interrupt** (from source). When a delegated sub-agent interrupts, `agents()` returns the text "Sub-agent '...' interrupted for additional input and could not complete the task". The parent cannot resume it, so a refund approval through `triage` is lost.
 - **A healthy interrupt looks like an error in a trace** (scripted model). The interrupt's tool span has `status.code: 2` and `isFailureSource: true` with an empty message, while the agent's `finishReason` is `interrupted`. An agent that reads the trace can take a working approval step for the bug.
 - **`trace:get --format json` truncates when piped** (scripted model). Piped output stops at 64 KB. Agent turns produce large traces, so an agent that pipes the trace into `jq` gets invalid JSON.
@@ -29,7 +29,7 @@ Genkit gives agents guidance through two channels: `GENKIT.md`, which `genkit in
 
 ## 3. Flows API
 
-- **`gemini-2.5-flash` thinks by default** (from source). Thinking tokens count against `maxOutputTokens`, so a small limit can return empty text instead of a short answer. The app turns thinking off once, in the model reference passed to `genkit()`, so that `truncated-output` gives truncated text. We have not yet seen the empty-text case live.
+- **`gemini-2.5-flash` thinks by default** (from source). Thinking tokens count against `maxOutputTokens`, so a small limit can return empty text instead of a short answer. The app turns thinking off once, in the model reference passed to `genkit()`, so a short reply is text and not empty. We have not yet seen the empty-text case live.
 - **`constrained: false` sends no schema text by default** (from source). With `output: { schema, constrained: false }` the model gets no description of the schema unless `instructions` is set, because the `json` format has `defaultInstructions: false`. The app does not rely on it; an agent that reaches for it to loosen validation will find the model answering blind.
 
 ## 4. Results

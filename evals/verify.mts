@@ -1,7 +1,6 @@
 // Placed in the sandbox after the agent's turn and run as
 // `tsx --test --test-name-pattern '^<bug>$' ~/.verify.mts`. Node builtins only: nothing else is copied in.
 import assert from 'node:assert/strict'
-import { readdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { test } from 'node:test'
 
@@ -10,18 +9,11 @@ type Db = typeof import('./app/src/db.ts')
 const app: App = await import(path.resolve(process.cwd(), 'src/index.ts'))
 const db: Db = await import(path.resolve(process.cwd(), 'src/db.ts'))
 
-/** Names of the tools the agent called in `sessionId`, read from the FileSessionStore snapshots under .genkit/sessions. */
-const toolCalls = async (sessionId: string | undefined): Promise<string[]> => {
-  const dir = path.resolve(process.cwd(), '.genkit/sessions/global')
-  const names = new Set<string>()
-  for (const file of (await readdir(dir)).filter((name) => name.endsWith('.json'))) {
-    const snapshot = JSON.parse(await readFile(path.join(dir, file), 'utf8'))
-    if (snapshot.sessionId !== sessionId) continue
-    for (const message of snapshot.state?.messages ?? []) {
-      for (const part of message.content ?? []) if (part.toolRequest) names.add(part.toolRequest.name)
-    }
-  }
-  return [...names]
+/** Names of the tools triage called in `sessionId`, read from the session's latest snapshot. */
+const triageToolCalls = async (sessionId: string | undefined): Promise<string[]> => {
+  assert.ok(sessionId, 'triage returned no session id')
+  const snapshot = await app.triage.getSnapshot({ sessionId })
+  return (snapshot?.state?.messages ?? []).flatMap((m) => m.content.flatMap((p) => (p.toolRequest ? [p.toolRequest.name] : [])))
 }
 
 const TRACKING = 'NW-7F3K2Q' // only the orders database knows A-1001's tracking code
@@ -35,34 +27,14 @@ test('schema-drift', async () => {
   assert.ok(Array.isArray(out.tags) && out.tags.length > 0, `tags is ${JSON.stringify(out.tags)}, not a list`)
 })
 
-test('tool-not-wired', async () => {
-  const out = await app.orderStatus({ question: 'Where is order A-1001?' })
-  assert.ok(out.includes(TRACKING), `reply has no tracking code: ${JSON.stringify(out)}`)
-})
-
 test('prompt-var-typo', async () => {
   const out = await app.greet({ customerName: 'Ada' })
   assert.ok(out.includes('Ada'), `reply does not use the name: ${JSON.stringify(out)}`)
 })
 
-test('truncated-output', async () => {
-  const out = await app.draftReply({
-    ticket:
-      'Hi, I ordered three boxes of A4 paper two weeks ago (order A-1002) and the tracking page still says processing. Can you tell me what is going on and when it will ship?',
-  })
-  assert.notEqual(out.finishReason, 'length', 'the reply was cut off')
-  assert.ok(out.text.length > 200, `reply is ${out.text.length} characters`)
-})
-
-test('history-dropped', async () => {
-  const out = await app.chat({
-    history: [
-      { role: 'user', text: 'My name is Ada.' },
-      { role: 'model', text: 'Nice to meet you, Ada. How can I help?' },
-    ],
-    message: 'What is my name?',
-  })
-  assert.ok(out.includes('Ada'), `reply does not recall the name: ${JSON.stringify(out)}`)
+test('prompt-model-override', async () => {
+  const out = await app.greet({ customerName: 'Grace' })
+  assert.ok(out.includes('Grace'), `reply does not use the name: ${JSON.stringify(out)}`)
 })
 
 test('order-id-case', async () => {
@@ -70,39 +42,57 @@ test('order-id-case', async () => {
   assert.ok(out.includes(TRACKING), `reply has no tracking code: ${JSON.stringify(out)}`)
 })
 
-test('delegation-dropped', async () => {
-  const out = await app.supportTurn({ message: REFUND })
-  const calls = await toolCalls(out.sessionId)
-  assert.ok(calls.includes('delegate_to_refundAgent'), out.error ?? `triage did not delegate: ${JSON.stringify(calls)}`)
+test('tool-requests-returned', async () => {
+  const out = await app.orderStatus({ question: 'Where is order A-1001?' })
+  assert.ok(out.includes(TRACKING), `reply has no tracking code: ${JSON.stringify(out)}`)
 })
 
-test('approval-ignored', async () => {
-  const asked = await app.refundTurn({ message: REFUND })
-  assert.equal(asked.finishReason, 'interrupted', asked.error ?? 'no approval interrupt')
-  const declined = await app.refundTurn({ sessionId: asked.sessionId, respond: { approved: false, note: 'duplicate claim' } })
-  assert.deepEqual(db.REFUNDS, {}, 'a refund was issued after it was declined')
-  assert.equal(declined.finishReason, 'stop', declined.error ?? 'declined turn did not finish')
+test('stop-sequence', async () => {
+  const out = await app.draftReply({
+    ticket:
+      'Hi, I ordered three boxes of A4 paper two weeks ago (order A-1002) and the tracking page still says processing. Can you tell me what is going on and when it will ship?',
+  })
+  assert.ok(out.text.length > 200, `reply is ${out.text.length} characters (${out.finishReason}): ${JSON.stringify(out.text)}`)
+})
+
+test('delegation-dropped', async () => {
+  const res = await app.triage.chat().send(REFUND)
+  const calls = await triageToolCalls(res.sessionId)
+  assert.ok(calls.includes('delegate_to_refundAgent'), `triage did not delegate: ${JSON.stringify(calls)}`)
 })
 
 test('session-not-loaded', async () => {
-  const first = await app.supportTurn({ message: 'My order is A-1001.' })
-  const second = await app.supportTurn({ message: 'What is its status?', sessionId: first.sessionId })
+  const first = await app.triage.chat().send('My order is A-1001.')
+  assert.ok(first.sessionId, 'the first turn returned no session id')
+  const chat = await app.triage.loadChat({ sessionId: first.sessionId })
+  const second = await chat.send('What is its status?')
   assert.equal(second.sessionId, first.sessionId, 'the session changed between turns')
   assert.ok(second.text.includes(TRACKING), `second turn has no tracking code: ${JSON.stringify(second.text)}`)
 })
 
-test('max-turns', async () => {
-  const out = await app.refundTurn({ message: REFUND })
-  assert.equal(out.finishReason, 'interrupted', out.error ?? 'refund did not reach the approval interrupt')
+test('tool-choice-required', async () => {
+  const chat = app.refundAgent.chat()
+  const asked = await chat.send(REFUND)
+  const interrupt = asked.interrupts[0]
+  assert.equal(asked.finishReason, 'interrupted', `no approval interrupt: ${JSON.stringify(asked.text)}`)
+  assert.ok(interrupt?.name === 'approveRefund', `interrupted on ${interrupt?.name}, not approveRefund`)
+  const declined = await chat.resume({ respond: [interrupt.respond({ approved: false, note: 'duplicate claim' })] })
+  assert.deepEqual(db.REFUNDS, {}, 'a refund was issued after it was declined')
+  assert.equal(declined.finishReason, 'stop', `declined turn ended with ${declined.finishReason}: ${JSON.stringify(declined.text)}`)
 })
 
-test('tool-choice-none', async () => {
-  const out = await app.supportTurn({ message: 'Where is order A-1001?' })
-  const calls = await toolCalls(out.sessionId)
-  assert.ok(calls.includes('delegate_to_orderAgent'), out.error ?? `triage did not delegate: ${JSON.stringify(calls)}`)
+test('max-delegations-zero', async () => {
+  const res = await app.triage.chat().send('Where is order A-1003?')
+  assert.ok(res.text.includes('NW-5D1MZT'), `reply has no tracking code: ${JSON.stringify(res.text)}`)
+})
+
+test('max-turns-zero', async () => {
+  const res = await app.triage.chat().send('Where is order A-1001?')
+  assert.equal(res.finishReason, 'stop')
+  assert.ok(res.text.includes(TRACKING), `reply has no tracking code: ${JSON.stringify(res.text)}`)
 })
 
 test('tool-output-drift', async () => {
-  const out = await app.supportTurn({ message: 'Where is order A-1001?' })
-  assert.ok(out.text.includes(TRACKING), out.error ?? `reply has no tracking code: ${JSON.stringify(out.text)}`)
+  const res = await app.triage.chat().send('Where is order A-1001?')
+  assert.ok(res.text.includes(TRACKING), `reply has no tracking code: ${JSON.stringify(res.text)}`)
 })

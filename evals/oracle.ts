@@ -5,26 +5,26 @@ import { BUGS, diagnosisErrors } from './bugs.ts'
 const CAUSES: Record<string, string> = {
   'schema-drift':
     'TicketSummarySchema declares tags as z.string() instead of z.array(z.string()), so summarizeTicket returns one comma-separated string where the dashboard expects a list.',
-  'tool-not-wired':
-    'getOrderStatus is defined but not passed in the tools array of the orderStatus generate call, so the model never calls the tool and cannot read the order status.',
   'prompt-var-typo':
     'prompts/greet.prompt references {{custmerName}} instead of {{customerName}}, a typo, so the input variable never renders and the name is empty.',
-  'truncated-output':
-    "draftReply sets config maxOutputTokens: 24, so the model stops early with finishReason 'length' and the reply is truncated.",
-  'history-dropped':
-    'The chat flow sends only the latest message and drops the history turns, so the model has no prior context and cannot recall earlier facts.',
+  'prompt-model-override':
+    'prompts/greet.prompt pins model: googleai/gemini-1.5-flash in its front matter, a model the app never configured and Google no longer serves, so the greet flow fails instead of using the default gemini-2.5-flash.',
   'order-id-case':
-    'getOrderStatus looks up ORDERS[orderId] without trimming and upper-casing the id, so a lowercase id like a-1001 is not found.',
+    'lookupOrder reads ORDERS[orderId] without trimming and upper-casing the id, so a lowercase id like a-1001 is not found and the tool returns null.',
+  'tool-requests-returned':
+    'orderStatus passes returnToolRequests: true to generate, so the call returns the lookupOrder tool request instead of running it and the flow returns empty text.',
+  'stop-sequence':
+    "draftReply passes config stopSequences: ['\\n'] to generate, so the model stops at the first line break and the reply ends after its greeting line.",
   'delegation-dropped':
-    'The triage agent() delegation list in agents() omits refundAgent, so there is no delegate_to_refundAgent tool and refund requests are never delegated.',
-  'approval-ignored':
-    'runTurn resumes the approveRefund interrupt with a hardcoded { approved: true } instead of the human respond payload, so a declined refund is still issued.',
+    'The agents() middleware on triage lists only orderAgent, so there is no delegate_to_refundAgent tool and refund requests are never delegated.',
   'session-not-loaded':
-    'The supportTurn flow ignores the sessionId and never calls loadChat, so triage.chat() starts a new session every turn and loses the earlier messages.',
-  'max-turns':
-    'refundAgent has maxTurns: 1, so the agent aborts with Exceeded maximum tool call iterations before it can look up the order and reach the approveRefund interrupt.',
-  'tool-choice-none':
-    "triage sets toolChoice: 'none', so the model is not allowed to call tools and never delegates to orderAgent or refundAgent.",
+    'triage no longer passes the FileSessionStore as store, so its sessions are client-managed and loadChat({ sessionId }) throws instead of continuing the conversation.',
+  'tool-choice-required':
+    "refundAgent sets toolChoice: 'required', so after a declined approval the model must call a tool on every turn and can never return a final text reply before maxTurns.",
+  'max-delegations-zero':
+    'The agents() middleware on triage sets maxDelegations: 0, so every delegate_to_* call returns Delegation limit reached and no sub-agent ever looks up the order.',
+  'max-turns-zero':
+    'triage sets maxTurns: 0, so the first delegation tool call exceeds the turn limit and the agent aborts instead of answering.',
   'tool-output-drift':
     'orders.json stores A-1001 total as the string "149.99", which fails lookupOrder outputSchema total: z.number(), so orderAgent fails on that order.',
 }

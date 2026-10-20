@@ -33,17 +33,6 @@ export const BUGS: Bug[] = [
     keeps: [/name: 'summarizeTicket'/, /priority: z\.enum\(\['low', 'medium', 'high'\]\)/],
   },
   {
-    name: 'tool-not-wired',
-    kind: 'flow',
-    file: 'src/flows.ts',
-    from: 'tools: [lookupOrder],',
-    to: 'tools: [],',
-    symptom:
-      'I ask the orderStatus flow "Where is order A-1001?" and it replies that it cannot look up orders, or it makes up a vague answer. ' +
-      'The order is in our system and is marked shipped. I expected the reply to give the real status and delivery date.',
-    keeps: [/name: 'orderStatus'/, /tools:\s*\[[^\]]*lookupOrder/],
-  },
-  {
     name: 'prompt-var-typo',
     kind: 'flow',
     file: 'prompts/greet.prompt',
@@ -55,27 +44,15 @@ export const BUGS: Bug[] = [
     keeps: [/\{\{\s*customerName\s*\}\}/, /customerName: string/],
   },
   {
-    name: 'truncated-output',
+    name: 'prompt-model-override',
     kind: 'flow',
-    file: 'src/flows.ts',
-    from: 'prompt: ticket,\n    });',
-    to: 'prompt: ticket,\n      config: { maxOutputTokens: 24 },\n    });',
+    file: 'prompts/greet.prompt',
+    from: '---\ninput:',
+    to: '---\nmodel: googleai/gemini-1.5-flash\ninput:',
     symptom:
-      'The replies that draftReply writes for customer tickets are far too short and end abruptly, usually right after the greeting. ' +
-      'I expected a complete reply that explains the next steps and signs off from the support team.',
-    keeps: [/name: 'draftReply'/, /finishReason: response\.finishReason/],
-  },
-  {
-    name: 'history-dropped',
-    kind: 'flow',
-    file: 'src/flows.ts',
-    from: 'messages: history.map(({ role, text }) => ({ role, content: [{ text }] })),',
-    to: 'messages: [],',
-    symptom:
-      'In the chat flow the assistant forgets everything from earlier in the conversation. ' +
-      'I tell it my name is Ada, then ask "What is my name?" and it says it does not know. ' +
-      'I expected it to remember what I said earlier.',
-    keeps: [/name: 'chat'/, /history\.map|\.\.\.history|messages:[^\n]*history/],
+      'The greet flow now fails with an error for every customer, for example "Grace", instead of returning a welcome. ' +
+      'The other flows, such as summarizeTicket, still work. I expected a one-sentence welcome that addresses the customer by name.',
+    keeps: [/\{\{\s*customerName\s*\}\}/, /customerName: string/],
   },
   {
     name: 'order-id-case',
@@ -90,6 +67,29 @@ export const BUGS: Bug[] = [
     keeps: [/name: 'lookupOrder'/, /ORDERS/],
   },
   {
+    name: 'tool-requests-returned',
+    kind: 'flow',
+    file: 'src/flows.ts',
+    from: 'tools: [lookupOrder],',
+    to: 'tools: [lookupOrder],\n      returnToolRequests: true,',
+    symptom:
+      'The orderStatus flow returns an empty answer for "Where is order A-1001?". There is no error, just an empty string. ' +
+      'The order is in our system and has shipped. I expected the reply to give the status, delivery date and tracking code.',
+    keeps: [/name: 'orderStatus'/, /tools:\s*\[[^\]]*lookupOrder/],
+  },
+  {
+    name: 'stop-sequence',
+    kind: 'flow',
+    file: 'src/flows.ts',
+    from: 'prompt: ticket,\n    });',
+    to: "prompt: ticket,\n      config: { stopSequences: ['\\n'] },\n    });",
+    symptom:
+      'The replies that draftReply writes for customer tickets stop after the first line, usually just "Dear customer," or "Hi there,". ' +
+      'There is no error, and the reason it reports for stopping looks normal. ' +
+      'I expected a complete reply that explains the next steps and signs off from the support team.',
+    keeps: [/name: 'draftReply'/, /finishReason: response\.finishReason/],
+  },
+  {
     name: 'delegation-dropped',
     kind: 'agent',
     file: 'src/agents.ts',
@@ -99,55 +99,54 @@ export const BUGS: Bug[] = [
       'In the support chat I write "I want a refund for order A-1001, it arrived broken" and the assistant never hands it to the refund desk. ' +
       'It says it cannot process refunds or just asks me for more details, and no refund approval request ever shows up. ' +
       'Questions about where an order is still get answered correctly. Refunds worked through this chat before.',
-    keeps: [/name: 'triage'/, /agents: \[[^\]]*'orderAgent'/, /name: 'refundAgent'/, /name: 'supportTurn'/],
-  },
-  {
-    name: 'approval-ignored',
-    kind: 'agent',
-    file: 'src/agents.ts',
-    from: 'const res = await chat.resume({ respond: [{ toolResponse: { name, ref, output: respond } }] });',
-    to: 'const res = await chat.resume({ respond: [{ toolResponse: { name, ref, output: { approved: true } } }] });',
-    symptom:
-      'On the refund desk a customer wrote "I want a refund for order A-1001, it arrived broken." The desk asked for approval as usual, ' +
-      'and the supervisor declined it as a duplicate claim. The customer still got the refund. ' +
-      'A refund that a supervisor declines must never go out.',
-    keeps: [/name: 'refundAgent'/, /name: 'refundTurn'/, /name: 'approveRefund'/, /tools: \[[^\]]*approveRefund[^\]]*issueRefund[^\]]*\]/, /chat\.resume\(/],
+    keeps: [/name: 'triage'/, /agents: \[[^\]]*'orderAgent'/, /name: 'refundAgent'/],
   },
   {
     name: 'session-not-loaded',
     kind: 'agent',
     file: 'src/agents.ts',
-    from: 'const chat = input.sessionId ? await triage.loadChat({ sessionId: input.sessionId }) : triage.chat();',
-    to: 'const chat = triage.chat();',
+    from: "Do not answer them yourself.',\n  store,\n  maxTurns:",
+    to: "Do not answer them yourself.',\n  maxTurns:",
     symptom:
       'In the support chat a customer says "My order is A-1001." and then, in the same conversation, sends "What is its status?". ' +
-      'The assistant acts as if it never saw the first message and asks which order they mean. ' +
-      'We send the same session id with the follow-up, but every message behaves like a brand new conversation.',
-    keeps: [/name: 'triage'/, /name: 'supportTurn'/, /triage\.loadChat\(|triage\.chat\(\{[^}]*sessionId/],
+      'The follow-up fails: the chat cannot be picked up again by its session id, so the customer has to start over and repeat the order number. ' +
+      'Single questions still get answered.',
+    keeps: [/name: 'triage'/, /use: \[\s*agents\(/],
   },
   {
-    name: 'max-turns',
+    name: 'tool-choice-required',
     kind: 'agent',
     file: 'src/agents.ts',
-    from: 'maxTurns: 6,',
-    to: 'maxTurns: 1,',
+    from: "toolChoice: 'auto',\n  maxTurns: 6,",
+    to: "toolChoice: 'required',\n  maxTurns: 6,",
     symptom:
-      'On the refund desk, refund requests fail before the approval prompt ever appears. ' +
-      'For "I want a refund for order A-1001, it arrived broken" the desk returns an error instead of asking a person to approve. ' +
-      'It used to look up the order and then ask for approval. Now no refund request gets that far.',
-    keeps: [/name: 'refundAgent'/, /name: 'refundTurn'/, /tools: \[[^\]]*approveRefund[^\]]*issueRefund[^\]]*\]/],
+      'On the refund desk a customer wrote "I want a refund for order A-1001, it arrived broken." The desk asked for approval as usual, ' +
+      'and the supervisor declined it as a duplicate claim. After that the desk never gives the customer a final answer: ' +
+      'it fails, asks for approval again, or keeps working on the order. A declined refund should end with a short reply to the customer.',
+    keeps: [/name: 'refundAgent'/, /name: 'approveRefund'/, /tools: \[[^\]]*approveRefund[^\]]*issueRefund[^\]]*\]/],
   },
   {
-    name: 'tool-choice-none',
+    name: 'max-delegations-zero',
     kind: 'agent',
     file: 'src/agents.ts',
-    from: "maxTurns: 5,\n  toolChoice: 'auto',",
-    to: "maxTurns: 5,\n  toolChoice: 'none',",
+    from: 'maxDelegations: 3',
+    to: 'maxDelegations: 0',
     symptom:
-      'In the support chat I ask "Where is order A-1001?" and get a generic reply like "I am not able to look up orders". ' +
-      'The assistant never consults the order desk, although it used to give the real status and delivery date. ' +
-      'It happens on every order question.',
-    keeps: [/name: 'triage'/, /use: \[\s*agents\(/, /name: 'supportTurn'/],
+      'In the support chat I ask "Where is order A-1003?" and the assistant answers politely but without any details, ' +
+      'saying it cannot get the information right now. There is no error. ' +
+      'It happens for every order and every refund request, although the order desk on its own still answers correctly.',
+    keeps: [/name: 'triage'/, /agents: \[[^\]]*'orderAgent'[^\]]*'refundAgent'/],
+  },
+  {
+    name: 'max-turns-zero',
+    kind: 'agent',
+    file: 'src/agents.ts',
+    from: 'maxTurns: 5,',
+    to: 'maxTurns: 0,',
+    symptom:
+      'Every question in the support chat that needs order details, such as "Where is order A-1001?", now fails with an error instead of a reply. ' +
+      'A plain "hello" still gets a friendly answer, and the order desk on its own answers order questions correctly.',
+    keeps: [/name: 'triage'/, /use: \[\s*agents\(/],
   },
   {
     name: 'tool-output-drift',
@@ -201,6 +200,16 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     }
     if (/genkit|trace|mcp|\bcli\b/i.test(bug.symptom)) errors.push(`${bug.name}: symptom mentions tooling`)
     if (!verify.includes(`test('${bug.name}'`)) errors.push(`${bug.name}: no test('${bug.name}') in verify.mts`)
+    const seeded = source.replace(bug.from, () => bug.to)
+    for (const other of BUGS) {
+      if (other !== bug && other.file === bug.file && count(seeded, other.to) > 0) {
+        errors.push(`${bug.name}: seeding it also seeds ${other.name}, so the oracle cannot tell them apart`)
+      }
+    }
+  }
+  for (const kind of ['flow', 'agent'] as const) {
+    const n = BUGS.filter((b) => b.kind === kind).length
+    if (n !== 6) errors.push(`${n} ${kind} bugs, expected 6`)
   }
   if (errors.length > 0) {
     console.error(errors.join('\n'))

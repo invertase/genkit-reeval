@@ -39,13 +39,13 @@ pnpm canary     # expect 12 failed, non-zero exit
 
 Each cell is a container that runs `npm install` and one Gemini call, so allow a few minutes each at concurrency 8. The judge runs with `fakeJudge()` here: no key, no model call.
 
-If the oracle fails a bug, the check is wrong, not the fix: read `failing_attempts`. If the canary passes a bug, the bug does not reproduce with the real model. Two are most at risk: `order-id-case` (Gemini may upper-case `a-1001` before calling the tool) and `truncated-output` (if the model's reply fits in 24 tokens). Re-run `pnpm canary <bug>` three times; a stable pass means the cell measures nothing, so redesign the bug in `evals/bugs.ts` and `evals/verify.mts` or drop it (the pooled lift needs at least 6 cases).
+If the oracle fails a bug, the check is wrong, not the fix: read `failing_attempts`. If the canary passes a bug, the bug does not reproduce with the real model. Two are most at risk: `order-id-case` (Gemini may upper-case `a-1001` before calling the tool) and `stop-sequence` (if the model writes the whole reply on one line). Re-run `pnpm canary <bug>` three times; a stable pass means the cell measures nothing, so redesign the bug in `evals/bugs.ts` and `evals/verify.mts` or drop it (the pooled lift needs at least 6 cases).
 
 ## Smoke
 
 ```bash
 pnpm reeval run --profile smoke schema-drift -v
-pnpm reeval run --profile smoke approval-ignored -v
+pnpm reeval run --profile smoke session-not-loaded -v
 pnpm reeval run codex:gpt-5.6-luna/mcp -v
 ```
 
@@ -58,7 +58,7 @@ One bug, four arms, one attempt each; then the `mcp` arm on Codex for all 12 bug
 - Every arm: `grep -r reeval_secret .reeval/debug/<run>` finds the placeholder and the real key appears nowhere.
 - Codex `mcp`: Codex may not pass the sandbox proxy to stdio MCP servers. If `run_flow` results show 401 or `fetch failed`, the server cannot reach Gemini; record it as a harness limitation.
 - Antigravity: the harness and the app both use `GEMINI_API_KEY`. Check an Antigravity attempt starts and the app still sees a placeholder.
-- Agents bug: does the `mcp` arm call `run_flow` on `supportTurn`/`refundTurn`? Does `get_trace` output fit, or is it truncated? Does the agent read the interrupt's error-looking span as the bug?
+- Agents bug: does the `mcp` arm call `run_flow` on `tryTriage`/`tryRefundDesk`? Does `get_trace` output fit, or is it truncated? Does the agent read the interrupt's error-looking span as the bug?
 - `pnpm reeval query check_discrimination` lists `names the cause`, `flow works`, `keeps the flow`; `pnpm reeval query judgements` has two rows per attempt.
 
 Then the whole smoke profile: `pnpm reeval run --profile smoke` (48 attempts).
@@ -151,14 +151,14 @@ Fill the README tables from these: fix rate from the first query, `x` ratios fro
 | Bug | File | What is wrong | What a trace or run shows |
 |---|---|---|---|
 | `schema-drift` | `src/flows.ts` | `tags` schema is a string, not a list | the structured output has `tags: "a, b"` |
-| `tool-not-wired` | `src/flows.ts` | `getOrderStatus` not in `generate({ tools })` | no tool span |
 | `prompt-var-typo` | `prompts/greet.prompt` | `{{custmerName}}` | the rendered prompt has an empty name |
-| `truncated-output` | `src/flows.ts` | `maxOutputTokens: 24` on `draftReply` | `finishReason: 'length'` |
-| `history-dropped` | `src/flows.ts` | `chat` sends `messages: []` | a one-message model request |
-| `order-id-case` | `src/flows.ts` | the tool no longer upper-cases the id | tool input `a-1001`, output `null` |
+| `prompt-model-override` | `prompts/greet.prompt` | front matter pins `googleai/gemini-1.5-flash` | the `greet` generate span fails; its request names a model the app never configured |
+| `order-id-case` | `src/tools.ts` | `lookupOrder` no longer trims and upper-cases the id | tool input `a-1001`, output `null` |
+| `tool-requests-returned` | `src/flows.ts` | `returnToolRequests: true` on `orderStatus` | the generate span ends on a `toolRequest` part; no tool span; empty text |
+| `stop-sequence` | `src/flows.ts` | `stopSequences: ['\n']` on `draftReply` | `finishReason: 'stop'` after one line; the request config carries the stop sequence |
 | `delegation-dropped` | `src/agents.ts` | `agents()` lists only `orderAgent` | no `delegate_to_refundAgent` tool in the request |
-| `approval-ignored` | `src/agents.ts` | the resume hardcodes `approved: true` | the tool response says approved while the human said no; `issueRefund` runs |
-| `session-not-loaded` | `src/agents.ts` | `supportTurn` ignores `sessionId` | the second turn gets a new session and no history |
-| `max-turns` | `src/agents.ts` | `maxTurns: 1` on `refundAgent` | `finishReason: 'failed'`, `ABORTED` before the interrupt |
-| `tool-choice-none` | `src/agents.ts` | `toolChoice: 'none'` on `triage` | the request carries `toolChoice: 'none'`; no delegation |
+| `session-not-loaded` | `src/agents.ts` | `triage` has no `store` | `loadChat` throws: a persistent store is required |
+| `tool-choice-required` | `src/agents.ts` | `toolChoice: 'required'` on `refundAgent` | every request carries `toolChoice: 'required'`; after the decline, tool calls until `maxTurns`, then `AgentError` `ABORTED` |
+| `max-delegations-zero` | `src/agents.ts` | `maxDelegations: 0` on `triage` | the `delegate_to_*` tool answers "Delegation limit reached (0)"; no sub-agent span |
+| `max-turns-zero` | `src/agents.ts` | `maxTurns: 0` on `triage` | `send` throws `AgentError` `ABORTED` on the first delegation |
 | `tool-output-drift` | `src/orders.json` | A-1001 `total` is a string | `lookupOrder` fails schema validation; triage reports an agent error |
