@@ -3,7 +3,7 @@
 Does Genkit's agent tooling (`GENKIT.md`, the `genkit mcp` server, the `developing-genkit-js` skill) help a coding agent fix a bug in a Genkit app, or build a feature with Genkit's agents API?
 Does it make the fix faster or cheaper, or neither?
 
-The study has not run yet; this README will carry the results. It runs on [reeval](https://github.com/invertase/reeval), Invertase's eval runner for coding agents.
+It runs on [reeval](https://github.com/invertase/reeval), Invertase's eval runner for coding agents. The full run has not happened yet; this README will carry its results. The smoke runs have, and they already answer some of it: see "What the smokes showed" below, `FINDINGS.md` for the detail, and `evals/.history/` for the recorded runs with every transcript.
 
 ## The task
 
@@ -64,9 +64,18 @@ The app starts without the feature. The prompt names the export, the call shape 
 
 Pass is all three checks: `typechecks` (`tsc --noEmit` in the sandbox), `agent works` (a hidden `node:test` file, `evals/verify-build.mts`, against real Gemini) and `keeps the flows` (the five flows are still exported from `src/index.ts`). One judge asks whether the agent used the agents API rather than hand-rolled `ai.generate` loops. One pairwise question asks which arm's `src/agents.ts` is more idiomatic. Both are recorded, never counted toward pass.
 
-## What we already know
+## What the smokes showed
 
-The two advice channels disagree about running the CLI. `GENKIT.md` tells the agent not to run `genkit` commands and to use the `start_runtime` MCP tool. The skill tells it to run `genkit flow:run` and `genkit trace:get`.
+Nine recorded runs, one attempt per cell, on Claude Code (Sonnet 5 and Haiku 5.5) and Antigravity. Each line names its run in `evals/.history/`; `FINDINGS.md` has the evidence.
+
+- **Every documentation search failed**, through the MCP server and through the CLI. `search_genkit_docs` and `genkit docs:search` both die on an object-valued `description` in the docs bundle. Agents fell back to grepping `node_modules`. (`…_8wte`, `…_ffh4`, `…_25bx`)
+- **The one docs tool that works changed the code an agent wrote.** The `mcp` arm on Sonnet read `js/agents/multi-agent.md` with `read_genkit_docs` and built delegation with the `agents()` middleware; on Haiku, three of four arms hand-rolled it after grepping `@genkit-ai/ai` for "handoff" and finding nothing. (`…_ffh4`, `…_w1kj`)
+- **Claude Code hides the Genkit tools behind its tool search.** 22 deferred tools; the model sees names until it calls `ToolSearch`. Sonnet did so in 2 of 9 `mcp` attempts, Haiku in none. Antigravity, which does not defer, used the server on 1 bug of 12. (`…_pcyg`, `…_sgps`)
+- **`restart_runtime` took the server down for the rest of the attempt**, with `invalid character '>' looking for beginning of value` on the next call. (`…_sgps`)
+- **The bugs do not separate the arms on pass rate**: every arm fixed every bug it was given. They separate on effort and on whether the agent ran the app. The `rules` arm read source and skipped the repro at 0.42x the tokens; `control`, `mcp` and `skill` ran it. (`…_bcx7`)
+- **The build task separates on idiom**: all four Haiku arms built a working front desk, one did it the Genkit way. (`…_w1kj`)
+
+Two things we knew before any run. The two advice channels disagree about running the CLI. `GENKIT.md` tells the agent not to run `genkit` commands and to use the `start_runtime` MCP tool. The skill tells it to run `genkit flow:run` and `genkit trace:get`.
 
 `GENKIT.md`, "Important Guidelines":
 
@@ -91,7 +100,7 @@ Cost: reeval estimates about 9.5 hours at concurrency 8. Expect hundreds of mill
 
 ## Results
 
-Not run yet. Each cell holds `rules / mcp / skill`. `x` is the arm's median over the `control` median.
+The full run has not happened yet. Each cell holds `rules / mcp / skill`. `x` is the arm's median over the `control` median.
 
 | Harness | Fix rate (control / rules / mcp / skill) | Build rate (control / rules / mcp / skill) | Tokens x | Time x | Tools x | Adoption |
 |---|---|---|---|---|---|---|
@@ -100,6 +109,29 @@ Not run yet. Each cell holds `rules / mcp / skill`. `x` is the arm's median over
 | antigravity |  |  |  |  |  |  |
 | cursor |  |  |  |  |  |  |
 | codex |  |  |  |  |  |  |
+
+## Reading a run
+
+This is what reeval leaves behind, and what the findings above cite. A recorded run is a directory under `evals/.history/`:
+
+```text
+evals/.history/<run>.json                 the record: plan, cells, checks, judgements, tokens
+evals/.history/<run>/summary.md           the run as Markdown, with every attempt's last message
+evals/.history/<run>/<eval>/<cell>/1/
+  transcript.jsonl                        every tool call and reasoning block, timed
+  diff.patch                              what the agent changed
+  checks/<n>.log                          each hidden check: command, exit code, output
+  judge-input.json                        exactly what the judge saw
+```
+
+```bash
+pnpm reeval show <run>                    # the summary in the terminal
+pnpm reeval query lift                    # per case, with a 95% interval; `effort`, `check_discrimination`, `judgements` likewise
+pnpm reeval query "SELECT tool, COUNT(*) FROM tool_calls WHERE run_id = '<run>' GROUP BY tool"
+pnpm reeval studio build --out site       # a static site over every run
+```
+
+API keys never enter the sandbox: the app and the agent see placeholders, and reeval's gateway swaps the real key into requests to the one host each key is for. The records are redacted before they are written.
 
 ## Run it
 
@@ -112,6 +144,7 @@ pnpm oracle
 pnpm canary
 pnpm reeval run --profile smoke
 pnpm reeval run --profile full claude-code:claude-sonnet-5
+pnpm reeval record <run>                  # copy a scratch run into evals/.history/ to commit it
 ```
 
 `pnpm oracle` swaps the agent for a fake one that applies the known fix or writes the healthy agents; it must pass 15/15. `pnpm canary` leaves the bug or the start state in place; it must fail 15/15. `RUNBOOK.md` has the full sequence, sizes and queries. `FINDINGS.md` lists what building the study taught us about the tooling.

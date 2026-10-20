@@ -1,0 +1,24 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..113fb60
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/agents.ts",
++  "snippet": "export const triage = ai.defineAgent({\n  name: 'triage',\n  system: 'Delegate order questions to orderAgent and refund requests to refundAgent. Do not answer them yourself.',\n  maxTurns: 5,\n  toolChoice: 'auto',\n  use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 3, historyLength: 4 })],\n});",
++  "cause": "The triage agent, which is the one the support chat actually talks to, was defined without a session `store`, making it a client-managed agent that Genkit refuses to resume by sessionId.",
++  "evidence": "In node_modules/@genkit-ai/ai/src/agent.ts, assertInitMatchesStateManagement() throws an AgentInitError ('Cannot use sessionId with agent ... this agent has no store configured (client-managed state)') whenever init.sessionId is supplied but config.store is unset; triage had no store while refundAgent (which resumes fine) already uses one, so a fresh first turn works but resuming the same conversation by its session id fails."
++}
+diff --git a/src/agents.ts b/src/agents.ts
+index 4aefbb2..222de7b 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -52,6 +52,7 @@ export const triage = ai.defineAgent({
+   maxTurns: 5,
+   toolChoice: 'auto',
+   use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 3, historyLength: 4 })],
++  store,
+ });
+ 
+ /** Lets the CLI exercise triage: `genkit flow:run` runs flows, not agents. */
