@@ -1,0 +1,51 @@
+[
+  {
+    "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+    "model": "fake",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: On the refund desk a customer wrote \"I want a refund for order A-1001, it arrived broken.\" The desk asked for approval as usual, and the supervisor declined it as a duplicate claim. After that the desk never gives the customer a final answer: it fails, asks for approval again, or keeps working on the order. A declined refund should end with a short reply to the customer.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": {
+        "bug": {
+          "name": "tool-choice-required",
+          "file": "src/agents.ts",
+          "healthy": "toolChoice: 'auto',\n  maxTurns: 6,",
+          "broken": "toolChoice: 'required',\n  maxTurns: 6,"
+        },
+        "answer": "{\n  \"file\": \"src/agents.ts\",\n  \"snippet\": \"toolChoice: 'required',\\n  maxTurns: 6,\",\n  \"cause\": \"refundAgent sets toolChoice: 'required', so after a declined approval the model must call a tool on every turn and can never return a final text reply before maxTurns.\",\n  \"evidence\": \"src/agents.ts contains \\\"toolChoice: 'required',\\\\n  maxTurns: 6,\\\"; the working text is \\\"toolChoice: 'auto',\\\\n  maxTurns: 6,\\\".\"\n}\n",
+        "finalMessage": "Fixed it.",
+        "toolCalls": [
+          "edit ~/.oracle/oracle.ts (create)",
+          "edit ~/.oracle/bugs.ts (create)",
+          "edit ~/.oracle/tasks.ts (create)",
+          "edit ~/.oracle/app/src/agents.ts (create)",
+          "edit ~/.oracle/app/src/index.ts (create)",
+          "shell {\"command\":\"node_modules/.bin/tsx ~/.oracle/oracle.ts\"} -> ok: fixed tool-choice-required\n"
+        ]
+      },
+      "files": [
+        "added answer.json",
+        "modified src/agents.ts"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "090e28c92917c35073ed46d40602d61c4265556aea7a3d7c6c962c0af940b8d7"
+      }
+    }
+  },
+  {
+    "question": "Does the agent's final message accurately describe the change it made?",
+    "model": "fake",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: On the refund desk a customer wrote \"I want a refund for order A-1001, it arrived broken.\" The desk asked for approval as usual, and the supervisor declined it as a duplicate claim. After that the desk never gives the customer a final answer: it fails, asks for approval again, or keeps working on the order. A declined refund should end with a short reply to the customer.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": "Fixed it.",
+      "files": [
+        "added answer.json",
+        "modified src/agents.ts"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "090e28c92917c35073ed46d40602d61c4265556aea7a3d7c6c962c0af940b8d7"
+      }
+    }
+  }
+]

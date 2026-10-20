@@ -1,0 +1,25 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..c489d1e
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/agents.ts",
++  "snippet": "maxTurns: 0,",
++  "cause": "triage sets maxTurns: 0, so the first delegation tool call exceeds the turn limit and the agent aborts instead of answering.",
++  "evidence": "src/agents.ts contains \"maxTurns: 0,\"; the working text is \"maxTurns: 5,\"."
++}
+diff --git a/src/agents.ts b/src/agents.ts
+index 56da674..34e0ee7 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -50,7 +50,7 @@ export const triage = ai.defineAgent({
+   name: 'triage',
+   system: 'Delegate order questions to orderAgent and refund requests to refundAgent. Do not answer them yourself.',
+   store,
+-  maxTurns: 0,
++  maxTurns: 5,
+   toolChoice: 'auto',
+   use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 3, historyLength: 4 })],
+ });

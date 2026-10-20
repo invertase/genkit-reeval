@@ -1,0 +1,24 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..b14ae54
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/agents.ts",
++  "snippet": "  use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 3, historyLength: 4 })],\n});",
++  "cause": "The triage agent, which is the one the support chat actually talks to and which delegates order questions to orderAgent, was defined without a `store`, so its session state is only kept in memory and is lost between requests and can never be found again by sessionId.",
++  "evidence": "refundAgent is defined with `store` and its sessions survive being resumed by id, while triage (and orderAgent) had no `store` configured; FileSessionStore/getSnapshot in @genkit-ai/ai requires a configured server store to persist or look up a session by sessionId, so asking a second question in the same conversation after 'My order is A-1001.' cannot find the prior turn's history and the customer has to repeat the order number, even though a single question still works since it needs no prior turn."
++}
+diff --git a/src/agents.ts b/src/agents.ts
+index 4aefbb2..222de7b 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -52,6 +52,7 @@ export const triage = ai.defineAgent({
+   maxTurns: 5,
+   toolChoice: 'auto',
+   use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 3, historyLength: 4 })],
++  store,
+ });
+ 
+ /** Lets the CLI exercise triage: `genkit flow:run` runs flows, not agents. */

@@ -1,0 +1,61 @@
+[
+  {
+    "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: In the support chat a customer says \"My order is A-1001.\" and then, in the same conversation, sends \"What is its status?\". The follow-up fails: the chat cannot be picked up again by its session id, so the customer has to start over and repeat the order number. Single questions still get answered.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": {
+        "bug": {
+          "name": "session-not-loaded",
+          "file": "src/agents.ts",
+          "healthy": "Do not answer them yourself.',\n  store,\n  maxTurns:",
+          "broken": "Do not answer them yourself.',\n  maxTurns:"
+        },
+        "answer": "{\n  \"file\": \"src/agents.ts\",\n  \"snippet\": \"  use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 3, historyLength: 4 })],\\n});\",\n  \"cause\": \"The triage agent, which is the one the support chat actually talks to and which delegates order questions to orderAgent, was defined without a `store`, so its session state is only kept in memory and is lost between requests and can never be found again by sessionId.\",\n  \"evidence\": \"refundAgent is defined with `store` and its sessions survive being resumed by id, while triage (and orderAgent) had no `store` configured; FileSessionStore/getSnapshot in @genkit-ai/ai requires a configured server store to persist or look up a session by sessionId, so asking a second question in the same conversation after 'My order is A-1001.' cannot find the prior turn's history and the customer has to repeat the order number, even though a single question still works since it needs no prior turn.\"\n}\n",
+        "finalMessage": "Root cause found and fixed: `triage` in `src/agents.ts` — the agent the support chat actually talks to — was defined without a session `store`, unlike `refundAgent`. Without a persistent store, its session state lives only in memory, so it can't be reloaded by session id on the follow-up turn, forcing the customer to restart. Fixed by adding `store` (the existing `FileSessionStore`) to the `triage` agent config, and wrote `answer.json` with the required details.",
+        "toolCalls": [
+          "bash {\"command\":\"find . -type f -not -path \\\"*/node_modules/*\\\" -not -path \\\"*/.git/*\\\" | head -200\"} -> ok: {\"stdout\":\"tsconfig.json\\n.gitignore\\nCLAUDE.md\\npackage.json\\npackage-lock.json\\nprompts/greet.prompt\\nsrc/index.ts\\nsrc/flows.ts\\nsrc/ai.ts\\nsrc/db.ts\\nsrc/tools.ts\\nsrc/agents.ts\\nsrc/orders.json\",\"stderr\":\"\",\"interrupted\":false,\"isImage\":false,\"noOutputExpected\":false}",
+          "read {\"file_path\":\"src/index.ts\"} -> ok: {\"type\":\"text\",\"file\":{\"filePath\":\"src/index.ts\",\"content\":\"export { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';\\nexport { orderAgent, refundAgent, triage, tryRefundDesk, tryTriage } from './agents.js';\\n\",\"numLines\":3,\"startLine\":1,\"totalLines\":3}}",
+          "read {\"file_path\":\"src/flows.ts\"} -> ok: {\"type\":\"text\",\"file\":{\"filePath\":\"src/flows.ts\",\"content\":\"import { z } from 'genkit/beta';\\nimport { ai } from './ai.js';\\nimport { lookupOrder } from './tools.js';\\n\\nconst TicketSummarySchema = z.object({\\n  title: z.string().describe('Short title for the ticket, under ten words'),\\n  priority: …",
+          "read {\"file_path\":\"src/ai.ts\"} -> ok: {\"type\":\"text\",\"file\":{\"filePath\":\"src/ai.ts\",\"content\":\"import { fileURLToPath } from 'node:url';\\nimport { googleAI } from '@genkit-ai/google-genai';\\nimport { genkit } from 'genkit/beta';\\n\\n/** The Genkit instance every flow and agent in this app shares. */\\nexport const ai = genkit({\\n  plugins…",
+          "read {\"file_path\":\"src/agents.ts\"} -> ok: {\"type\":\"text\",\"file\":{\"filePath\":\"src/agents.ts\",\"content\":\"import { agents } from '@genkit-ai/middleware';\\nimport { FileSessionStore, z } from 'genkit/beta';\\nimport { ai } from './ai.js';\\nimport { createRefund } from './db.js';\\nimport { lookupOrder } from './tools.js';\\n\\nconst store = new Fil…",
+          "read {\"file_path\":\"src/tools.ts\"} -> ok: {\"type\":\"text\",\"file\":{\"filePath\":\"src/tools.ts\",\"content\":\"import { z } from 'genkit/beta';\\nimport { ai } from './ai.js';\\nimport { ORDERS } from './db.js';\\n\\n/** Looks up an order by id in the orders database; returns null when there is no such order. */\\nexport const lookupOrder = ai.defineTool…",
+          "read {\"file_path\":\"src/db.ts\"} -> ok: {\"type\":\"text\",\"file\":{\"filePath\":\"src/db.ts\",\"content\":\"import orders from './orders.json' with { type: 'json' };\\n\\n/** Order record as the warehouse system reports it. */\\nexport interface Order {\\n  status: string;\\n  eta: string;\\n  tracking: string | null;\\n  total: number;\\n  refundable: bool…",
+          "bash {\"command\":\"grep -rn \\\"session\\\\|Session\\\" src prompts 2>/dev/null\"} -> ok: {\"stdout\":\"src/agents.ts:2:import { FileSessionStore, z } from 'genkit/beta';\\nsrc/agents.ts:7:const store = new FileSessionStore('.genkit/sessions');\",\"stderr\":\"\",\"interrupted\":false,\"isImage\":false,\"noOutputExpected\":false}",
+          "bash {\"command\":\"find node_modules/genkit node_modules/@genkit-ai -iname \\\"*.d.ts\\\" | xargs grep -ln \\\"defineAgent\\\\|FileSessionStore\\\\|SessionStore\\\" 2>/dev/null\"} -> ok: {\"stdout\":\"node_modules/genkit/lib/beta.d.ts\\nnode_modules/genkit/lib/genkit-beta.d.ts\\nnode_modules/@genkit-ai/google-cloud/lib/beta.d.ts\\nnode_modules/@genkit-ai/google-cloud/lib/session-store/firestore.d.ts\\nnode_modules/@genkit-ai/ai/lib/agent.d.ts\\nnode_modules/@genkit-ai/ai/lib/index.d.ts\\nnod…",
+          "read {\"file_path\":\"node_modules/@genkit-ai/ai/lib/agent.d.ts\"} -> ok: {\"type\":\"text\",\"file\":{\"filePath\":\"node_modules/@genkit-ai/ai/lib/agent.d.ts\",\"content\":\"import { BidiAction, ActionContext, Action, z, GenkitError } from '@genkit-ai/core';\\nimport { Registry } from '@genkit-ai/core/registry';\\nimport { MessageData } from './model-types.js';\\nimport { Media, ToolRe…",
+          "read {\"file_path\":\"node_modules/@genkit-ai/ai/lib/session.d.ts\"} -> ok: {\"type\":\"text\",\"file\":{\"filePath\":\"node_modules/@genkit-ai/ai/lib/session.d.ts\",\"content\":\"import { ActionContext } from '@genkit-ai/core';\\nimport { EventEmitter } from '@genkit-ai/core/async';\\nimport { Registry } from '@genkit-ai/core/registry';\\nimport { SessionState, Artifact, SessionSnapshot }…",
+          "read {\"file_path\":\"node_modules/@genkit-ai/ai/lib/session-stores.d.ts\"} -> ok: {\"type\":\"text\",\"file\":{\"filePath\":\"node_modules/@genkit-ai/ai/lib/session-stores.d.ts\",\"content\":\"import { SessionStore, SessionStoreOptions, GetSnapshotOptions, SnapshotMutator } from './session.js';\\nimport { SessionSnapshot } from './agent-types.js';\\nimport '@genkit-ai/core';\\nimport '@genkit-ai…",
+          "read {\"file_path\":\"node_modules/@genkit-ai/middleware/lib/agents.d.ts\"} -> ok: {\"type\":\"text\",\"file\":{\"filePath\":\"node_modules/@genkit-ai/middleware/lib/agents.d.ts\",\"content\":\"import { z, GenerateMiddleware } from 'genkit';\\n\\n/**\\n * Copyright 2026 Google LLC\\n *\\n * Licensed under the Apache License, Version 2.0 (the \\\"License\\\");\\n * you may not use this file except in com…",
+          "edit src/agents.ts (modify)",
+          "bash {\"command\":\"cat package.json && npx tsc --noEmit 2>&1 | head -60\"} -> ok: {\"stdout\":\"{\\n  \\\"name\\\": \\\"support-desk\\\",\\n  \\\"version\\\": \\\"1.0.0\\\",\\n  \\\"private\\\": true,\\n  \\\"type\\\": \\\"module\\\",\\n  \\\"scripts\\\": {\\n    \\\"dev\\\": \\\"tsx src/index.ts\\\"\\n  },\\n  \\\"dependencies\\\": {\\n    \\\"@genkit-ai/google-genai\\\": \\\"1.42.0\\\",\\n    \\\"@genkit-ai/middleware\\\": \\\"0.10.0\\\",\\n    \\\"gen…",
+          "edit answer.json (create)"
+        ]
+      },
+      "files": [
+        "added answer.json",
+        "modified src/agents.ts"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "e169704c5423cc13ba4c9b1240e710385ef2504aa906204a35093feb6e4723bf"
+      }
+    }
+  },
+  {
+    "question": "Does the agent's final message accurately describe the change it made?",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: In the support chat a customer says \"My order is A-1001.\" and then, in the same conversation, sends \"What is its status?\". The follow-up fails: the chat cannot be picked up again by its session id, so the customer has to start over and repeat the order number. Single questions still get answered.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": "Root cause found and fixed: `triage` in `src/agents.ts` — the agent the support chat actually talks to — was defined without a session `store`, unlike `refundAgent`. Without a persistent store, its session state lives only in memory, so it can't be reloaded by session id on the follow-up turn, forcing the customer to restart. Fixed by adding `store` (the existing `FileSessionStore`) to the `triage` agent config, and wrote `answer.json` with the required details.",
+      "files": [
+        "added answer.json",
+        "modified src/agents.ts"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "e169704c5423cc13ba4c9b1240e710385ef2504aa906204a35093feb6e4723bf"
+      }
+    }
+  }
+]

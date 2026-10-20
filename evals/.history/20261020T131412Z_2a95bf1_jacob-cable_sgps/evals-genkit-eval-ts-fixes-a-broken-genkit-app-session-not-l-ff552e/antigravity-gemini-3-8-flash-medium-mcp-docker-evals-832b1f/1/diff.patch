@@ -1,0 +1,24 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..2450611
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/agents.ts",
++  "snippet": "  toolChoice: 'auto',",
++  "cause": "The triage agent was defined without configuring a session store, so chat sessions cannot be resumed by session ID.",
++  "evidence": "Attempting to resume a chat using triage.chat({ sessionId }) threw 'FAILED_PRECONDITION: Cannot use \\'sessionId\\' with agent \\'triage\\': this agent has no store configured', and adding store to the triage agent configuration resolves the error and allows follow-up questions to retain session history."
++}
+diff --git a/src/agents.ts b/src/agents.ts
+index 4aefbb2..3fec961 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -51,6 +51,7 @@ export const triage = ai.defineAgent({
+   system: 'Delegate order questions to orderAgent and refund requests to refundAgent. Do not answer them yourself.',
+   maxTurns: 5,
+   toolChoice: 'auto',
++  store,
+   use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 3, historyLength: 4 })],
+ });
+ 

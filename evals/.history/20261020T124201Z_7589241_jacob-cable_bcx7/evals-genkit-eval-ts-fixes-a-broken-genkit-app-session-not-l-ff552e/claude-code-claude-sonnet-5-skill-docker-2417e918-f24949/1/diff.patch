@@ -1,0 +1,24 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..632e255
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/agents.ts",
++  "snippet": "  use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 3, historyLength: 4 })],\n});",
++  "cause": "The customer-facing `triage` agent was defined without a `store`, so it is client-managed (stateless) and cannot be resumed by `sessionId` on the next request.",
++  "evidence": "Reproducing the two-turn conversation (`triage.chat().send('My order is A-1001.')` then `triage.chat({ sessionId }).send('What is its status?')`) threw `FAILED_PRECONDITION: Cannot use 'sessionId' with agent 'triage': this agent has no store configured (client-managed state). Send 'state' instead.` from node_modules/@genkit-ai/ai/src/agent.ts's assertInitMatchesStateManagement; adding the already-defined `store` (a FileSessionStore, already used by refundAgent) to `triage` made the same repro succeed, with turn 2 correctly recalling order A-1001."
++}
+diff --git a/src/agents.ts b/src/agents.ts
+index 4aefbb2..222de7b 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -52,6 +52,7 @@ export const triage = ai.defineAgent({
+   maxTurns: 5,
+   toolChoice: 'auto',
+   use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 3, historyLength: 4 })],
++  store,
+ });
+ 
+ /** Lets the CLI exercise triage: `genkit flow:run` runs flows, not agents. */

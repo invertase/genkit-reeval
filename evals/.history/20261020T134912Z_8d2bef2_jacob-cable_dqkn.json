@@ -1,0 +1,2143 @@
+{
+  "kind": "es-run",
+  "schemaVersion": 1,
+  "runId": "20261020T134912Z_8d2bef2_jacob-cable_dqkn",
+  "status": "complete",
+  "startedAt": "2026-10-20T13:49:12.278Z",
+  "endedAt": "2026-10-20T13:50:13.391Z",
+  "durationMs": 61113,
+  "author": "jacob-cable",
+  "git": {
+    "sha": "8d2bef2fe9baff133230ac55299281d55c9ac34a",
+    "branch": "main",
+    "dirty": false,
+    "diffHash": null,
+    "worktreePatch": null,
+    "worktreePatchNote": null,
+    "commitTime": "2026-10-20T14:48:16+01:00",
+    "shallow": false,
+    "remote": null
+  },
+  "runner": {
+    "kind": "local",
+    "hostHash": "2c818801e9b8"
+  },
+  "dependencies": {
+    "lockfiles": [
+      {
+        "path": "pnpm-lock.yaml",
+        "sha256": "29e4483045e44a4f6df8369648c063808a5fb8d44694e13ba938fb54d7765888"
+      }
+    ]
+  },
+  "stack": {
+    "es": "0.9.0",
+    "node": "24.9.0",
+    "runtime": {
+      "name": "node",
+      "version": "24.9.0"
+    },
+    "language": {
+      "name": "typescript"
+    },
+    "os": "darwin",
+    "arch": "arm64",
+    "images": [
+      {
+        "ref": "reeval-dockerfile:evals-87447ab241681a3b",
+        "id": "sha256:a56e1c8e17521f59f11064c0e9ae1d4155173ec39a355f1162c628528faeaadc",
+        "agentCli": "2.1.290 (Claude Code)",
+        "base": "reeval-dockerfile:evals-87447ab241681a3b",
+        "install": [],
+        "dockerfile": {
+          "path": "evals/Dockerfile",
+          "sha256": "87447ab241681a3be7792f13fbfe604a4cb14be8b029aefeb5348f9b797ac4b3"
+        },
+        "repoDigests": []
+      }
+    ],
+    "packages": {
+      "@vitest/expect": "5.0.2",
+      "jiti": "2.7.0",
+      "@reeval/harness-antigravity": "0.1.6",
+      "@reeval/harness-opencode": "0.2.7",
+      "@reeval/harness-goose": "0.1.2",
+      "@reeval/harness-pi": "0.2.6",
+      "@reeval/harness-cursor-sdk": "0.1.4",
+      "@ai-sdk/harness-claude-code": "1.0.152-patch.8edc594f",
+      "@reeval/harness-codex": "0.1.6",
+      "ai": "7.0.140",
+      "@ai-sdk/harness": "1.0.148",
+      "@ai-sdk/google": "4.0.93",
+      "@ai-sdk/typesafe-ai": "3.0.18"
+    },
+    "harnesses": [
+      {
+        "id": "claude-code:claude-haiku-5-5",
+        "kind": "claude-code",
+        "model": "claude-haiku-5-5",
+        "effort": null,
+        "resolvedModels": [
+          "claude-haiku-5-5"
+        ],
+        "resolvedEffort": []
+      }
+    ],
+    "judge": {
+      "model": "google/gemini-3.8-flash",
+      "resolvedModels": [
+        "gemini-3.8-flash"
+      ],
+      "threshold": 0.7,
+      "version": "040f4c93d76f"
+    },
+    "context": [
+      {
+        "path": "CLAUDE.md",
+        "sha256": "71cd594de1577284a5ff40793e45d9f8e798d9d04658998f84e27ee1451d0ed4"
+      },
+      {
+        "path": "~/.claude/skills/.ai-sdk-harness-skills.json",
+        "sha256": "5ddf48ce4d7015c17873d3c8b1c02e421c433763e17d96c4ef377bbddabb44fe"
+      },
+      {
+        "path": "~/.claude/skills/.ai-sdk-harness-skills.json",
+        "sha256": "f9d7052cdb988ff2cfe540c4e225123beb54f92f02af503cfe05af787be6781f"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-js/SKILL.md",
+        "sha256": "a73e7c330ebea2a848f0e129e98d6c14cb49be6f4b846cbb6106737b573de2f5"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-js/references/a2ui.md",
+        "sha256": "ea18fea07663fe865ca2067d9f31bdf5c2b20f4f10f95fc91af2a9acbfc2716e"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-js/references/agents-artifacts.md",
+        "sha256": "0491c5b37eda7d47850e29c97e0502a2d2077d6c149a1e2ffc48da93e1379019"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-js/references/agents-background.md",
+        "sha256": "39db50da36ec4927a144a9877c2f33ed2eba5858c7f28d900e0610cbf34a0572"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-js/references/agents-branching.md",
+        "sha256": "cc34a1653ab672a166af428532fe096101cfbd2df619971a934f0544412e4aa9"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-js/references/agents-custom.md",
+        "sha256": "3642e5cb774161f13c7b8b8f5931525c5fdc4e80ff813cd2d8d82ab1560bdb0d"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-js/references/agents-deployment.md",
+        "sha256": "fd362d8d7708fecbb749f586bca6d56e45902acd91686e31f62b5c0351686b78"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-js/references/agents-human-in-the-loop.md",
+        "sha256": "fc7dbd225edac863ea43ab8ebaa75ab3f6127c2eec95eda0a1273b4b22757d0a"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-js/references/agents-multi-agent.md",
+        "sha256": "d3dcf5c00ab8a27d728eaeff6528c105862c7289f3275eafe5706948a3077b77"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-js/references/agents-sessions.md",
+        "sha256": "21ab836bbe5d9d74ae203a23136515e0741f2ec59f07df88c9d7edaece8d828e"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-js/references/agents-state.md",
+        "sha256": "0a700770483e09d668a67239dd0caa563857829e6a6901a14cbcd273dde6d8c1"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-js/references/agents.md",
+        "sha256": "18277cecac28bf52c6c0d1c56a894f6c2b24f1dd27556ec3f9a2b2ace9bed819"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-js/references/best-practices.md",
+        "sha256": "27ba9ce26813dc44c27bcab072c9bf54a2b7d4134dcd51d400a800a79f9b1f7a"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-js/references/common-errors.md",
+        "sha256": "fa6d8d108d6e9550bcbd53aaa16caf5387e6dc2375b86d9c4ac3c9faecd21862"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-js/references/docs-and-cli.md",
+        "sha256": "0b2cccd50816d2838210d631ae5bbf91a5d117374e20ab39daa781690c49dc86"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-js/references/dotprompt.md",
+        "sha256": "77b60b2e16cc8077e33ec0071be5c493c575fda153c9bee80f1dfc322396f921"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-js/references/examples.md",
+        "sha256": "7973a3b8510ff4f4494c41d82607e8c1fc5ab2794d8a139f376bd42187499aa0"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-js/references/middleware-custom.md",
+        "sha256": "540b58e84ff2b7fe2200a65a1a3699a569c67f1900b22d224cedd648fecbbbfa"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-js/references/middleware.md",
+        "sha256": "920f8e93e71eb3d44b76a1f527061d2950dbe3900a229194c091eeb54b39b76b"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-js/references/setup.md",
+        "sha256": "87e7e012ea72edb0fed1bb7d3e497921f2c54add7a154a3aa4dfad69fccc1759"
+      }
+    ],
+    "fingerprintScope": [
+      "eval-source",
+      "harness",
+      "environment",
+      "agent-cli",
+      "image-id",
+      "judge",
+      "context"
+    ]
+  },
+  "environments": [
+    {
+      "name": "control",
+      "parent": null,
+      "overrides": [],
+      "digest": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+      "setup": [
+        "cp -r /opt/support-desk/node_modules .",
+        "genkit --non-interactive config set analyticsOptOut true",
+        "genkit --non-interactive docs:list js >/dev/null"
+      ],
+      "skills": [],
+      "mcp": [],
+      "files": [
+        {
+          "path": ".gitignore",
+          "sha256": "2324373b38e6a6e40c2533a3440dde4733c59a33d59dffb95f2a87564eadf8b1"
+        },
+        {
+          "path": "package-lock.json",
+          "sha256": "adef6f981124a1f92fe0a00ff1ab04045b798eea61263a3cdfa71a65d1d3b4e2"
+        },
+        {
+          "path": "package.json",
+          "sha256": "12829aa396015aca5c0fd8161b11c040acc5d5f0ffcbe8aaf34d2bf68a5bf1f9"
+        },
+        {
+          "path": "prompts/greet.prompt",
+          "sha256": "0e4330eab89a5d0443dac4ae3e0b948a7769e0ae7d6db72e4868065a6de587c4"
+        },
+        {
+          "path": "src/agents.ts",
+          "sha256": "8a8bbed0be0d55841e68867eb66c725db3844d8937e41023f7c9e26cbefbb23d"
+        },
+        {
+          "path": "src/ai.ts",
+          "sha256": "279503e1481fd36866447ad99e3c9062fcce1492337b420bc4b7cf5d5c1b665f"
+        },
+        {
+          "path": "src/db.ts",
+          "sha256": "f822166aef9e14bffb2a3259facfff3284ad56fa5aafdc9fcd819b5f8f89bca9"
+        },
+        {
+          "path": "src/flows.ts",
+          "sha256": "5e6bffefd47a06ff2e2f8aafbf8ecfc4ef5cffc9918a8cd32f21579a5fa9f932"
+        },
+        {
+          "path": "src/index.ts",
+          "sha256": "ae90d6cb599cca69414e7b2688d600597b80d03b13420afccb4178212c74743b"
+        },
+        {
+          "path": "src/orders.json",
+          "sha256": "db96fdc2bd8de3bd0e2f5e3e478bab0658705cd9cbb6e060a54454b61fb54c85"
+        },
+        {
+          "path": "src/tools.ts",
+          "sha256": "bd30895bd2041fead14058472f80f976e6702675235c97018d09fdad2e1dc809"
+        },
+        {
+          "path": "tsconfig.json",
+          "sha256": "4a1fe8a611430f39f2b16ecbb9c966222d20a64585dd5b7377e2da42679a925c"
+        }
+      ],
+      "vars": [
+        "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+      ],
+      "secrets": [
+        "GEMINI_API_KEY"
+      ],
+      "brokered": [
+        "GEMINI_API_KEY"
+      ],
+      "unset": [],
+      "egress": "allow-all"
+    },
+    {
+      "name": "mcp",
+      "parent": "rules",
+      "overrides": [],
+      "digest": "sha256:327c8dea985822cb2ea82dfbcf1c4c8c3eb281c4c8e49276f3595bfdf88c2c36",
+      "setup": [
+        "cp -r /opt/support-desk/node_modules .",
+        "genkit --non-interactive config set analyticsOptOut true",
+        "genkit --non-interactive docs:list js >/dev/null"
+      ],
+      "skills": [],
+      "mcp": [
+        "genkit"
+      ],
+      "files": [
+        {
+          "path": ".gitignore",
+          "sha256": "2324373b38e6a6e40c2533a3440dde4733c59a33d59dffb95f2a87564eadf8b1"
+        },
+        {
+          "path": "package-lock.json",
+          "sha256": "adef6f981124a1f92fe0a00ff1ab04045b798eea61263a3cdfa71a65d1d3b4e2"
+        },
+        {
+          "path": "package.json",
+          "sha256": "12829aa396015aca5c0fd8161b11c040acc5d5f0ffcbe8aaf34d2bf68a5bf1f9"
+        },
+        {
+          "path": "prompts/greet.prompt",
+          "sha256": "0e4330eab89a5d0443dac4ae3e0b948a7769e0ae7d6db72e4868065a6de587c4"
+        },
+        {
+          "path": "src/agents.ts",
+          "sha256": "8a8bbed0be0d55841e68867eb66c725db3844d8937e41023f7c9e26cbefbb23d"
+        },
+        {
+          "path": "src/ai.ts",
+          "sha256": "279503e1481fd36866447ad99e3c9062fcce1492337b420bc4b7cf5d5c1b665f"
+        },
+        {
+          "path": "src/db.ts",
+          "sha256": "f822166aef9e14bffb2a3259facfff3284ad56fa5aafdc9fcd819b5f8f89bca9"
+        },
+        {
+          "path": "src/flows.ts",
+          "sha256": "5e6bffefd47a06ff2e2f8aafbf8ecfc4ef5cffc9918a8cd32f21579a5fa9f932"
+        },
+        {
+          "path": "src/index.ts",
+          "sha256": "ae90d6cb599cca69414e7b2688d600597b80d03b13420afccb4178212c74743b"
+        },
+        {
+          "path": "src/orders.json",
+          "sha256": "db96fdc2bd8de3bd0e2f5e3e478bab0658705cd9cbb6e060a54454b61fb54c85"
+        },
+        {
+          "path": "src/tools.ts",
+          "sha256": "bd30895bd2041fead14058472f80f976e6702675235c97018d09fdad2e1dc809"
+        },
+        {
+          "path": "tsconfig.json",
+          "sha256": "4a1fe8a611430f39f2b16ecbb9c966222d20a64585dd5b7377e2da42679a925c"
+        },
+        {
+          "path": "CLAUDE.md",
+          "sha256": "71cd594de1577284a5ff40793e45d9f8e798d9d04658998f84e27ee1451d0ed4"
+        }
+      ],
+      "vars": [
+        "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+      ],
+      "secrets": [
+        "GEMINI_API_KEY"
+      ],
+      "brokered": [
+        "GEMINI_API_KEY"
+      ],
+      "unset": [],
+      "egress": "allow-all"
+    },
+    {
+      "name": "rules",
+      "parent": "control",
+      "overrides": [],
+      "digest": "sha256:05001ec2ab40b87c634974d0d543eaec041d32cf554181fc685d3405d94f9c2d",
+      "setup": [
+        "cp -r /opt/support-desk/node_modules .",
+        "genkit --non-interactive config set analyticsOptOut true",
+        "genkit --non-interactive docs:list js >/dev/null"
+      ],
+      "skills": [],
+      "mcp": [],
+      "files": [
+        {
+          "path": ".gitignore",
+          "sha256": "2324373b38e6a6e40c2533a3440dde4733c59a33d59dffb95f2a87564eadf8b1"
+        },
+        {
+          "path": "package-lock.json",
+          "sha256": "adef6f981124a1f92fe0a00ff1ab04045b798eea61263a3cdfa71a65d1d3b4e2"
+        },
+        {
+          "path": "package.json",
+          "sha256": "12829aa396015aca5c0fd8161b11c040acc5d5f0ffcbe8aaf34d2bf68a5bf1f9"
+        },
+        {
+          "path": "prompts/greet.prompt",
+          "sha256": "0e4330eab89a5d0443dac4ae3e0b948a7769e0ae7d6db72e4868065a6de587c4"
+        },
+        {
+          "path": "src/agents.ts",
+          "sha256": "8a8bbed0be0d55841e68867eb66c725db3844d8937e41023f7c9e26cbefbb23d"
+        },
+        {
+          "path": "src/ai.ts",
+          "sha256": "279503e1481fd36866447ad99e3c9062fcce1492337b420bc4b7cf5d5c1b665f"
+        },
+        {
+          "path": "src/db.ts",
+          "sha256": "f822166aef9e14bffb2a3259facfff3284ad56fa5aafdc9fcd819b5f8f89bca9"
+        },
+        {
+          "path": "src/flows.ts",
+          "sha256": "5e6bffefd47a06ff2e2f8aafbf8ecfc4ef5cffc9918a8cd32f21579a5fa9f932"
+        },
+        {
+          "path": "src/index.ts",
+          "sha256": "ae90d6cb599cca69414e7b2688d600597b80d03b13420afccb4178212c74743b"
+        },
+        {
+          "path": "src/orders.json",
+          "sha256": "db96fdc2bd8de3bd0e2f5e3e478bab0658705cd9cbb6e060a54454b61fb54c85"
+        },
+        {
+          "path": "src/tools.ts",
+          "sha256": "bd30895bd2041fead14058472f80f976e6702675235c97018d09fdad2e1dc809"
+        },
+        {
+          "path": "tsconfig.json",
+          "sha256": "4a1fe8a611430f39f2b16ecbb9c966222d20a64585dd5b7377e2da42679a925c"
+        },
+        {
+          "path": "CLAUDE.md",
+          "sha256": "71cd594de1577284a5ff40793e45d9f8e798d9d04658998f84e27ee1451d0ed4"
+        }
+      ],
+      "vars": [
+        "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+      ],
+      "secrets": [
+        "GEMINI_API_KEY"
+      ],
+      "brokered": [
+        "GEMINI_API_KEY"
+      ],
+      "unset": [],
+      "egress": "allow-all"
+    },
+    {
+      "name": "skill",
+      "parent": "control",
+      "overrides": [],
+      "digest": "sha256:e9431bf417939072b55400df65976cc9f3c02183838db4e20ea3784f7990b584",
+      "setup": [
+        "cp -r /opt/support-desk/node_modules .",
+        "genkit --non-interactive config set analyticsOptOut true",
+        "genkit --non-interactive docs:list js >/dev/null"
+      ],
+      "skills": [
+        {
+          "name": "developing-genkit-js",
+          "source": "github:genkit-ai/skills#d02d49da3a77687914715188d495999170bbf48b:skills",
+          "commit": "d02d49da3a77687914715188d495999170bbf48b",
+          "sha256": "c0b4c1b3f4a41780b6391820f6a208c653f26292a3e7c48a4c2df8748b2712c5",
+          "placement": "harness",
+          "excluded": []
+        }
+      ],
+      "mcp": [],
+      "files": [
+        {
+          "path": ".gitignore",
+          "sha256": "2324373b38e6a6e40c2533a3440dde4733c59a33d59dffb95f2a87564eadf8b1"
+        },
+        {
+          "path": "package-lock.json",
+          "sha256": "adef6f981124a1f92fe0a00ff1ab04045b798eea61263a3cdfa71a65d1d3b4e2"
+        },
+        {
+          "path": "package.json",
+          "sha256": "12829aa396015aca5c0fd8161b11c040acc5d5f0ffcbe8aaf34d2bf68a5bf1f9"
+        },
+        {
+          "path": "prompts/greet.prompt",
+          "sha256": "0e4330eab89a5d0443dac4ae3e0b948a7769e0ae7d6db72e4868065a6de587c4"
+        },
+        {
+          "path": "src/agents.ts",
+          "sha256": "8a8bbed0be0d55841e68867eb66c725db3844d8937e41023f7c9e26cbefbb23d"
+        },
+        {
+          "path": "src/ai.ts",
+          "sha256": "279503e1481fd36866447ad99e3c9062fcce1492337b420bc4b7cf5d5c1b665f"
+        },
+        {
+          "path": "src/db.ts",
+          "sha256": "f822166aef9e14bffb2a3259facfff3284ad56fa5aafdc9fcd819b5f8f89bca9"
+        },
+        {
+          "path": "src/flows.ts",
+          "sha256": "5e6bffefd47a06ff2e2f8aafbf8ecfc4ef5cffc9918a8cd32f21579a5fa9f932"
+        },
+        {
+          "path": "src/index.ts",
+          "sha256": "ae90d6cb599cca69414e7b2688d600597b80d03b13420afccb4178212c74743b"
+        },
+        {
+          "path": "src/orders.json",
+          "sha256": "db96fdc2bd8de3bd0e2f5e3e478bab0658705cd9cbb6e060a54454b61fb54c85"
+        },
+        {
+          "path": "src/tools.ts",
+          "sha256": "bd30895bd2041fead14058472f80f976e6702675235c97018d09fdad2e1dc809"
+        },
+        {
+          "path": "tsconfig.json",
+          "sha256": "4a1fe8a611430f39f2b16ecbb9c966222d20a64585dd5b7377e2da42679a925c"
+        }
+      ],
+      "vars": [
+        "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+      ],
+      "secrets": [
+        "GEMINI_API_KEY"
+      ],
+      "brokered": [
+        "GEMINI_API_KEY"
+      ],
+      "unset": [],
+      "egress": "allow-all"
+    }
+  ],
+  "profile": {
+    "name": "haiku",
+    "reason": "--profile",
+    "defaults": {},
+    "limit": {
+      "runs": 1,
+      "harness": [
+        "claude-code:claude-haiku-5-5"
+      ]
+    }
+  },
+  "plan": {
+    "evals": 1,
+    "cells": 4,
+    "attempts": 4,
+    "estimateMs": 720000,
+    "sandboxWarnings": []
+  },
+  "budget": null,
+  "config": {
+    "sandbox": "docker:evals",
+    "environment": null,
+    "runs": 1,
+    "judgeModel": "google/gemini-3.8-flash",
+    "threshold": 0.7,
+    "timeoutMs": 900000,
+    "concurrency": 8,
+    "configHash": "6e996b7d75077b3d2df75632f4c73eabeabb7ed432eb76af1e11ff5b70a93a8a"
+  },
+  "cost": {
+    "inputTokens": 823524,
+    "outputTokens": 9861,
+    "usage": {
+      "input": 48,
+      "output": 9861,
+      "cacheRead": 801642,
+      "cacheWrite": 21834,
+      "reasoning": null
+    },
+    "source": "reported"
+  },
+  "artifacts": "all",
+  "redaction": {
+    "version": 1
+  },
+  "summary": {
+    "evals": 1,
+    "attempts": 4,
+    "pass": 4,
+    "fail": 0,
+    "notGated": 0,
+    "infraError": 0,
+    "skipped": 0
+  },
+  "evals": [
+    {
+      "id": "evals/genkit.eval.ts › fixes a broken Genkit app: schema-drift",
+      "key": "evals/genkit.eval.ts › fixes a broken Genkit app: schema-drift",
+      "slug": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-schema-drift-6b0324",
+      "file": "evals/genkit.eval.ts",
+      "group": [],
+      "name": "fixes a broken Genkit app: schema-drift",
+      "tags": [],
+      "compare": {
+        "baseline": "control"
+      },
+      "family": {
+        "id": "evals/genkit.eval.ts › fixes a broken Genkit app: $name",
+        "name": "fixes a broken Genkit app: $name",
+        "case": 0,
+        "cases": 12
+      },
+      "fingerprint": "3b95900e05e16f50205a4b7315f44f59f19e74163a441ae7d1f33b8c46f7ad8d",
+      "sources": [
+        {
+          "path": "evals/bugs.ts",
+          "sha256": "f72309483927e05317eab0e669cebcbbf2a54a26f7df5c2a949f920994bb555b"
+        },
+        {
+          "path": "evals/environments.ts",
+          "sha256": "427c931b764296e1d9d4a231f6385a8f64feb15723c7cde453b00e26be3ed25d"
+        },
+        {
+          "path": "evals/genkit.eval.ts",
+          "sha256": "912594cd8659e8506c5df902e69abd0f55f94a34aea4fa134752a36c174a96b9"
+        }
+      ],
+      "outcome": "pass",
+      "todo": false,
+      "passRate": null,
+      "cells": [
+        {
+          "key": "claude-code:claude-haiku-5-5/control/docker:evals",
+          "harness": "claude-code:claude-haiku-5-5",
+          "environment": "control",
+          "sandbox": "docker:evals",
+          "role": "control",
+          "fingerprint": "c2d95e03291e983e0fb4d24da8a8a62252428f41dad6434b70ecae588cfbe233",
+          "fingerprintParts": {
+            "sources": "a074cd13739d16fc9df716ce80d40be54de851857c665a68d9646c111caab319",
+            "harness": "4b768d4b65c113409486c2017a7073fae803af0b378c7df7186df256cdc956dd",
+            "environment": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+            "image": "sha256:a56e1c8e17521f59f11064c0e9ae1d4155173ec39a355f1162c628528faeaadc",
+            "agentCli": "2.1.290 (Claude Code)",
+            "judge": "ac864c7c38fdd09373305392f2fc7a5f08e0adcb108c6cfef3280d4cbba6b81c",
+            "context": "d680a9af604b702351f33a2ce31b15296969758add41c64fb0a6166601be0556"
+          },
+          "environmentDigest": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+          "harnessKind": "claude-code",
+          "model": "claude-haiku-5-5",
+          "effort": null,
+          "gate": "none",
+          "overrides": [],
+          "runs": 1,
+          "pass": 1,
+          "fail": 0,
+          "infraError": 0,
+          "skipped": 0,
+          "passRate": 1,
+          "outcome": "pass",
+          "checks": [
+            {
+              "label": "names the cause",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "flow works",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "keeps the flow",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            }
+          ]
+        },
+        {
+          "key": "claude-code:claude-haiku-5-5/rules/docker:evals",
+          "harness": "claude-code:claude-haiku-5-5",
+          "environment": "rules",
+          "sandbox": "docker:evals",
+          "role": "variant",
+          "variant": "rules",
+          "fingerprint": "2d97154904bc2a7a48aa6811afdb7dac56db9383d321a5d83cd8a395be4685b2",
+          "fingerprintParts": {
+            "sources": "a074cd13739d16fc9df716ce80d40be54de851857c665a68d9646c111caab319",
+            "harness": "4b768d4b65c113409486c2017a7073fae803af0b378c7df7186df256cdc956dd",
+            "environment": "sha256:05001ec2ab40b87c634974d0d543eaec041d32cf554181fc685d3405d94f9c2d",
+            "image": "sha256:a56e1c8e17521f59f11064c0e9ae1d4155173ec39a355f1162c628528faeaadc",
+            "agentCli": "2.1.290 (Claude Code)",
+            "judge": "ac864c7c38fdd09373305392f2fc7a5f08e0adcb108c6cfef3280d4cbba6b81c",
+            "context": "07c230f6ff89db3f0a3b519aa8f68de3c7b04959da7614232694bd7bc416431f"
+          },
+          "environmentDigest": "sha256:05001ec2ab40b87c634974d0d543eaec041d32cf554181fc685d3405d94f9c2d",
+          "harnessKind": "claude-code",
+          "model": "claude-haiku-5-5",
+          "effort": null,
+          "gate": "none",
+          "overrides": [],
+          "runs": 1,
+          "pass": 1,
+          "fail": 0,
+          "infraError": 0,
+          "skipped": 0,
+          "passRate": 1,
+          "outcome": "pass",
+          "checks": [
+            {
+              "label": "names the cause",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            },
+            {
+              "label": "flow works",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            },
+            {
+              "label": "keeps the flow",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            }
+          ],
+          "lift": {
+            "vs": "claude-code:claude-haiku-5-5/control/docker:evals",
+            "control": {
+              "pass": 1,
+              "counted": 1
+            },
+            "variant": {
+              "pass": 1,
+              "counted": 1
+            },
+            "points": 0,
+            "interval": {
+              "lo": -0.793,
+              "hi": 0.793,
+              "level": 0.95,
+              "method": "newcombe-wilson"
+            },
+            "withinNoise": true
+          }
+        },
+        {
+          "key": "claude-code:claude-haiku-5-5/mcp/docker:evals",
+          "harness": "claude-code:claude-haiku-5-5",
+          "environment": "mcp",
+          "sandbox": "docker:evals",
+          "role": "variant",
+          "variant": "mcp",
+          "fingerprint": "380e310508fa71ceb729a7afbc1494073981011a9c95075cb00b6390a5caf99e",
+          "fingerprintParts": {
+            "sources": "a074cd13739d16fc9df716ce80d40be54de851857c665a68d9646c111caab319",
+            "harness": "4b768d4b65c113409486c2017a7073fae803af0b378c7df7186df256cdc956dd",
+            "environment": "sha256:327c8dea985822cb2ea82dfbcf1c4c8c3eb281c4c8e49276f3595bfdf88c2c36",
+            "image": "sha256:a56e1c8e17521f59f11064c0e9ae1d4155173ec39a355f1162c628528faeaadc",
+            "agentCli": "2.1.290 (Claude Code)",
+            "judge": "ac864c7c38fdd09373305392f2fc7a5f08e0adcb108c6cfef3280d4cbba6b81c",
+            "context": "07c230f6ff89db3f0a3b519aa8f68de3c7b04959da7614232694bd7bc416431f"
+          },
+          "environmentDigest": "sha256:327c8dea985822cb2ea82dfbcf1c4c8c3eb281c4c8e49276f3595bfdf88c2c36",
+          "harnessKind": "claude-code",
+          "model": "claude-haiku-5-5",
+          "effort": null,
+          "gate": "none",
+          "overrides": [],
+          "runs": 1,
+          "pass": 1,
+          "fail": 0,
+          "infraError": 0,
+          "skipped": 0,
+          "passRate": 1,
+          "outcome": "pass",
+          "checks": [
+            {
+              "label": "names the cause",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            },
+            {
+              "label": "flow works",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            },
+            {
+              "label": "keeps the flow",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            }
+          ],
+          "lift": {
+            "vs": "claude-code:claude-haiku-5-5/control/docker:evals",
+            "control": {
+              "pass": 1,
+              "counted": 1
+            },
+            "variant": {
+              "pass": 1,
+              "counted": 1
+            },
+            "points": 0,
+            "interval": {
+              "lo": -0.793,
+              "hi": 0.793,
+              "level": 0.95,
+              "method": "newcombe-wilson"
+            },
+            "withinNoise": true
+          }
+        },
+        {
+          "key": "claude-code:claude-haiku-5-5/skill/docker:evals",
+          "harness": "claude-code:claude-haiku-5-5",
+          "environment": "skill",
+          "sandbox": "docker:evals",
+          "role": "variant",
+          "variant": "skill",
+          "fingerprint": "87b528a9262d8856db4d521e93283160205d2b509a3e34d8a46786610a2c7486",
+          "fingerprintParts": {
+            "sources": "a074cd13739d16fc9df716ce80d40be54de851857c665a68d9646c111caab319",
+            "harness": "4b768d4b65c113409486c2017a7073fae803af0b378c7df7186df256cdc956dd",
+            "environment": "sha256:e9431bf417939072b55400df65976cc9f3c02183838db4e20ea3784f7990b584",
+            "image": "sha256:a56e1c8e17521f59f11064c0e9ae1d4155173ec39a355f1162c628528faeaadc",
+            "agentCli": "2.1.290 (Claude Code)",
+            "judge": "ac864c7c38fdd09373305392f2fc7a5f08e0adcb108c6cfef3280d4cbba6b81c",
+            "context": "f8058bee9b6511df2761515f4678bf5557ba25344f17ae49de1475f952ebc28a"
+          },
+          "environmentDigest": "sha256:e9431bf417939072b55400df65976cc9f3c02183838db4e20ea3784f7990b584",
+          "harnessKind": "claude-code",
+          "model": "claude-haiku-5-5",
+          "effort": null,
+          "gate": "none",
+          "overrides": [],
+          "runs": 1,
+          "pass": 1,
+          "fail": 0,
+          "infraError": 0,
+          "skipped": 0,
+          "passRate": 1,
+          "outcome": "pass",
+          "checks": [
+            {
+              "label": "names the cause",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            },
+            {
+              "label": "flow works",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            },
+            {
+              "label": "keeps the flow",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            }
+          ],
+          "lift": {
+            "vs": "claude-code:claude-haiku-5-5/control/docker:evals",
+            "control": {
+              "pass": 1,
+              "counted": 1
+            },
+            "variant": {
+              "pass": 1,
+              "counted": 1
+            },
+            "points": 0,
+            "interval": {
+              "lo": -0.793,
+              "hi": 0.793,
+              "level": 0.95,
+              "method": "newcombe-wilson"
+            },
+            "withinNoise": true
+          }
+        }
+      ],
+      "attempts": [
+        {
+          "key": "evals/genkit.eval.ts › fixes a broken Genkit app: schema-drift # claude-code:claude-haiku-5-5/control/docker:evals#1",
+          "id": "claude-code:claude-haiku-5-5/control/docker:evals#1",
+          "cell": "claude-code:claude-haiku-5-5/control/docker:evals",
+          "n": 1,
+          "seq": 1,
+          "startedAt": "2026-10-20T13:49:13.226Z",
+          "imageId": "sha256:a56e1c8e17521f59f11064c0e9ae1d4155173ec39a355f1162c628528faeaadc",
+          "env": {
+            "vars": [
+              "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+            ],
+            "secrets": [
+              "GEMINI_API_KEY"
+            ],
+            "brokered": [
+              "GEMINI_API_KEY"
+            ]
+          },
+          "context": [
+            {
+              "path": "~/.claude/skills/.ai-sdk-harness-skills.json",
+              "sha256": "5ddf48ce4d7015c17873d3c8b1c02e421c433763e17d96c4ef377bbddabb44fe"
+            }
+          ],
+          "egress": {
+            "policy": "allow-all",
+            "allowed": null,
+            "recorded": true,
+            "contacted": [
+              {
+                "host": "api.anthropic.com",
+                "port": 443,
+                "connections": 3,
+                "sent": 589394,
+                "received": 41777
+              },
+              {
+                "host": "generativelanguage.googleapis.com",
+                "port": 443,
+                "connections": 1,
+                "sent": 3166,
+                "received": 4387
+              },
+              {
+                "host": "genkit.dev",
+                "port": 443,
+                "connections": 1,
+                "sent": 1958,
+                "received": 460481
+              },
+              {
+                "host": "registry.npmjs.org",
+                "port": 443,
+                "connections": 1,
+                "sent": 2192,
+                "received": 303666
+              }
+            ],
+            "blocked": [],
+            "expectedBlocked": []
+          },
+          "servedModels": null,
+          "effort": null,
+          "servedEffort": null,
+          "outcome": "pass",
+          "error": null,
+          "durationMs": 33731,
+          "turns": [
+            {
+              "prompt": "You are on the support-desk Genkit app in this directory. Bug report: Since this week summarizeTicket returns the tags as one comma-separated string such as \"shipping, damage\" instead of a list of tags. The triage dashboard reads tags as a list and now shows nothing. It happens for every ticket, for example one about a cracked monitor that arrived damaged.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+              "status": "completed",
+              "startedAt": "2026-10-20T13:49:18.662Z",
+              "durationMs": 21392,
+              "usage": {
+                "input": 12,
+                "output": 2437,
+                "cacheRead": 183699,
+                "cacheWrite": 5134,
+                "reasoning": null
+              },
+              "model": "claude-haiku-5-5",
+              "unreported": [],
+              "error": null,
+              "text": "The root cause is in `src/flows.ts` line 8: the `TicketSummarySchema` declared `tags` as `z.string()` with a description asking for comma-separated text, so `summarizeTicket` returned one string. I changed it to `z.array(z.string()).describe('Up to three lowercase topic tags')`. The type check passes, but I did not run the flow against the model. `answer.json` is written to the project root, and `package.json` is unchanged."
+            }
+          ],
+          "usage": {
+            "input": 12,
+            "output": 2437,
+            "cacheRead": 183699,
+            "cacheWrite": 5134,
+            "reasoning": null
+          },
+          "timings": {
+            "setupMs": 5283,
+            "agentMs": 21393,
+            "diffMs": 102,
+            "checksMs": 2021,
+            "judgeMs": 4039
+          },
+          "activity": {
+            "tools": 4,
+            "fileEdits": 2,
+            "webSearches": 0,
+            "webFetches": 0,
+            "reasoningMs": 11007
+          },
+          "judgements": [
+            {
+              "verdict": "fail",
+              "score": 0,
+              "threshold": 0.7,
+              "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+              "model": "google/gemini-3.8-flash",
+              "resolvedModel": "gemini-3.8-flash",
+              "key": "0:32a297b09106"
+            },
+            {
+              "verdict": "pass",
+              "score": 1,
+              "threshold": 0.7,
+              "question": "Does the agent's final message accurately describe the change it made?",
+              "model": "google/gemini-3.8-flash",
+              "resolvedModel": "gemini-3.8-flash",
+              "key": "1:f4a285891d47"
+            }
+          ],
+          "assertions": [
+            {
+              "label": "names the cause",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            },
+            {
+              "label": "flow works",
+              "labelled": true,
+              "matcher": "toSucceed",
+              "status": "pass",
+              "soft": true,
+              "durationMs": 2021
+            },
+            {
+              "label": "keeps the flow",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            }
+          ],
+          "checks": [
+            {
+              "command": "node_modules/.bin/tsx --test --test-name-pattern '^schema-drift$' ~/.verify.mts",
+              "exitCode": 0,
+              "durationMs": 2021,
+              "log": {
+                "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-schema-drift-6b0324/claude-code-claude-haiku-5-5-control-docker-evals-dc9dee/1/checks/1.log",
+                "sha256": "57664e89ae490a1fe581ace6122b79196915f477692922ab4204ee87703cee6e",
+                "bytes": 1045
+              }
+            }
+          ],
+          "changedFiles": [
+            {
+              "path": "answer.json",
+              "status": "added"
+            },
+            {
+              "path": "src/flows.ts",
+              "status": "modified"
+            }
+          ],
+          "files": {
+            "setupLog": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-schema-drift-6b0324/claude-code-claude-haiku-5-5-control-docker-evals-dc9dee/1/setup.log",
+              "sha256": "e946949232375fe97d2e8526b51357d033bf35e239dc71f2737e9ca4288d5f13",
+              "bytes": 599
+            },
+            "transcript": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-schema-drift-6b0324/claude-code-claude-haiku-5-5-control-docker-evals-dc9dee/1/transcript.jsonl",
+              "sha256": "6f171935e6f6de83b2c21891bbd0891086750c49e22277169e9b1039e361be44",
+              "bytes": 12541
+            },
+            "diff": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-schema-drift-6b0324/claude-code-claude-haiku-5-5-control-docker-evals-dc9dee/1/diff.patch",
+              "sha256": "4877e34e1989bbf48a5f28b2263f976ffcd6853cb112153e7802c7f2e14ab31b",
+              "bytes": 1561
+            },
+            "judgeInput": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-schema-drift-6b0324/claude-code-claude-haiku-5-5-control-docker-evals-dc9dee/1/judge-input.json",
+              "sha256": "a67358332894af9c34c697f1552afe0b2cd6d6f49e6791d0725360ee889c1a08",
+              "bytes": 7106
+            }
+          }
+        },
+        {
+          "key": "evals/genkit.eval.ts › fixes a broken Genkit app: schema-drift # claude-code:claude-haiku-5-5/rules/docker:evals#1",
+          "id": "claude-code:claude-haiku-5-5/rules/docker:evals#1",
+          "cell": "claude-code:claude-haiku-5-5/rules/docker:evals",
+          "n": 1,
+          "seq": 2,
+          "startedAt": "2026-10-20T13:49:13.238Z",
+          "imageId": "sha256:a56e1c8e17521f59f11064c0e9ae1d4155173ec39a355f1162c628528faeaadc",
+          "env": {
+            "vars": [
+              "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+            ],
+            "secrets": [
+              "GEMINI_API_KEY"
+            ],
+            "brokered": [
+              "GEMINI_API_KEY"
+            ]
+          },
+          "context": [
+            {
+              "path": "~/.claude/skills/.ai-sdk-harness-skills.json",
+              "sha256": "5ddf48ce4d7015c17873d3c8b1c02e421c433763e17d96c4ef377bbddabb44fe"
+            },
+            {
+              "path": "CLAUDE.md",
+              "sha256": "71cd594de1577284a5ff40793e45d9f8e798d9d04658998f84e27ee1451d0ed4"
+            }
+          ],
+          "egress": {
+            "policy": "allow-all",
+            "allowed": null,
+            "recorded": true,
+            "contacted": [
+              {
+                "host": "api.anthropic.com",
+                "port": 443,
+                "connections": 3,
+                "sent": 786460,
+                "received": 46195
+              },
+              {
+                "host": "generativelanguage.googleapis.com",
+                "port": 443,
+                "connections": 1,
+                "sent": 3166,
+                "received": 4371
+              },
+              {
+                "host": "genkit.dev",
+                "port": 443,
+                "connections": 1,
+                "sent": 1958,
+                "received": 460217
+              }
+            ],
+            "blocked": [],
+            "expectedBlocked": []
+          },
+          "servedModels": null,
+          "effort": null,
+          "servedEffort": null,
+          "outcome": "pass",
+          "error": null,
+          "durationMs": 41434,
+          "turns": [
+            {
+              "prompt": "You are on the support-desk Genkit app in this directory. Bug report: Since this week summarizeTicket returns the tags as one comma-separated string such as \"shipping, damage\" instead of a list of tags. The triage dashboard reads tags as a list and now shows nothing. It happens for every ticket, for example one about a cracked monitor that arrived damaged.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+              "status": "completed",
+              "startedAt": "2026-10-20T13:49:18.667Z",
+              "durationMs": 25630,
+              "usage": {
+                "input": 14,
+                "output": 2757,
+                "cacheRead": 249182,
+                "cacheWrite": 5620,
+                "reasoning": null
+              },
+              "model": "claude-haiku-5-5",
+              "unreported": [],
+              "error": null,
+              "text": "The bug was in the `summarizeTicket` output schema: `tags` was declared as a plain string, so the model returned one comma-joined string instead of a list. I changed it to `z.array(z.string())` in `src/flows.ts:8` and dropped \"comma separated\" from the description so the model isn't told to emit a string. The project typechecks cleanly, and I wrote `answer.json` to the project root. I did not call the live model, so the end-to-end output is unverified."
+            }
+          ],
+          "usage": {
+            "input": 14,
+            "output": 2757,
+            "cacheRead": 249182,
+            "cacheWrite": 5620,
+            "reasoning": null
+          },
+          "timings": {
+            "setupMs": 5273,
+            "agentMs": 25629,
+            "diffMs": 123,
+            "checksMs": 2780,
+            "judgeMs": 6670
+          },
+          "activity": {
+            "tools": 4,
+            "fileEdits": 2,
+            "webSearches": 0,
+            "webFetches": 0,
+            "reasoningMs": 10419
+          },
+          "judgements": [
+            {
+              "verdict": "fail",
+              "score": 0,
+              "threshold": 0.7,
+              "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+              "model": "google/gemini-3.8-flash",
+              "resolvedModel": "gemini-3.8-flash",
+              "key": "0:32a297b09106"
+            },
+            {
+              "verdict": "pass",
+              "score": 1,
+              "threshold": 0.7,
+              "question": "Does the agent's final message accurately describe the change it made?",
+              "model": "google/gemini-3.8-flash",
+              "resolvedModel": "gemini-3.8-flash",
+              "key": "1:f4a285891d47"
+            }
+          ],
+          "assertions": [
+            {
+              "label": "names the cause",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            },
+            {
+              "label": "flow works",
+              "labelled": true,
+              "matcher": "toSucceed",
+              "status": "pass",
+              "soft": true,
+              "durationMs": 2778
+            },
+            {
+              "label": "keeps the flow",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            }
+          ],
+          "checks": [
+            {
+              "command": "node_modules/.bin/tsx --test --test-name-pattern '^schema-drift$' ~/.verify.mts",
+              "exitCode": 0,
+              "durationMs": 2780,
+              "log": {
+                "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-schema-drift-6b0324/claude-code-claude-haiku-5-5-rules-docker-evals-0b6f56/1/checks/1.log",
+                "sha256": "aeb2733dfbd5ca72b8c70118eaf14743743dc89e4e109e04434c30a5d5a849e4",
+                "bytes": 1045
+              }
+            }
+          ],
+          "changedFiles": [
+            {
+              "path": "answer.json",
+              "status": "added"
+            },
+            {
+              "path": "src/flows.ts",
+              "status": "modified"
+            }
+          ],
+          "files": {
+            "setupLog": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-schema-drift-6b0324/claude-code-claude-haiku-5-5-rules-docker-evals-0b6f56/1/setup.log",
+              "sha256": "3cf9a3f1c3054d78b09c3a8ba545acb900e8d319c9c23706a2444ef0d1f36950",
+              "bytes": 599
+            },
+            "transcript": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-schema-drift-6b0324/claude-code-claude-haiku-5-5-rules-docker-evals-0b6f56/1/transcript.jsonl",
+              "sha256": "608656ce465b37d9b97cbff15911d645c7c548d1ad8923b891c8e68aafc54498",
+              "bytes": 13498
+            },
+            "diff": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-schema-drift-6b0324/claude-code-claude-haiku-5-5-rules-docker-evals-0b6f56/1/diff.patch",
+              "sha256": "04abe4847786c52dba59132fa6313430ee06b2a036605f73870550c31c6e5c27",
+              "bytes": 1522
+            },
+            "judgeInput": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-schema-drift-6b0324/claude-code-claude-haiku-5-5-rules-docker-evals-0b6f56/1/judge-input.json",
+              "sha256": "6066814b300269abc22ae5235346c02b99240878d7238bbc7b206c392a1f29e0",
+              "bytes": 7120
+            }
+          }
+        },
+        {
+          "key": "evals/genkit.eval.ts › fixes a broken Genkit app: schema-drift # claude-code:claude-haiku-5-5/mcp/docker:evals#1",
+          "id": "claude-code:claude-haiku-5-5/mcp/docker:evals#1",
+          "cell": "claude-code:claude-haiku-5-5/mcp/docker:evals",
+          "n": 1,
+          "seq": 3,
+          "startedAt": "2026-10-20T13:49:13.241Z",
+          "imageId": "sha256:a56e1c8e17521f59f11064c0e9ae1d4155173ec39a355f1162c628528faeaadc",
+          "env": {
+            "vars": [
+              "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+            ],
+            "secrets": [
+              "GEMINI_API_KEY"
+            ],
+            "brokered": [
+              "GEMINI_API_KEY"
+            ]
+          },
+          "context": [
+            {
+              "path": "~/.claude/skills/.ai-sdk-harness-skills.json",
+              "sha256": "5ddf48ce4d7015c17873d3c8b1c02e421c433763e17d96c4ef377bbddabb44fe"
+            },
+            {
+              "path": "CLAUDE.md",
+              "sha256": "71cd594de1577284a5ff40793e45d9f8e798d9d04658998f84e27ee1451d0ed4"
+            }
+          ],
+          "egress": {
+            "policy": "allow-all",
+            "allowed": null,
+            "recorded": true,
+            "contacted": [
+              {
+                "host": "api.anthropic.com",
+                "port": 443,
+                "connections": 3,
+                "sent": 675016,
+                "received": 41929
+              },
+              {
+                "host": "generativelanguage.googleapis.com",
+                "port": 443,
+                "connections": 1,
+                "sent": 3166,
+                "received": 4382
+              },
+              {
+                "host": "genkit.dev",
+                "port": 443,
+                "connections": 1,
+                "sent": 1958,
+                "received": 460217
+              },
+              {
+                "host": "registry.npmjs.org",
+                "port": 443,
+                "connections": 1,
+                "sent": 2192,
+                "received": 303624
+              }
+            ],
+            "blocked": [],
+            "expectedBlocked": []
+          },
+          "servedModels": null,
+          "effort": null,
+          "servedEffort": null,
+          "outcome": "pass",
+          "error": null,
+          "durationMs": 33704,
+          "turns": [
+            {
+              "prompt": "You are on the support-desk Genkit app in this directory. Bug report: Since this week summarizeTicket returns the tags as one comma-separated string such as \"shipping, damage\" instead of a list of tags. The triage dashboard reads tags as a list and now shows nothing. It happens for every ticket, for example one about a cracked monitor that arrived damaged.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+              "status": "completed",
+              "startedAt": "2026-10-20T13:49:18.665Z",
+              "durationMs": 20431,
+              "usage": {
+                "input": 12,
+                "output": 2611,
+                "cacheRead": 215568,
+                "cacheWrite": 6150,
+                "reasoning": null
+              },
+              "model": null,
+              "unreported": [],
+              "error": null,
+              "text": "The root cause is in `src/flows.ts`: the `TicketSummarySchema` declared `tags` as a single comma-separated `z.string()`, so `summarizeTicket` returned a string instead of a list. I changed it to `z.array(z.string())`, and the project type-checks cleanly. `answer.json` is written to the project root. I did not run the flow against the model, so the fix is confirmed by the schema change and the type check only."
+            }
+          ],
+          "usage": {
+            "input": 12,
+            "output": 2611,
+            "cacheRead": 215568,
+            "cacheWrite": 6150,
+            "reasoning": null
+          },
+          "timings": {
+            "setupMs": 5270,
+            "agentMs": 20431,
+            "diffMs": 121,
+            "checksMs": 2070,
+            "judgeMs": 4804
+          },
+          "activity": {
+            "tools": 5,
+            "fileEdits": 2,
+            "webSearches": 0,
+            "webFetches": 0,
+            "reasoningMs": 9051
+          },
+          "judgements": [
+            {
+              "verdict": "fail",
+              "score": 0,
+              "threshold": 0.7,
+              "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+              "model": "google/gemini-3.8-flash",
+              "resolvedModel": "gemini-3.8-flash",
+              "key": "0:32a297b09106"
+            },
+            {
+              "verdict": "pass",
+              "score": 1,
+              "threshold": 0.7,
+              "question": "Does the agent's final message accurately describe the change it made?",
+              "model": "google/gemini-3.8-flash",
+              "resolvedModel": "gemini-3.8-flash",
+              "key": "1:f4a285891d47"
+            }
+          ],
+          "assertions": [
+            {
+              "label": "names the cause",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            },
+            {
+              "label": "flow works",
+              "labelled": true,
+              "matcher": "toSucceed",
+              "status": "pass",
+              "soft": true,
+              "durationMs": 2069
+            },
+            {
+              "label": "keeps the flow",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            }
+          ],
+          "checks": [
+            {
+              "command": "node_modules/.bin/tsx --test --test-name-pattern '^schema-drift$' ~/.verify.mts",
+              "exitCode": 0,
+              "durationMs": 2070,
+              "log": {
+                "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-schema-drift-6b0324/claude-code-claude-haiku-5-5-mcp-docker-evals-18e3ce/1/checks/1.log",
+                "sha256": "e106d693f0545a6a04f0412932d018e9825485e7200bd53065b94579eea05b32",
+                "bytes": 1045
+              }
+            }
+          ],
+          "changedFiles": [
+            {
+              "path": "answer.json",
+              "status": "added"
+            },
+            {
+              "path": "src/flows.ts",
+              "status": "modified"
+            }
+          ],
+          "files": {
+            "setupLog": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-schema-drift-6b0324/claude-code-claude-haiku-5-5-mcp-docker-evals-18e3ce/1/setup.log",
+              "sha256": "93c6dd3f94a28fcee7758983010399cd8a0c227a54fb711b10dfa37942f15252",
+              "bytes": 599
+            },
+            "transcript": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-schema-drift-6b0324/claude-code-claude-haiku-5-5-mcp-docker-evals-18e3ce/1/transcript.jsonl",
+              "sha256": "3579ab4efed607bdc78b6ff36df408f89cb395a827083bceeb67875c57e370a6",
+              "bytes": 13699
+            },
+            "diff": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-schema-drift-6b0324/claude-code-claude-haiku-5-5-mcp-docker-evals-18e3ce/1/diff.patch",
+              "sha256": "8ea01e6347ae6ca630ab69b80da11031365d4bdf2a9c609b63155aae445dac9e",
+              "bytes": 1317
+            },
+            "judgeInput": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-schema-drift-6b0324/claude-code-claude-haiku-5-5-mcp-docker-evals-18e3ce/1/judge-input.json",
+              "sha256": "f39264b08eab7e18dca5d4c9560d9cf1c3ff2fda32ad99b08af08674189efaea",
+              "bytes": 7323
+            }
+          }
+        },
+        {
+          "key": "evals/genkit.eval.ts › fixes a broken Genkit app: schema-drift # claude-code:claude-haiku-5-5/skill/docker:evals#1",
+          "id": "claude-code:claude-haiku-5-5/skill/docker:evals#1",
+          "cell": "claude-code:claude-haiku-5-5/skill/docker:evals",
+          "n": 1,
+          "seq": 4,
+          "startedAt": "2026-10-20T13:49:13.243Z",
+          "imageId": "sha256:a56e1c8e17521f59f11064c0e9ae1d4155173ec39a355f1162c628528faeaadc",
+          "env": {
+            "vars": [
+              "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+            ],
+            "secrets": [
+              "GEMINI_API_KEY"
+            ],
+            "brokered": [
+              "GEMINI_API_KEY"
+            ]
+          },
+          "context": [
+            {
+              "path": "~/.claude/skills/.ai-sdk-harness-skills.json",
+              "sha256": "f9d7052cdb988ff2cfe540c4e225123beb54f92f02af503cfe05af787be6781f"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-js/SKILL.md",
+              "sha256": "a73e7c330ebea2a848f0e129e98d6c14cb49be6f4b846cbb6106737b573de2f5"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-js/references/a2ui.md",
+              "sha256": "ea18fea07663fe865ca2067d9f31bdf5c2b20f4f10f95fc91af2a9acbfc2716e"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-js/references/agents-artifacts.md",
+              "sha256": "0491c5b37eda7d47850e29c97e0502a2d2077d6c149a1e2ffc48da93e1379019"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-js/references/agents-background.md",
+              "sha256": "39db50da36ec4927a144a9877c2f33ed2eba5858c7f28d900e0610cbf34a0572"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-js/references/agents-branching.md",
+              "sha256": "cc34a1653ab672a166af428532fe096101cfbd2df619971a934f0544412e4aa9"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-js/references/agents-custom.md",
+              "sha256": "3642e5cb774161f13c7b8b8f5931525c5fdc4e80ff813cd2d8d82ab1560bdb0d"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-js/references/agents-deployment.md",
+              "sha256": "fd362d8d7708fecbb749f586bca6d56e45902acd91686e31f62b5c0351686b78"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-js/references/agents-human-in-the-loop.md",
+              "sha256": "fc7dbd225edac863ea43ab8ebaa75ab3f6127c2eec95eda0a1273b4b22757d0a"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-js/references/agents-multi-agent.md",
+              "sha256": "d3dcf5c00ab8a27d728eaeff6528c105862c7289f3275eafe5706948a3077b77"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-js/references/agents-sessions.md",
+              "sha256": "21ab836bbe5d9d74ae203a23136515e0741f2ec59f07df88c9d7edaece8d828e"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-js/references/agents-state.md",
+              "sha256": "0a700770483e09d668a67239dd0caa563857829e6a6901a14cbcd273dde6d8c1"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-js/references/agents.md",
+              "sha256": "18277cecac28bf52c6c0d1c56a894f6c2b24f1dd27556ec3f9a2b2ace9bed819"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-js/references/best-practices.md",
+              "sha256": "27ba9ce26813dc44c27bcab072c9bf54a2b7d4134dcd51d400a800a79f9b1f7a"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-js/references/common-errors.md",
+              "sha256": "fa6d8d108d6e9550bcbd53aaa16caf5387e6dc2375b86d9c4ac3c9faecd21862"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-js/references/docs-and-cli.md",
+              "sha256": "0b2cccd50816d2838210d631ae5bbf91a5d117374e20ab39daa781690c49dc86"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-js/references/dotprompt.md",
+              "sha256": "77b60b2e16cc8077e33ec0071be5c493c575fda153c9bee80f1dfc322396f921"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-js/references/examples.md",
+              "sha256": "7973a3b8510ff4f4494c41d82607e8c1fc5ab2794d8a139f376bd42187499aa0"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-js/references/middleware-custom.md",
+              "sha256": "540b58e84ff2b7fe2200a65a1a3699a569c67f1900b22d224cedd648fecbbbfa"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-js/references/middleware.md",
+              "sha256": "920f8e93e71eb3d44b76a1f527061d2950dbe3900a229194c091eeb54b39b76b"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-js/references/setup.md",
+              "sha256": "87e7e012ea72edb0fed1bb7d3e497921f2c54add7a154a3aa4dfad69fccc1759"
+            }
+          ],
+          "egress": {
+            "policy": "allow-all",
+            "allowed": null,
+            "recorded": true,
+            "contacted": [
+              {
+                "host": "api.anthropic.com",
+                "port": 443,
+                "connections": 3,
+                "sent": 486909,
+                "received": 35905
+              },
+              {
+                "host": "generativelanguage.googleapis.com",
+                "port": 443,
+                "connections": 1,
+                "sent": 3166,
+                "received": 4384
+              },
+              {
+                "host": "genkit.dev",
+                "port": 443,
+                "connections": 1,
+                "sent": 1958,
+                "received": 460217
+              }
+            ],
+            "blocked": [],
+            "expectedBlocked": []
+          },
+          "servedModels": null,
+          "effort": null,
+          "servedEffort": null,
+          "outcome": "pass",
+          "error": null,
+          "durationMs": 29934,
+          "turns": [
+            {
+              "prompt": "You are on the support-desk Genkit app in this directory. Bug report: Since this week summarizeTicket returns the tags as one comma-separated string such as \"shipping, damage\" instead of a list of tags. The triage dashboard reads tags as a list and now shows nothing. It happens for every ticket, for example one about a cracked monitor that arrived damaged.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+              "status": "completed",
+              "startedAt": "2026-10-20T13:49:18.980Z",
+              "durationMs": 15206,
+              "usage": {
+                "input": 10,
+                "output": 2056,
+                "cacheRead": 153193,
+                "cacheWrite": 4930,
+                "reasoning": null
+              },
+              "model": "claude-haiku-5-5",
+              "unreported": [],
+              "error": null,
+              "text": "The root cause is in the output schema for `summarizeTicket`: `tags` was declared as `z.string()` with a description asking for comma-separated text, so the model returns one string like `\"shipping, damage\"`. I changed it to `z.array(z.string())` in `src/flows.ts` (line 8) and dropped the comma instruction from the description. `tsc --noEmit` passes. I did not run the flow against the live model, so the fix is verified statically only.\n\n`answer.json` is written to the project root with the file, the replaced line, the cause, and the evidence. No changes to `package.json` or dependencies."
+            }
+          ],
+          "usage": {
+            "input": 10,
+            "output": 2056,
+            "cacheRead": 153193,
+            "cacheWrite": 4930,
+            "reasoning": null
+          },
+          "timings": {
+            "setupMs": 5602,
+            "agentMs": 15206,
+            "diffMs": 112,
+            "checksMs": 2066,
+            "judgeMs": 6013
+          },
+          "activity": {
+            "tools": 4,
+            "fileEdits": 2,
+            "webSearches": 0,
+            "webFetches": 0,
+            "reasoningMs": 5797
+          },
+          "judgements": [
+            {
+              "verdict": "fail",
+              "score": 0,
+              "threshold": 0.7,
+              "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+              "model": "google/gemini-3.8-flash",
+              "resolvedModel": "gemini-3.8-flash",
+              "key": "0:32a297b09106"
+            },
+            {
+              "verdict": "pass",
+              "score": 1,
+              "threshold": 0.7,
+              "question": "Does the agent's final message accurately describe the change it made?",
+              "model": "google/gemini-3.8-flash",
+              "resolvedModel": "gemini-3.8-flash",
+              "key": "1:f4a285891d47"
+            }
+          ],
+          "assertions": [
+            {
+              "label": "names the cause",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            },
+            {
+              "label": "flow works",
+              "labelled": true,
+              "matcher": "toSucceed",
+              "status": "pass",
+              "soft": true,
+              "durationMs": 2066
+            },
+            {
+              "label": "keeps the flow",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            }
+          ],
+          "checks": [
+            {
+              "command": "node_modules/.bin/tsx --test --test-name-pattern '^schema-drift$' ~/.verify.mts",
+              "exitCode": 0,
+              "durationMs": 2066,
+              "log": {
+                "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-schema-drift-6b0324/claude-code-claude-haiku-5-5-skill-docker-evals-af3db5/1/checks/1.log",
+                "sha256": "4577691f9757f829e7bc508e3c5622c5faf8db21f8d316da4f1a2953bdd9f83d",
+                "bytes": 1045
+              }
+            }
+          ],
+          "changedFiles": [
+            {
+              "path": "answer.json",
+              "status": "added"
+            },
+            {
+              "path": "src/flows.ts",
+              "status": "modified"
+            }
+          ],
+          "files": {
+            "setupLog": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-schema-drift-6b0324/claude-code-claude-haiku-5-5-skill-docker-evals-af3db5/1/setup.log",
+              "sha256": "e03fd23d4f151b0e2a1854b0294290387d5daa412b589b4749bfb2dd3cf174cd",
+              "bytes": 599
+            },
+            "transcript": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-schema-drift-6b0324/claude-code-claude-haiku-5-5-skill-docker-evals-af3db5/1/transcript.jsonl",
+              "sha256": "61552f1331e5c5e47adbfbf484bf937496acf9b198514bd14baf332541bc041d",
+              "bytes": 11391
+            },
+            "diff": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-schema-drift-6b0324/claude-code-claude-haiku-5-5-skill-docker-evals-af3db5/1/diff.patch",
+              "sha256": "88b7aab67de4d041cfbb0c91c6c193343b8132a4f7964ef909c9c4439aee7abc",
+              "bytes": 1465
+            },
+            "judgeInput": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-schema-drift-6b0324/claude-code-claude-haiku-5-5-skill-docker-evals-af3db5/1/judge-input.json",
+              "sha256": "7c930c50aafb463f2567126d2279cc412c227d801e7400e78bc6f9544f8363d1",
+              "bytes": 7147
+            }
+          }
+        }
+      ],
+      "answers": [
+        {
+          "question": "Which attempt's answer.json evidence describes something observed by running the app (an output, an error, a trace) rather than inferred from reading the code?",
+          "model": "google/gemini-3.8-flash",
+          "resolvedModel": "gemini-3.8-flash",
+          "votes": [
+            {
+              "question": "Which attempt's answer.json evidence describes something observed by running the app (an output, an error, a trace) rather than inferred from reading the code?",
+              "cut": "within",
+              "harness": "claude-code:claude-haiku-5-5",
+              "run": 1,
+              "a": "control",
+              "b": "mcp",
+              "winner": "tie",
+              "swapped": false,
+              "reason": "Neither attempt's evidence describes observations from running the app. Both infer the cause by inspecting the source code, and Attempt A explicitly notes that it did not run the flow."
+            },
+            {
+              "question": "Which attempt's answer.json evidence describes something observed by running the app (an output, an error, a trace) rather than inferred from reading the code?",
+              "cut": "within",
+              "harness": "claude-code:claude-haiku-5-5",
+              "run": 1,
+              "a": "control",
+              "b": "mcp",
+              "winner": "tie",
+              "swapped": true,
+              "reason": "Neither attempt ran the app to observe its output, an error, or an execution trace. Both inferred the root cause purely by inspecting the code, and Attempt B explicitly notes that it did not run the…"
+            },
+            {
+              "question": "Which attempt's answer.json evidence describes something observed by running the app (an output, an error, a trace) rather than inferred from reading the code?",
+              "cut": "within",
+              "harness": "claude-code:claude-haiku-5-5",
+              "run": 1,
+              "a": "control",
+              "b": "rules",
+              "winner": "tie",
+              "swapped": false,
+              "reason": "Neither attempt observed output, errors, or traces from running the app; both inferred the root cause by reading the code and explicitly noted in their evidence that they did not run the flow…"
+            },
+            {
+              "question": "Which attempt's answer.json evidence describes something observed by running the app (an output, an error, a trace) rather than inferred from reading the code?",
+              "cut": "within",
+              "harness": "claude-code:claude-haiku-5-5",
+              "run": 1,
+              "a": "control",
+              "b": "rules",
+              "winner": "tie",
+              "swapped": true,
+              "reason": "Neither attempt observed evidence by running the app; both inferred the cause by reading the code and running static type checking (`tsc --noEmit`), explicitly noting they did not run the app…"
+            },
+            {
+              "question": "Which attempt's answer.json evidence describes something observed by running the app (an output, an error, a trace) rather than inferred from reading the code?",
+              "cut": "within",
+              "harness": "claude-code:claude-haiku-5-5",
+              "run": 1,
+              "a": "control",
+              "b": "skill",
+              "winner": "tie",
+              "swapped": false,
+              "reason": "Neither attempt describes anything observed by running the app; in fact, both explicitly state in their evidence that they did not run the flow against the model."
+            },
+            {
+              "question": "Which attempt's answer.json evidence describes something observed by running the app (an output, an error, a trace) rather than inferred from reading the code?",
+              "cut": "within",
+              "harness": "claude-code:claude-haiku-5-5",
+              "run": 1,
+              "a": "control",
+              "b": "skill",
+              "winner": "tie",
+              "swapped": true,
+              "reason": "Neither attempt ran the app; both inferred the root cause from reading the code, ran only TypeScript typechecks (`tsc --noEmit`), and explicitly noted in their evidence that they did not run the…"
+            },
+            {
+              "question": "Which attempt's answer.json evidence describes something observed by running the app (an output, an error, a trace) rather than inferred from reading the code?",
+              "cut": "within",
+              "harness": "claude-code:claude-haiku-5-5",
+              "run": 1,
+              "a": "mcp",
+              "b": "rules",
+              "winner": "tie",
+              "swapped": false,
+              "reason": "Neither attempt provides evidence observed from running the application (such as runtime output, an error, or a trace). Both inferred the cause strictly by inspecting the code, and Attempt B…"
+            },
+            {
+              "question": "Which attempt's answer.json evidence describes something observed by running the app (an output, an error, a trace) rather than inferred from reading the code?",
+              "cut": "within",
+              "harness": "claude-code:claude-haiku-5-5",
+              "run": 1,
+              "a": "mcp",
+              "b": "rules",
+              "winner": "tie",
+              "swapped": true,
+              "reason": "Neither attempt's evidence describes observations from running the app (such as runtime output, an error, or a trace). Both rely on static code inspection, and Attempt A explicitly notes that it did…"
+            },
+            {
+              "question": "Which attempt's answer.json evidence describes something observed by running the app (an output, an error, a trace) rather than inferred from reading the code?",
+              "cut": "within",
+              "harness": "claude-code:claude-haiku-5-5",
+              "run": 1,
+              "a": "mcp",
+              "b": "skill",
+              "winner": "tie",
+              "swapped": false,
+              "reason": "Neither attempt's evidence describes an observation from running the application (such as an execution output, error, or trace); both deduce the cause by reading the code, and attempt B explicitly…"
+            },
+            {
+              "question": "Which attempt's answer.json evidence describes something observed by running the app (an output, an error, a trace) rather than inferred from reading the code?",
+              "cut": "within",
+              "harness": "claude-code:claude-haiku-5-5",
+              "run": 1,
+              "a": "mcp",
+              "b": "skill",
+              "winner": "tie",
+              "swapped": true,
+              "reason": "Neither attempt ran the app to observe runtime output, traces, or errors; both inferred the cause entirely by reading the code (with Attempt A explicitly noting that it did not run the flow)."
+            },
+            {
+              "question": "Which attempt's answer.json evidence describes something observed by running the app (an output, an error, a trace) rather than inferred from reading the code?",
+              "cut": "within",
+              "harness": "claude-code:claude-haiku-5-5",
+              "run": 1,
+              "a": "rules",
+              "b": "skill",
+              "winner": "tie",
+              "swapped": false,
+              "reason": "Neither attempt ran the app; both inferred the cause by reading the code and running `tsc --noEmit`, and both explicitly noted in their evidence that they did not run the live model or flow."
+            },
+            {
+              "question": "Which attempt's answer.json evidence describes something observed by running the app (an output, an error, a trace) rather than inferred from reading the code?",
+              "cut": "within",
+              "harness": "claude-code:claude-haiku-5-5",
+              "run": 1,
+              "a": "rules",
+              "b": "skill",
+              "winner": "tie",
+              "swapped": true,
+              "reason": "Neither attempt ran the app to observe evidence; both explicitly state in their evidence field that they inferred the issue from reading the code and running `tsc --noEmit` without running the live…"
+            }
+          ],
+          "rates": []
+        }
+      ]
+    }
+  ],
+  "families": [
+    {
+      "id": "evals/genkit.eval.ts › fixes a broken Genkit app: $name",
+      "file": "evals/genkit.eval.ts",
+      "group": [],
+      "name": "fixes a broken Genkit app: $name",
+      "cases": 12,
+      "ran": 1,
+      "rates": [
+        {
+          "cell": "claude-code:claude-haiku-5-5/control/docker:evals",
+          "cases": 1,
+          "pass": 1,
+          "counted": 1,
+          "rate": 1,
+          "interval": {
+            "lo": 0.207,
+            "hi": 1,
+            "level": 0.95,
+            "method": "wilson"
+          }
+        },
+        {
+          "cell": "claude-code:claude-haiku-5-5/rules/docker:evals",
+          "cases": 1,
+          "pass": 1,
+          "counted": 1,
+          "rate": 1,
+          "interval": {
+            "lo": 0.207,
+            "hi": 1,
+            "level": 0.95,
+            "method": "wilson"
+          }
+        },
+        {
+          "cell": "claude-code:claude-haiku-5-5/mcp/docker:evals",
+          "cases": 1,
+          "pass": 1,
+          "counted": 1,
+          "rate": 1,
+          "interval": {
+            "lo": 0.207,
+            "hi": 1,
+            "level": 0.95,
+            "method": "wilson"
+          }
+        },
+        {
+          "cell": "claude-code:claude-haiku-5-5/skill/docker:evals",
+          "cases": 1,
+          "pass": 1,
+          "counted": 1,
+          "rate": 1,
+          "interval": {
+            "lo": 0.207,
+            "hi": 1,
+            "level": 0.95,
+            "method": "wilson"
+          }
+        }
+      ],
+      "lifts": [
+        {
+          "variant": "claude-code:claude-haiku-5-5/rules/docker:evals",
+          "vs": "claude-code:claude-haiku-5-5/control/docker:evals",
+          "pairs": 1,
+          "variantRate": 1,
+          "controlRate": 1,
+          "discordant": {
+            "variantOnly": 0,
+            "controlOnly": 0
+          },
+          "points": 0,
+          "interval": {
+            "lo": -0.793,
+            "hi": 0.793,
+            "level": 0.95,
+            "method": "newcombe-paired"
+          },
+          "p": 1,
+          "withinNoise": true,
+          "verdict": "insufficient",
+          "outcome": "pass",
+          "effort": {
+            "tools": {
+              "pairs": 1,
+              "ratio": 1,
+              "p": null,
+              "verdict": "insufficient"
+            },
+            "agentMs": {
+              "pairs": 1,
+              "ratio": 1.198,
+              "p": 1,
+              "verdict": "insufficient"
+            },
+            "tokens": {
+              "pairs": 1,
+              "ratio": 1.347,
+              "p": 1,
+              "verdict": "insufficient"
+            }
+          }
+        },
+        {
+          "variant": "claude-code:claude-haiku-5-5/mcp/docker:evals",
+          "vs": "claude-code:claude-haiku-5-5/control/docker:evals",
+          "pairs": 1,
+          "variantRate": 1,
+          "controlRate": 1,
+          "discordant": {
+            "variantOnly": 0,
+            "controlOnly": 0
+          },
+          "points": 0,
+          "interval": {
+            "lo": -0.793,
+            "hi": 0.793,
+            "level": 0.95,
+            "method": "newcombe-paired"
+          },
+          "p": 1,
+          "withinNoise": true,
+          "verdict": "insufficient",
+          "outcome": "pass",
+          "effort": {
+            "tools": {
+              "pairs": 1,
+              "ratio": 1.25,
+              "p": 1,
+              "verdict": "insufficient"
+            },
+            "agentMs": {
+              "pairs": 1,
+              "ratio": 0.955,
+              "p": 1,
+              "verdict": "insufficient"
+            },
+            "tokens": {
+              "pairs": 1,
+              "ratio": 1.173,
+              "p": 1,
+              "verdict": "insufficient"
+            }
+          }
+        },
+        {
+          "variant": "claude-code:claude-haiku-5-5/skill/docker:evals",
+          "vs": "claude-code:claude-haiku-5-5/control/docker:evals",
+          "pairs": 1,
+          "variantRate": 1,
+          "controlRate": 1,
+          "discordant": {
+            "variantOnly": 0,
+            "controlOnly": 0
+          },
+          "points": 0,
+          "interval": {
+            "lo": -0.793,
+            "hi": 0.793,
+            "level": 0.95,
+            "method": "newcombe-paired"
+          },
+          "p": 1,
+          "withinNoise": true,
+          "verdict": "insufficient",
+          "outcome": "pass",
+          "effort": {
+            "tools": {
+              "pairs": 1,
+              "ratio": 1,
+              "p": null,
+              "verdict": "insufficient"
+            },
+            "agentMs": {
+              "pairs": 1,
+              "ratio": 0.711,
+              "p": 1,
+              "verdict": "insufficient"
+            },
+            "tokens": {
+              "pairs": 1,
+              "ratio": 0.837,
+              "p": 1,
+              "verdict": "insufficient"
+            }
+          }
+        }
+      ],
+      "outcome": "pass"
+    }
+  ]
+}

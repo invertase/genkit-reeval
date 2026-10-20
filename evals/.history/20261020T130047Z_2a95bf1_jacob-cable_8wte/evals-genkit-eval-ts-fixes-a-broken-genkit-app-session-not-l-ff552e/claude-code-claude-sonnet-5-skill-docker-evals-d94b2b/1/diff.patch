@@ -1,0 +1,24 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..fa9b7b4
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/agents.ts",
++  "snippet": "  use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 3, historyLength: 4 })],\n});",
++  "cause": "The triage agent (the entry point for the support chat) was defined without a session `store`, so Genkit's agent runtime rejects any attempt to resume a chat via `sessionId`, forcing the customer to start a brand-new session and repeat the order number.",
++  "evidence": "Calling triage.chat({ sessionId }).send(...) a second time with the same sessionId throws `FAILED_PRECONDITION: Cannot use 'sessionId' with agent 'triage': this agent has no store configured (client-managed state). Send 'state' instead.` (from @genkit-ai/ai's assertInitMatchesStateManagement in agent.mjs); refundAgent, which does have `store` configured, has no such problem. Adding `store` (the same FileSessionStore already used by refundAgent) to the triage agent fixed it: a two-turn test session ('My order is A-1001.' then 'What is its status?', resumed only by sessionId) correctly answered 'Your order A-1001 is currently shipped.' on the second turn without repeating the order id."
++}
+diff --git a/src/agents.ts b/src/agents.ts
+index 4aefbb2..222de7b 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -52,6 +52,7 @@ export const triage = ai.defineAgent({
+   maxTurns: 5,
+   toolChoice: 'auto',
+   use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 3, historyLength: 4 })],
++  store,
+ });
+ 
+ /** Lets the CLI exercise triage: `genkit flow:run` runs flows, not agents. */

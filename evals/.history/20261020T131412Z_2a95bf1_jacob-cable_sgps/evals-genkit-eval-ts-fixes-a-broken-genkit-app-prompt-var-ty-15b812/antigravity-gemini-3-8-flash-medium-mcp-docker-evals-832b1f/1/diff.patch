@@ -1,0 +1,23 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..565be5b
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "prompts/greet.prompt",
++  "snippet": "Write a short, friendly, one-sentence welcome for the customer named {{custmerName}}.",
++  "cause": "The greet prompt contained a typo in the template variable ({{custmerName}} instead of {{customerName}}), causing the customer name to evaluate to undefined during template interpolation.",
++  "evidence": "The input schema defines customerName, so rendering the prompt with { customerName: 'Ada' } produced 'welcome for the customer named .' with an empty name, leaving the model unable to address the customer by name."
++}
+diff --git a/prompts/greet.prompt b/prompts/greet.prompt
+index c8ce110..688841d 100644
+--- a/prompts/greet.prompt
++++ b/prompts/greet.prompt
+@@ -4,5 +4,5 @@ input:
+     customerName: string
+ ---
+ You are the support desk of Northwind Supplies.
+-Write a short, friendly, one-sentence welcome for the customer named {{custmerName}}.
++Write a short, friendly, one-sentence welcome for the customer named {{customerName}}.
+ Address them by name.

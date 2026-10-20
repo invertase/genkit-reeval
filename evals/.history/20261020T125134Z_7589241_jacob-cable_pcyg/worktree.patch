@@ -1,0 +1,19 @@
+diff --git a/evals/mcp-probe.eval.ts b/evals/mcp-probe.eval.ts
+new file mode 100644
+index 0000000..62b58bb
+--- /dev/null
++++ b/evals/mcp-probe.eval.ts
+@@ -0,0 +1,13 @@
++import { evaluate, expect } from 'reeval'
++import { mcp } from './environments.ts'
++
++// Diagnostic, not part of the study: does the harness expose the genkit MCP server to the agent?
++evaluate('mcp-probe', { environment: mcp }, async (c) => {
++  const turn = await c.send(
++    'List the exact names of every MCP tool you can call, one per line, nothing else. ' +
++      "Then call the genkit MCP server's list_flows tool and append its raw result. " +
++      'Write all of it to mcp-probe.txt in the project root. Do not edit any other file.',
++  )
++  expect.soft(turn).toHaveCalledMcp('genkit', 'list_flows')
++  expect.soft((await c.readFile('mcp-probe.txt')) ?? '', 'tool list').toMatch(/list_flows/)
++})

@@ -1,0 +1,25 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..3bea470
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/flows.ts",
++  "snippet": "tags: z.string().describe('Up to three lowercase topic tags, comma separated'),",
++  "cause": "The TicketSummarySchema declares tags as a single string with a comma-separated description, so the model is asked for and returns one string instead of a list of tags.",
++  "evidence": "src/flows.ts:8 is the only definition of tags in the repo and declares it as z.string(); summarizeTicket returns the structured output unchanged (src/flows.ts:23), so the string passes straight through to the dashboard, which expects an array."
++}
+diff --git a/src/flows.ts b/src/flows.ts
+index 80d0ba0..1fb1efb 100644
+--- a/src/flows.ts
++++ b/src/flows.ts
+@@ -5,7 +5,7 @@ import { lookupOrder } from './tools.js';
+ const TicketSummarySchema = z.object({
+   title: z.string().describe('Short title for the ticket, under ten words'),
+   priority: z.enum(['low', 'medium', 'high']).describe('How urgent the ticket is'),
+-  tags: z.string().describe('Up to three lowercase topic tags, comma separated'),
++  tags: z.array(z.string()).describe('Up to three lowercase topic tags'),
+ });
+ 
+ /** Turns a raw support ticket into a title, a priority and topic tags. */

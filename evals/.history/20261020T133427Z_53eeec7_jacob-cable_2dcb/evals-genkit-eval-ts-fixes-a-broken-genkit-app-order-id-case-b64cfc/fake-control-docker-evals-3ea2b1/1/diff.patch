@@ -1,0 +1,23 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..a037de0
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/tools.ts",
++  "snippet": "async ({ orderId }) => ORDERS[orderId] ?? null,",
++  "cause": "lookupOrder reads ORDERS[orderId] without trimming and upper-casing the id, so a lowercase id like a-1001 is not found and the tool returns null.",
++  "evidence": "src/tools.ts contains \"async ({ orderId }) => ORDERS[orderId] ?? null,\"; the working text is \"async ({ orderId }) => ORDERS[orderId.trim().toUpperCase()] ?? null,\"."
++}
+diff --git a/src/tools.ts b/src/tools.ts
+index 86c44fb..cafb4a7 100644
+--- a/src/tools.ts
++++ b/src/tools.ts
+@@ -20,5 +20,5 @@ export const lookupOrder = ai.defineTool(
+       })
+       .nullable(),
+   },
+-  async ({ orderId }) => ORDERS[orderId] ?? null,
++  async ({ orderId }) => ORDERS[orderId.trim().toUpperCase()] ?? null,
+ );

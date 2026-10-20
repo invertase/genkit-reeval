@@ -1,0 +1,24 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..4174721
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/agents.ts",
++  "snippet": "  use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 3, historyLength: 4 })],\n});",
++  "cause": "The triage agent, which is the entry point for the support chat, had no SessionStore configured, so its conversation state was never persisted and couldn't be reloaded by session id on the next request.",
++  "evidence": "refundAgent passes the shared FileSessionStore and works fine across turns, while orderAgent and triage omit `store`; per genkit's Agent docs an agent without a store is client-managed (no server-side snapshot to resume from), and loadChat/getSnapshot explicitly require a server store, matching the symptom that only follow-up turns (which need to resume by session id) fail while single questions (no resume needed) succeed."
++}
+diff --git a/src/agents.ts b/src/agents.ts
+index 4aefbb2..222de7b 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -52,6 +52,7 @@ export const triage = ai.defineAgent({
+   maxTurns: 5,
+   toolChoice: 'auto',
+   use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 3, historyLength: 4 })],
++  store,
+ });
+ 
+ /** Lets the CLI exercise triage: `genkit flow:run` runs flows, not agents. */

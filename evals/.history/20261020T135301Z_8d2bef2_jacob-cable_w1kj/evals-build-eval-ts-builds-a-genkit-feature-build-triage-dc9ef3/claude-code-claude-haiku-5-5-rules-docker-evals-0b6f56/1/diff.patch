@@ -1,0 +1,65 @@
+diff --git a/src/agents.ts b/src/agents.ts
+index 8bde8a3..34168e7 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -43,3 +43,52 @@ export const refundAgent = ai.defineAgent({
+   maxTurns: 6,
+   store,
+ });
++
++const askOrderAgent = ai.defineTool(
++  {
++    name: 'askOrderAgent',
++    description:
++      'Passes an order question to the order desk and returns its answer. The order desk cannot see the customer conversation, ' +
++      'so the question must name the order id, for example "What is the status of order A-1001?".',
++    inputSchema: z.object({ question: z.string() }),
++    outputSchema: z.string(),
++  },
++  async ({ question }) => {
++    const response = await orderAgent.chat().send(question);
++    return response.text;
++  },
++);
++
++const askRefundAgent = ai.defineTool(
++  {
++    name: 'askRefundAgent',
++    description:
++      'Passes a refund request to the refund desk and returns the outcome. The refund desk cannot see the customer conversation, ' +
++      'so the request must name the order id and the reason for the refund.',
++    inputSchema: z.object({ request: z.string() }),
++    outputSchema: z.string(),
++  },
++  async ({ request }) => {
++    const response = await refundAgent.chat().send(request);
++    if (response.interrupts.length > 0) {
++      return 'The refund is waiting for human approval and has not been issued yet.';
++    }
++    return response.text;
++  },
++);
++
++/** Customer-facing front desk: answers general questions and routes order and refund requests to specialists. */
++export const triage = ai.defineAgent({
++  name: 'triage',
++  description: 'The first point of contact for customers. Routes order questions and refund requests to specialist agents.',
++  system:
++    'You are the Northwind Supplies front desk, the first contact for customers. ' +
++    'For questions about an order, call askOrderAgent. For refund requests, call askRefundAgent. ' +
++    'Never answer order or refund questions yourself. ' +
++    'Specialists cannot see this conversation, so every question or request you pass on must name the order id, ' +
++    'taken from earlier in the conversation when the customer refers to it as "it" or "its". ' +
++    'Keep replies to one or two sentences.',
++  tools: [askOrderAgent, askRefundAgent],
++  maxTurns: 4,
++  store,
++});
+diff --git a/src/index.ts b/src/index.ts
+index 6eb2d9f..31fb90c 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1,2 +1,2 @@
+ export { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';
+-export { orderAgent, refundAgent } from './agents.js';
++export { orderAgent, refundAgent, triage } from './agents.js';

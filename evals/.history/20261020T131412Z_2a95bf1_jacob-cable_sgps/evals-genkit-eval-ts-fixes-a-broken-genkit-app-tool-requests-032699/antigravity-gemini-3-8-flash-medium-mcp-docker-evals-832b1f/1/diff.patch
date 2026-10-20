@@ -1,0 +1,24 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..66b9526
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/flows.ts",
++  "snippet": "returnToolRequests: true,",
++  "cause": "Setting returnToolRequests: true in ai.generate causes Genkit to return the tool request immediately without executing the lookupOrder tool and generating the final text response.",
++  "evidence": "In @genkit-ai/ai/src/generate/action.ts, if returnToolRequests is true, the response is returned immediately before resolveToolRequests can execute the tool, leaving response.text empty."
++}
+diff --git a/src/flows.ts b/src/flows.ts
+index 7dc7b7e..1fb1efb 100644
+--- a/src/flows.ts
++++ b/src/flows.ts
+@@ -34,7 +34,6 @@ export const orderStatus = ai.defineFlow(
+         'Quote the status, ETA and tracking code exactly as the tool returns them. If an order is not found, say so.',
+       prompt: question,
+       tools: [lookupOrder],
+-      returnToolRequests: true,
+     });
+     return text;
+   },

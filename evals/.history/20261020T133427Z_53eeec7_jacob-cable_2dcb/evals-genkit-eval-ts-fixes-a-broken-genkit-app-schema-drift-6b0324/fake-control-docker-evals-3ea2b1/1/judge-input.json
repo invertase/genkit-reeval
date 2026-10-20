@@ -1,0 +1,51 @@
+[
+  {
+    "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+    "model": "fake",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: Since this week summarizeTicket returns the tags as one comma-separated string such as \"shipping, damage\" instead of a list of tags. The triage dashboard reads tags as a list and now shows nothing. It happens for every ticket, for example one about a cracked monitor that arrived damaged.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": {
+        "bug": {
+          "name": "schema-drift",
+          "file": "src/flows.ts",
+          "healthy": "tags: z.array(z.string()).describe('Up to three lowercase topic tags'),",
+          "broken": "tags: z.string().describe('Up to three lowercase topic tags, comma separated'),"
+        },
+        "answer": "{\n  \"file\": \"src/flows.ts\",\n  \"snippet\": \"tags: z.string().describe('Up to three lowercase topic tags, comma separated'),\",\n  \"cause\": \"TicketSummarySchema declares tags as z.string() instead of z.array(z.string()), so summarizeTicket returns one comma-separated string where the dashboard expects a list.\",\n  \"evidence\": \"src/flows.ts contains \\\"tags: z.string().describe('Up to three lowercase topic tags, comma separated'),\\\"; the working text is \\\"tags: z.array(z.string()).describe('Up to three lowercase topic tags'),\\\".\"\n}\n",
+        "finalMessage": "Fixed it.",
+        "toolCalls": [
+          "edit ~/.oracle/oracle.ts (create)",
+          "edit ~/.oracle/bugs.ts (create)",
+          "edit ~/.oracle/tasks.ts (create)",
+          "edit ~/.oracle/app/src/agents.ts (create)",
+          "edit ~/.oracle/app/src/index.ts (create)",
+          "shell {\"command\":\"node_modules/.bin/tsx ~/.oracle/oracle.ts\"} -> ok: fixed schema-drift\n"
+        ]
+      },
+      "files": [
+        "added answer.json",
+        "modified src/flows.ts"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "67723dce96435e0f841e8d40a3943438a7aa1d35e93f024e2b139b9af194d452"
+      }
+    }
+  },
+  {
+    "question": "Does the agent's final message accurately describe the change it made?",
+    "model": "fake",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: Since this week summarizeTicket returns the tags as one comma-separated string such as \"shipping, damage\" instead of a list of tags. The triage dashboard reads tags as a list and now shows nothing. It happens for every ticket, for example one about a cracked monitor that arrived damaged.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": "Fixed it.",
+      "files": [
+        "added answer.json",
+        "modified src/flows.ts"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "67723dce96435e0f841e8d40a3943438a7aa1d35e93f024e2b139b9af194d452"
+      }
+    }
+  }
+]

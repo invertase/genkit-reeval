@@ -1,0 +1,58 @@
+diff --git a/src/agents.ts b/src/agents.ts
+index 8bde8a3..95d24fc 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -43,3 +43,45 @@ export const refundAgent = ai.defineAgent({
+   maxTurns: 6,
+   store,
+ });
++
++const handOffToOrderAgent = ai.defineTool(
++  {
++    name: 'handOffToOrderAgent',
++    description:
++      'Hands an order question to the order desk and returns its answer. Pass a self-contained question that includes the order id.',
++    inputSchema: z.object({ question: z.string() }),
++    outputSchema: z.string(),
++  },
++  async ({ question }) => (await orderAgent.chat().send(question)).text,
++);
++
++const handOffToRefundAgent = ai.defineTool(
++  {
++    name: 'handOffToRefundAgent',
++    description:
++      'Hands a refund request to the refund desk. Pass a self-contained request that includes the order id and the reason. ' +
++      'Refunds wait for human approval, so the result may say the request is pending.',
++    inputSchema: z.object({ request: z.string() }),
++    outputSchema: z.string(),
++  },
++  async ({ request }) => {
++    const response = await refundAgent.chat().send(request);
++    if (response.interrupts.length === 0) return response.text;
++    return `The refund is awaiting human approval in session ${response.sessionId}.`;
++  },
++);
++
++/** Front desk: the first agent customers talk to. Hands order and refund requests to specialists. */
++export const triage = ai.defineAgent({
++  name: 'triage',
++  description: 'Front desk for Northwind Supplies customers. Hands order and refund requests to specialist agents.',
++  system:
++    'You are the Northwind Supplies front desk, the first point of contact for customers. ' +
++    'Do not answer order status or refund questions yourself. Hand order questions to handOffToOrderAgent and ' +
++    'refund requests to handOffToRefundAgent, including the order id from the conversation. ' +
++    'Relay the specialist answer to the customer in one or two sentences. ' +
++    'Use what the customer told you earlier in the conversation, such as their name or order id.',
++  tools: [handOffToOrderAgent, handOffToRefundAgent],
++  maxTurns: 4,
++  store,
++});
+diff --git a/src/index.ts b/src/index.ts
+index 6eb2d9f..31fb90c 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1,2 +1,2 @@
+ export { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';
+-export { orderAgent, refundAgent } from './agents.js';
++export { orderAgent, refundAgent, triage } from './agents.js';

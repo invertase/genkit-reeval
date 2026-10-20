@@ -1,0 +1,24 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..ecdc5d6
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/agents.ts",
++  "snippet": "export const triage = ai.defineAgent({\n  name: 'triage',\n  system: 'Delegate order questions to orderAgent and refund requests to refundAgent. Do not answer them yourself.',\n  maxTurns: 5,\n  toolChoice: 'auto',\n  use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 3, historyLength: 4 })],\n});",
++  "cause": "The triage agent, which is the entry point for the support chat and delegates order questions to orderAgent, was defined without a session `store`, so it is client-managed; Genkit rejects a `sessionId` sent to a client-managed agent as initialization misuse before the turn runs, so the follow-up request can never be picked up by session id.",
++  "evidence": "Genkit's agent docs (Sessions and state / Run and stream / Error handling) state that server-managed state (resuming via sessionId) requires an agent `store`, and that 'sending sessionId to a client-managed agent' is rejected before a turn starts as init misuse. In this app, refundAgent is defined with `store: store` and works fine across turns, while triage (the customer-facing chat entry point) omitted `store`, matching the reported failure: a single question works (fresh chat, no sessionId needed) but resuming the same session on the follow-up question fails."
++}
+diff --git a/src/agents.ts b/src/agents.ts
+index 4aefbb2..222de7b 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -52,6 +52,7 @@ export const triage = ai.defineAgent({
+   maxTurns: 5,
+   toolChoice: 'auto',
+   use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 3, historyLength: 4 })],
++  store,
+ });
+ 
+ /** Lets the CLI exercise triage: `genkit flow:run` runs flows, not agents. */

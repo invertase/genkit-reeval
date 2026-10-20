@@ -1,0 +1,23 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..34277bd
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "prompts/greet.prompt",
++  "snippet": "{{custmerName}}",
++  "cause": "prompts/greet.prompt references {{custmerName}} instead of {{customerName}}, a typo, so the input variable never renders and the name is empty.",
++  "evidence": "prompts/greet.prompt contains \"{{custmerName}}\"; the working text is \"{{customerName}}\"."
++}
+diff --git a/prompts/greet.prompt b/prompts/greet.prompt
+index c8ce110..688841d 100644
+--- a/prompts/greet.prompt
++++ b/prompts/greet.prompt
+@@ -4,5 +4,5 @@ input:
+     customerName: string
+ ---
+ You are the support desk of Northwind Supplies.
+-Write a short, friendly, one-sentence welcome for the customer named {{custmerName}}.
++Write a short, friendly, one-sentence welcome for the customer named {{customerName}}.
+ Address them by name.

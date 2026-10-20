@@ -1,0 +1,22 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..b97c7d6
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "prompts/greet.prompt",
++  "snippet": "model: googleai/gemini-1.5-flash",
++  "cause": "The greet prompt explicitly specified the model 'googleai/gemini-1.5-flash', which is no longer available in the API and results in a 404 Not Found error.",
++  "evidence": "Running the greet flow failed with 'Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta', and removing the model line allows the prompt to use the app's default model (gemini-2.5-flash) and return the expected welcome message."
++}
+diff --git a/prompts/greet.prompt b/prompts/greet.prompt
+index ef5cf8e..688841d 100644
+--- a/prompts/greet.prompt
++++ b/prompts/greet.prompt
+@@ -1,5 +1,4 @@
+ ---
+-model: googleai/gemini-1.5-flash
+ input:
+   schema:
+     customerName: string

@@ -1,0 +1,14 @@
+$ cp -r /opt/support-desk/node_modules .
+exit 0 after 3812ms
+
+$ genkit --non-interactive config set analyticsOptOut true
+exit 0 after 1937ms
+Set "analyticsOptOut" to "true".
+
+(node:1227) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+$ genkit --non-interactive docs:list js >/dev/null
+exit 0 after 894ms
+(node:1250) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)

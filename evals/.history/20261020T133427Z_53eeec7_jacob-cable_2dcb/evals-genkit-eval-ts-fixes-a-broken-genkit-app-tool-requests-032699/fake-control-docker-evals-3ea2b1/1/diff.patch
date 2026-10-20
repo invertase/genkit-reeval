@@ -1,0 +1,24 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..8f3863e
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/flows.ts",
++  "snippet": "tools: [lookupOrder],\n      returnToolRequests: true,",
++  "cause": "orderStatus passes returnToolRequests: true to generate, so the call returns the lookupOrder tool request instead of running it and the flow returns empty text.",
++  "evidence": "src/flows.ts contains \"tools: [lookupOrder],\\n      returnToolRequests: true,\"; the working text is \"tools: [lookupOrder],\"."
++}
+diff --git a/src/flows.ts b/src/flows.ts
+index 7dc7b7e..1fb1efb 100644
+--- a/src/flows.ts
++++ b/src/flows.ts
+@@ -34,7 +34,6 @@ export const orderStatus = ai.defineFlow(
+         'Quote the status, ETA and tracking code exactly as the tool returns them. If an order is not found, say so.',
+       prompt: question,
+       tools: [lookupOrder],
+-      returnToolRequests: true,
+     });
+     return text;
+   },

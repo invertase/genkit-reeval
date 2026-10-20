@@ -1,0 +1,43 @@
+diff --git a/src/agents.ts b/src/agents.ts
+index 8bde8a3..34e0ee7 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -1,3 +1,4 @@
++import { agents } from '@genkit-ai/middleware';
+ import { FileSessionStore, z } from 'genkit/beta';
+ import { ai } from './ai.js';
+ import { createRefund } from './db.js';
+@@ -43,3 +44,25 @@ export const refundAgent = ai.defineAgent({
+   maxTurns: 6,
+   store,
+ });
++
++/** Routes each customer message to the right specialist agent. */
++export const triage = ai.defineAgent({
++  name: 'triage',
++  system: 'Delegate order questions to orderAgent and refund requests to refundAgent. Do not answer them yourself.',
++  store,
++  maxTurns: 5,
++  toolChoice: 'auto',
++  use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 3, historyLength: 4 })],
++});
++
++/** Lets the CLI exercise triage: `genkit flow:run` runs flows, not agents. */
++export const tryTriage = ai.defineFlow(
++  { name: 'tryTriage', inputSchema: z.string(), outputSchema: z.string() },
++  async (message) => (await triage.chat().send(message)).text,
++);
++
++/** Lets the CLI exercise the refund desk: `genkit flow:run` runs flows, not agents. */
++export const tryRefundDesk = ai.defineFlow(
++  { name: 'tryRefundDesk', inputSchema: z.string(), outputSchema: z.string() },
++  async (message) => (await refundAgent.chat().send(message)).text,
++);
+diff --git a/src/index.ts b/src/index.ts
+index 6eb2d9f..712c374 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1,2 +1,2 @@
+ export { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';
+-export { orderAgent, refundAgent } from './agents.js';
++export { orderAgent, refundAgent, triage, tryRefundDesk, tryTriage } from './agents.js';

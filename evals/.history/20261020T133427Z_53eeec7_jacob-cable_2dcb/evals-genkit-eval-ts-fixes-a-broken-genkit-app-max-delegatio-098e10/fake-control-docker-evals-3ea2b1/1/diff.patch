@@ -1,0 +1,25 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..75469dd
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/agents.ts",
++  "snippet": "maxDelegations: 0",
++  "cause": "The agents() middleware on triage sets maxDelegations: 0, so every delegate_to_* call returns Delegation limit reached and no sub-agent ever looks up the order.",
++  "evidence": "src/agents.ts contains \"maxDelegations: 0\"; the working text is \"maxDelegations: 3\"."
++}
+diff --git a/src/agents.ts b/src/agents.ts
+index 74a8a10..34e0ee7 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -52,7 +52,7 @@ export const triage = ai.defineAgent({
+   store,
+   maxTurns: 5,
+   toolChoice: 'auto',
+-  use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 0, historyLength: 4 })],
++  use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 3, historyLength: 4 })],
+ });
+ 
+ /** Lets the CLI exercise triage: `genkit flow:run` runs flows, not agents. */

@@ -1,0 +1,62 @@
+diff --git a/src/agents.ts b/src/agents.ts
+index 8bde8a3..f4316bb 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -43,3 +43,49 @@ export const refundAgent = ai.defineAgent({
+   maxTurns: 6,
+   store,
+ });
++
++const askOrderAgent = ai.defineTool(
++  {
++    name: 'askOrderAgent',
++    description:
++      'Hands an order question (status, delivery date, tracking code, total) to the order desk. ' +
++      'Pass a fully self-contained question, resolving any order id already given by the customer.',
++    inputSchema: z.object({ question: z.string() }),
++    outputSchema: z.string(),
++  },
++  async ({ question }) => {
++    const { text } = await orderAgent.chat().send(question);
++    return text;
++  },
++);
++
++const askRefundAgent = ai.defineTool(
++  {
++    name: 'askRefundAgent',
++    description:
++      'Hands a refund request to the refund desk. ' +
++      'Pass a fully self-contained request, resolving any order id already given by the customer.',
++    inputSchema: z.object({ question: z.string() }),
++    outputSchema: z.string(),
++  },
++  async ({ question }) => {
++    const { text } = await refundAgent.chat().send(question);
++    return text;
++  },
++);
++
++/** Front desk agent customers talk to first; routes order and refund questions instead of answering them itself. */
++export const triage = ai.defineAgent({
++  name: 'triage',
++  description: 'The Northwind Supplies front desk. Routes order questions and refund requests to the right specialist.',
++  system:
++    'You are the Northwind Supplies front desk. You do not answer order or refund questions yourself. ' +
++    'For questions about an order (status, delivery, tracking, total), call askOrderAgent. ' +
++    'For refund requests, call askRefundAgent. ' +
++    'When calling a tool, include any details the customer already gave you, such as an order id, so the specialist does not have to ask again. ' +
++    'Relay the specialist\'s answer back to the customer.',
++  tools: [askOrderAgent, askRefundAgent],
++  toolChoice: 'auto',
++  maxTurns: 6,
++  store,
++});
+diff --git a/src/index.ts b/src/index.ts
+index 6eb2d9f..31fb90c 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1,2 +1,2 @@
+ export { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';
+-export { orderAgent, refundAgent } from './agents.js';
++export { orderAgent, refundAgent, triage } from './agents.js';

@@ -1,0 +1,51 @@
+[
+  {
+    "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+    "model": "fake",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: The orderStatus flow returns an empty answer for \"Where is order A-1001?\". There is no error, just an empty string. The order is in our system and has shipped. I expected the reply to give the status, delivery date and tracking code.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": {
+        "bug": {
+          "name": "tool-requests-returned",
+          "file": "src/flows.ts",
+          "healthy": "tools: [lookupOrder],",
+          "broken": "tools: [lookupOrder],\n      returnToolRequests: true,"
+        },
+        "answer": "{\n  \"file\": \"src/flows.ts\",\n  \"snippet\": \"tools: [lookupOrder],\\n      returnToolRequests: true,\",\n  \"cause\": \"orderStatus passes returnToolRequests: true to generate, so the call returns the lookupOrder tool request instead of running it and the flow returns empty text.\",\n  \"evidence\": \"src/flows.ts contains \\\"tools: [lookupOrder],\\\\n      returnToolRequests: true,\\\"; the working text is \\\"tools: [lookupOrder],\\\".\"\n}\n",
+        "finalMessage": "Fixed it.",
+        "toolCalls": [
+          "edit ~/.oracle/oracle.ts (create)",
+          "edit ~/.oracle/bugs.ts (create)",
+          "edit ~/.oracle/tasks.ts (create)",
+          "edit ~/.oracle/app/src/agents.ts (create)",
+          "edit ~/.oracle/app/src/index.ts (create)",
+          "shell {\"command\":\"node_modules/.bin/tsx ~/.oracle/oracle.ts\"} -> ok: fixed tool-requests-returned\n"
+        ]
+      },
+      "files": [
+        "added answer.json",
+        "modified src/flows.ts"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "2d522ba31317a13b17260ea4fbbf0d7bf32116b254dc7310177e330624b469bf"
+      }
+    }
+  },
+  {
+    "question": "Does the agent's final message accurately describe the change it made?",
+    "model": "fake",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: The orderStatus flow returns an empty answer for \"Where is order A-1001?\". There is no error, just an empty string. The order is in our system and has shipped. I expected the reply to give the status, delivery date and tracking code.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": "Fixed it.",
+      "files": [
+        "added answer.json",
+        "modified src/flows.ts"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "2d522ba31317a13b17260ea4fbbf0d7bf32116b254dc7310177e330624b469bf"
+      }
+    }
+  }
+]

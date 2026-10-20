@@ -1,0 +1,22 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..b88da77
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "prompts/greet.prompt",
++  "snippet": "---\nmodel: googleai/gemini-1.5-flash\ninput:",
++  "cause": "prompts/greet.prompt pins model: googleai/gemini-1.5-flash in its front matter, a model the app never configured and Google no longer serves, so the greet flow fails instead of using the default gemini-2.5-flash.",
++  "evidence": "prompts/greet.prompt contains \"---\\nmodel: googleai/gemini-1.5-flash\\ninput:\"; the working text is \"---\\ninput:\"."
++}
+diff --git a/prompts/greet.prompt b/prompts/greet.prompt
+index ef5cf8e..688841d 100644
+--- a/prompts/greet.prompt
++++ b/prompts/greet.prompt
+@@ -1,5 +1,4 @@
+ ---
+-model: googleai/gemini-1.5-flash
+ input:
+   schema:
+     customerName: string

@@ -1,0 +1,32 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..5acb930
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/agents.ts",
++  "snippet": "  tools: [lookupOrder],\n  maxTurns: 4,\n});",
++  "cause": "The triage and orderAgent agents were defined without a `store`, so their sessions are client-managed and cannot be reattached via sessionId, forcing every follow-up message to start a brand-new, history-less session.",
++  "evidence": "@genkit-ai/ai/lib/agent.js's assertInitMatchesStateManagement throws 'Cannot use sessionId with agent ... this agent has no store configured (client-managed state)' whenever init.sessionId is supplied but config.store is undefined — exactly the case for triage/orderAgent (only refundAgent had `store: new FileSessionStore(...)` configured), while a fresh single-turn chat with no sessionId never hits that check and succeeds."
++}
+diff --git a/src/agents.ts b/src/agents.ts
+index 4aefbb2..6eee45d 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -32,6 +32,7 @@ export const orderAgent = ai.defineAgent({
+     'Quote the status, ETA and tracking code exactly as the tool returns them. If an order is not found, say so.',
+   tools: [lookupOrder],
+   maxTurns: 4,
++  store,
+ });
+ 
+ /** Handles refund requests and pauses for human approval before refunding. */
+@@ -52,6 +53,7 @@ export const triage = ai.defineAgent({
+   maxTurns: 5,
+   toolChoice: 'auto',
+   use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 3, historyLength: 4 })],
++  store,
+ });
+ 
+ /** Lets the CLI exercise triage: `genkit flow:run` runs flows, not agents. */

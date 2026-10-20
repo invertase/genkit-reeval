@@ -1,0 +1,24 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..b7b5464
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/agents.ts",
++  "snippet": "  use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 3, historyLength: 4 })],\n});",
++  "cause": "The customer-facing triage agent was defined without a session `store`, so its conversation state was never persisted and could not be reloaded by sessionId on the follow-up turn.",
++  "evidence": "Reproducing the flow (triage.chat().send('My order is A-1001.') then triage.loadChat({ sessionId }) for the follow-up) throws GenkitError FAILED_PRECONDITION: \"getSnapshotData requires a persistent store. Provide a 'store' when defining 'triage'.\" Adding the already-defined FileSessionStore (`store`, used by refundAgent) to triage's config lets loadChat succeed and the second turn correctly answers using the order id from turn one; single-turn calls worked before because they never needed to reload a session."
++}
+diff --git a/src/agents.ts b/src/agents.ts
+index 4aefbb2..222de7b 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -52,6 +52,7 @@ export const triage = ai.defineAgent({
+   maxTurns: 5,
+   toolChoice: 'auto',
+   use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 3, historyLength: 4 })],
++  store,
+ });
+ 
+ /** Lets the CLI exercise triage: `genkit flow:run` runs flows, not agents. */

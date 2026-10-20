@@ -1,0 +1,4176 @@
+{
+  "kind": "es-run",
+  "schemaVersion": 1,
+  "runId": "20261020T133427Z_53eeec7_jacob-cable_2dcb",
+  "status": "complete",
+  "startedAt": "2026-10-20T13:34:27.397Z",
+  "endedAt": "2026-10-20T13:35:21.518Z",
+  "durationMs": 54121,
+  "author": "jacob-cable",
+  "git": {
+    "sha": "53eeec7bf2ac29bfcde3676a9331454b9a0d6cb7",
+    "branch": "main",
+    "dirty": false,
+    "diffHash": null,
+    "worktreePatch": null,
+    "worktreePatchNote": null,
+    "commitTime": "2026-10-20T14:34:04+01:00",
+    "shallow": false,
+    "remote": null
+  },
+  "runner": {
+    "kind": "local",
+    "hostHash": "2c818801e9b8"
+  },
+  "dependencies": {
+    "lockfiles": [
+      {
+        "path": "pnpm-lock.yaml",
+        "sha256": "29e4483045e44a4f6df8369648c063808a5fb8d44694e13ba938fb54d7765888"
+      }
+    ]
+  },
+  "stack": {
+    "es": "0.9.0",
+    "node": "24.9.0",
+    "runtime": {
+      "name": "node",
+      "version": "24.9.0"
+    },
+    "language": {
+      "name": "typescript"
+    },
+    "os": "darwin",
+    "arch": "arm64",
+    "images": [
+      {
+        "ref": "reeval-dockerfile:evals-9f0d8bd35b9b1708",
+        "id": "sha256:ca580a67749f4aaef83dca4570e448ac5fb965f1906336ddc61bd14577ceafb9",
+        "agentCli": "@cursor/sdk 1.0.37",
+        "base": "reeval-dockerfile:evals-9f0d8bd35b9b1708",
+        "install": [],
+        "dockerfile": {
+          "path": "evals/Dockerfile",
+          "sha256": "9f0d8bd35b9b1708f4c2e8108244a2cc274424723608d66297accd23c7e86a68"
+        },
+        "repoDigests": []
+      }
+    ],
+    "packages": {
+      "@vitest/expect": "5.0.2",
+      "jiti": "2.7.0",
+      "@reeval/harness-antigravity": "0.1.6",
+      "@reeval/harness-opencode": "0.2.7",
+      "@reeval/harness-goose": "0.1.2",
+      "@reeval/harness-pi": "0.2.6",
+      "@reeval/harness-cursor-sdk": "0.1.4",
+      "@ai-sdk/harness-claude-code": "1.0.152-patch.8edc594f",
+      "@reeval/harness-codex": "0.1.6",
+      "ai": "7.0.140",
+      "@ai-sdk/harness": "1.0.148",
+      "@ai-sdk/google": "4.0.93",
+      "@ai-sdk/typesafe-ai": "3.0.18"
+    },
+    "harnesses": [
+      {
+        "id": "fake",
+        "kind": "fake",
+        "model": null,
+        "effort": null,
+        "resolvedModels": [],
+        "resolvedEffort": []
+      }
+    ],
+    "judge": {
+      "model": "fake",
+      "resolvedModels": [],
+      "threshold": 0.8,
+      "version": "1b0277d32682"
+    },
+    "context": [],
+    "fingerprintScope": [
+      "eval-source",
+      "harness",
+      "environment",
+      "agent-cli",
+      "image-id",
+      "judge",
+      "context"
+    ]
+  },
+  "environments": [
+    {
+      "name": "control",
+      "parent": null,
+      "overrides": [],
+      "digest": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+      "setup": [
+        "cp -r /opt/support-desk/node_modules .",
+        "genkit --non-interactive config set analyticsOptOut true",
+        "genkit --non-interactive docs:list js >/dev/null"
+      ],
+      "skills": [],
+      "mcp": [],
+      "files": [
+        {
+          "path": ".gitignore",
+          "sha256": "2324373b38e6a6e40c2533a3440dde4733c59a33d59dffb95f2a87564eadf8b1"
+        },
+        {
+          "path": "package-lock.json",
+          "sha256": "adef6f981124a1f92fe0a00ff1ab04045b798eea61263a3cdfa71a65d1d3b4e2"
+        },
+        {
+          "path": "package.json",
+          "sha256": "12829aa396015aca5c0fd8161b11c040acc5d5f0ffcbe8aaf34d2bf68a5bf1f9"
+        },
+        {
+          "path": "prompts/greet.prompt",
+          "sha256": "0e4330eab89a5d0443dac4ae3e0b948a7769e0ae7d6db72e4868065a6de587c4"
+        },
+        {
+          "path": "src/agents.ts",
+          "sha256": "8a8bbed0be0d55841e68867eb66c725db3844d8937e41023f7c9e26cbefbb23d"
+        },
+        {
+          "path": "src/ai.ts",
+          "sha256": "279503e1481fd36866447ad99e3c9062fcce1492337b420bc4b7cf5d5c1b665f"
+        },
+        {
+          "path": "src/db.ts",
+          "sha256": "f822166aef9e14bffb2a3259facfff3284ad56fa5aafdc9fcd819b5f8f89bca9"
+        },
+        {
+          "path": "src/flows.ts",
+          "sha256": "5e6bffefd47a06ff2e2f8aafbf8ecfc4ef5cffc9918a8cd32f21579a5fa9f932"
+        },
+        {
+          "path": "src/index.ts",
+          "sha256": "ae90d6cb599cca69414e7b2688d600597b80d03b13420afccb4178212c74743b"
+        },
+        {
+          "path": "src/orders.json",
+          "sha256": "db96fdc2bd8de3bd0e2f5e3e478bab0658705cd9cbb6e060a54454b61fb54c85"
+        },
+        {
+          "path": "src/tools.ts",
+          "sha256": "bd30895bd2041fead14058472f80f976e6702675235c97018d09fdad2e1dc809"
+        },
+        {
+          "path": "tsconfig.json",
+          "sha256": "4a1fe8a611430f39f2b16ecbb9c966222d20a64585dd5b7377e2da42679a925c"
+        }
+      ],
+      "vars": [
+        "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+      ],
+      "secrets": [
+        "GEMINI_API_KEY"
+      ],
+      "brokered": [
+        "GEMINI_API_KEY"
+      ],
+      "unset": [],
+      "egress": "allow-all"
+    }
+  ],
+  "profile": {
+    "name": "oracle",
+    "reason": "default",
+    "defaults": {},
+    "limit": {
+      "compare": false
+    }
+  },
+  "plan": {
+    "evals": 15,
+    "cells": 15,
+    "attempts": 15,
+    "estimateMs": 908333,
+    "sandboxWarnings": []
+  },
+  "budget": null,
+  "config": {
+    "sandbox": "docker:evals",
+    "environment": null,
+    "runs": 1,
+    "judgeModel": "fake",
+    "threshold": 0.8,
+    "timeoutMs": 900000,
+    "concurrency": 8,
+    "configHash": "15c4c8dfe70bca249102fbcbb24225f5c9697b5c3fd28f8a5f8aa3100c2776f0"
+  },
+  "cost": {
+    "inputTokens": null,
+    "outputTokens": null,
+    "usage": null,
+    "source": "unreported"
+  },
+  "artifacts": "all",
+  "redaction": {
+    "version": 1
+  },
+  "summary": {
+    "evals": 15,
+    "attempts": 15,
+    "pass": 14,
+    "fail": 1,
+    "notGated": 0,
+    "infraError": 0,
+    "skipped": 0
+  },
+  "evals": [
+    {
+      "id": "evals/build.eval.ts › builds a Genkit feature: build-order-desk",
+      "key": "evals/build.eval.ts › builds a Genkit feature: build-order-desk",
+      "slug": "evals-build-eval-ts-builds-a-genkit-feature-build-order-desk-9a0841",
+      "file": "evals/build.eval.ts",
+      "group": [],
+      "name": "builds a Genkit feature: build-order-desk",
+      "tags": [],
+      "compare": {
+        "baseline": "control"
+      },
+      "family": {
+        "id": "evals/build.eval.ts › builds a Genkit feature: $name",
+        "name": "builds a Genkit feature: $name",
+        "case": 0,
+        "cases": 3
+      },
+      "fingerprint": "be1c04dd167613184dd1b7292946a1da491449345fcaf9c12c2ca47ec4f5d4f3",
+      "sources": [
+        {
+          "path": "evals/bugs.ts",
+          "sha256": "f72309483927e05317eab0e669cebcbbf2a54a26f7df5c2a949f920994bb555b"
+        },
+        {
+          "path": "evals/build.eval.ts",
+          "sha256": "928b0914f2315e3de70751a37b7b10091f3f1f232f495a633d2534d29598429b"
+        },
+        {
+          "path": "evals/environments.ts",
+          "sha256": "427c931b764296e1d9d4a231f6385a8f64feb15723c7cde453b00e26be3ed25d"
+        },
+        {
+          "path": "evals/tasks.ts",
+          "sha256": "335a63a1b8e08124852f21d91dec85da586621336ef8b5f7d664e8a73b3301f5"
+        }
+      ],
+      "outcome": "pass",
+      "todo": false,
+      "passRate": 1,
+      "cells": [
+        {
+          "key": "fake/control/docker:evals",
+          "harness": "fake",
+          "environment": "control",
+          "sandbox": "docker:evals",
+          "role": "control",
+          "fingerprint": "c619bfc85fe816ba8ee55b7c29727089f0790171eadb8e78e83468284cafbd81",
+          "fingerprintParts": {
+            "sources": "0155d8cd203ddedf0cb52a8e4533c030a99bb25435fa9d13215692775c5e7ea2",
+            "harness": "80f1e0023250e3b01f6298e172d01a21e1a092f1a5bf0cd5ef7a94d9f7612f44",
+            "environment": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+            "image": "sha256:ca580a67749f4aaef83dca4570e448ac5fb965f1906336ddc61bd14577ceafb9",
+            "agentCli": "@cursor/sdk 1.0.37",
+            "judge": "1d4bbecdc1dc0e5f28fc1b93efd9787b0f5c15d4fe5902a4c583d4421b5641a1",
+            "context": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          "environmentDigest": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+          "harnessKind": "fake",
+          "model": null,
+          "effort": null,
+          "gate": "all",
+          "overrides": [],
+          "runs": 1,
+          "pass": 1,
+          "fail": 0,
+          "infraError": 0,
+          "skipped": 0,
+          "passRate": 1,
+          "outcome": "pass",
+          "checks": [
+            {
+              "label": "typechecks",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "agent works",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "keeps the flows",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            }
+          ]
+        }
+      ],
+      "attempts": [
+        {
+          "key": "evals/build.eval.ts › builds a Genkit feature: build-order-desk # fake/control/docker:evals#1",
+          "id": "fake/control/docker:evals#1",
+          "cell": "fake/control/docker:evals",
+          "n": 1,
+          "seq": 1,
+          "startedAt": "2026-10-20T13:34:28.331Z",
+          "imageId": "sha256:ca580a67749f4aaef83dca4570e448ac5fb965f1906336ddc61bd14577ceafb9",
+          "env": {
+            "vars": [
+              "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+            ],
+            "secrets": [
+              "GEMINI_API_KEY"
+            ],
+            "brokered": [
+              "GEMINI_API_KEY"
+            ]
+          },
+          "context": [],
+          "egress": {
+            "policy": "allow-all",
+            "allowed": null,
+            "recorded": true,
+            "contacted": [
+              {
+                "host": "generativelanguage.googleapis.com",
+                "port": 443,
+                "connections": 2,
+                "sent": 7151,
+                "received": 9489
+              },
+              {
+                "host": "genkit.dev",
+                "port": 443,
+                "connections": 1,
+                "sent": 1958,
+                "received": 460217
+              }
+            ],
+            "blocked": [],
+            "expectedBlocked": []
+          },
+          "servedModels": null,
+          "effort": null,
+          "servedEffort": null,
+          "outcome": "pass",
+          "error": null,
+          "durationMs": 25475,
+          "turns": [
+            {
+              "prompt": "You are on the support-desk app in this directory. Add an order desk agent. Create `src/agents.ts` exporting `orderAgent`, an agent that answers customer questions about their orders (status, delivery date, tracking code) with the existing `lookupOrder` tool from `src/tools.ts`. Export `orderAgent` from `src/index.ts`. Callers hold a conversation with it: `orderAgent.chat()` starts one, `send('Where is order A-1001?')` on it returns a response whose `text` is the reply. Keep the existing flows and their exports. Don't change `package.json` or add dependencies.",
+              "status": "completed",
+              "startedAt": "2026-10-20T13:34:44.631Z",
+              "durationMs": 874,
+              "usage": null,
+              "model": null,
+              "unreported": [],
+              "error": null,
+              "text": "Fixed it."
+            }
+          ],
+          "usage": null,
+          "timings": {
+            "setupMs": 16033,
+            "agentMs": 875,
+            "diffMs": 131,
+            "checksMs": 5507,
+            "judgeMs": 1
+          },
+          "activity": {
+            "tools": 1,
+            "fileEdits": 5,
+            "webSearches": 0,
+            "webFetches": 0,
+            "reasoningMs": 0
+          },
+          "judgements": [
+            {
+              "verdict": "pass",
+              "score": 1,
+              "threshold": 0.8,
+              "question": "Did the agent build the feature with Genkit's agents API (`ai.defineAgent`, `ai.defineInterrupt` for the approval step, the `agents()` middleware from `@genkit-ai/middleware` for delegation, a session store such as `FileSessionStore` for resumable conversations) rather than hand-rolled `ai.generate` loops, flows posing as agents, or APIs Genkit no longer has such as `ai.chat()`? Judge only the parts the task needed: an order desk needs `defineAgent` with the tool; a refund desk also needs an interrupt; a front desk also needs delegation and a store.",
+              "model": "fake",
+              "key": "0:47910c0b1033"
+            }
+          ],
+          "assertions": [
+            {
+              "label": "typechecks",
+              "labelled": true,
+              "matcher": "toSucceed",
+              "status": "pass",
+              "soft": true,
+              "durationMs": 1993
+            },
+            {
+              "label": "agent works",
+              "labelled": true,
+              "matcher": "toSucceed",
+              "status": "pass",
+              "soft": true,
+              "durationMs": 3465
+            },
+            {
+              "label": "keeps the flows",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            }
+          ],
+          "checks": [
+            {
+              "command": "rm src/agents.ts",
+              "exitCode": 0,
+              "durationMs": 44,
+              "log": {
+                "path": "evals-build-eval-ts-builds-a-genkit-feature-build-order-desk-9a0841/fake-control-docker-evals-3ea2b1/1/checks/1.log",
+                "sha256": "865c352170e09ed8f38c73e9038370b657a3d181a15882fab5279460298c2785",
+                "bytes": 48
+              }
+            },
+            {
+              "command": "node_modules/.bin/tsc --noEmit",
+              "exitCode": 0,
+              "durationMs": 1996,
+              "log": {
+                "path": "evals-build-eval-ts-builds-a-genkit-feature-build-order-desk-9a0841/fake-control-docker-evals-3ea2b1/1/checks/2.log",
+                "sha256": "be0202cc2c67ae3851854f47c4ecb4d185cf16a81331cf2bb10ff348475cf50c",
+                "bytes": 62
+              }
+            },
+            {
+              "command": "node_modules/.bin/tsx --test --test-name-pattern '^build-order-desk$' ~/.verify-build.mts",
+              "exitCode": 0,
+              "durationMs": 3467,
+              "log": {
+                "path": "evals-build-eval-ts-builds-a-genkit-feature-build-order-desk-9a0841/fake-control-docker-evals-3ea2b1/1/checks/3.log",
+                "sha256": "c0ad60e44f812ce751520de669c554f998a86ba92b52402d51d8b2b47ee7d580",
+                "bytes": 1063
+              }
+            }
+          ],
+          "changedFiles": [
+            {
+              "path": "src/agents.ts",
+              "status": "modified"
+            },
+            {
+              "path": "src/index.ts",
+              "status": "modified"
+            }
+          ],
+          "files": {
+            "setupLog": {
+              "path": "evals-build-eval-ts-builds-a-genkit-feature-build-order-desk-9a0841/fake-control-docker-evals-3ea2b1/1/setup.log",
+              "sha256": "9dabe2517538c5e88a88e6f43ed9f6d3901e442f7f7f9474b36d958e8a87e302",
+              "bytes": 600
+            },
+            "transcript": {
+              "path": "evals-build-eval-ts-builds-a-genkit-feature-build-order-desk-9a0841/fake-control-docker-evals-3ea2b1/1/transcript.jsonl",
+              "sha256": "b298e915eebd2ea1ab1f9cfaa47108278878a59b0037094a7ca473ab4c9b0ebb",
+              "bytes": 2662
+            },
+            "diff": {
+              "path": "evals-build-eval-ts-builds-a-genkit-feature-build-order-desk-9a0841/fake-control-docker-evals-3ea2b1/1/diff.patch",
+              "sha256": "1e8eb797145563e6dc202c2f881079352b3fe063ee323d631e2d77787ea70382",
+              "bytes": 3361
+            },
+            "judgeInput": {
+              "path": "evals-build-eval-ts-builds-a-genkit-feature-build-order-desk-9a0841/fake-control-docker-evals-3ea2b1/1/judge-input.json",
+              "sha256": "d28d6c1d90ce031421bf73af28f3dc4480dd24db25d76df98261d68c83e3b875",
+              "bytes": 4369
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "evals/build.eval.ts › builds a Genkit feature: build-refund-desk",
+      "key": "evals/build.eval.ts › builds a Genkit feature: build-refund-desk",
+      "slug": "evals-build-eval-ts-builds-a-genkit-feature-build-refund-des-f6fe92",
+      "file": "evals/build.eval.ts",
+      "group": [],
+      "name": "builds a Genkit feature: build-refund-desk",
+      "tags": [],
+      "compare": {
+        "baseline": "control"
+      },
+      "family": {
+        "id": "evals/build.eval.ts › builds a Genkit feature: $name",
+        "name": "builds a Genkit feature: $name",
+        "case": 1,
+        "cases": 3
+      },
+      "fingerprint": "be1c04dd167613184dd1b7292946a1da491449345fcaf9c12c2ca47ec4f5d4f3",
+      "sources": [
+        {
+          "path": "evals/bugs.ts",
+          "sha256": "f72309483927e05317eab0e669cebcbbf2a54a26f7df5c2a949f920994bb555b"
+        },
+        {
+          "path": "evals/build.eval.ts",
+          "sha256": "928b0914f2315e3de70751a37b7b10091f3f1f232f495a633d2534d29598429b"
+        },
+        {
+          "path": "evals/environments.ts",
+          "sha256": "427c931b764296e1d9d4a231f6385a8f64feb15723c7cde453b00e26be3ed25d"
+        },
+        {
+          "path": "evals/tasks.ts",
+          "sha256": "335a63a1b8e08124852f21d91dec85da586621336ef8b5f7d664e8a73b3301f5"
+        }
+      ],
+      "outcome": "pass",
+      "todo": false,
+      "passRate": 1,
+      "cells": [
+        {
+          "key": "fake/control/docker:evals",
+          "harness": "fake",
+          "environment": "control",
+          "sandbox": "docker:evals",
+          "role": "control",
+          "fingerprint": "c619bfc85fe816ba8ee55b7c29727089f0790171eadb8e78e83468284cafbd81",
+          "fingerprintParts": {
+            "sources": "0155d8cd203ddedf0cb52a8e4533c030a99bb25435fa9d13215692775c5e7ea2",
+            "harness": "80f1e0023250e3b01f6298e172d01a21e1a092f1a5bf0cd5ef7a94d9f7612f44",
+            "environment": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+            "image": "sha256:ca580a67749f4aaef83dca4570e448ac5fb965f1906336ddc61bd14577ceafb9",
+            "agentCli": "@cursor/sdk 1.0.37",
+            "judge": "1d4bbecdc1dc0e5f28fc1b93efd9787b0f5c15d4fe5902a4c583d4421b5641a1",
+            "context": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          "environmentDigest": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+          "harnessKind": "fake",
+          "model": null,
+          "effort": null,
+          "gate": "all",
+          "overrides": [],
+          "runs": 1,
+          "pass": 1,
+          "fail": 0,
+          "infraError": 0,
+          "skipped": 0,
+          "passRate": 1,
+          "outcome": "pass",
+          "checks": [
+            {
+              "label": "typechecks",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "agent works",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "keeps the flows",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            }
+          ]
+        }
+      ],
+      "attempts": [
+        {
+          "key": "evals/build.eval.ts › builds a Genkit feature: build-refund-desk # fake/control/docker:evals#1",
+          "id": "fake/control/docker:evals#1",
+          "cell": "fake/control/docker:evals",
+          "n": 1,
+          "seq": 4,
+          "startedAt": "2026-10-20T13:34:28.345Z",
+          "imageId": "sha256:ca580a67749f4aaef83dca4570e448ac5fb965f1906336ddc61bd14577ceafb9",
+          "env": {
+            "vars": [
+              "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+            ],
+            "secrets": [
+              "GEMINI_API_KEY"
+            ],
+            "brokered": [
+              "GEMINI_API_KEY"
+            ]
+          },
+          "context": [],
+          "egress": {
+            "policy": "allow-all",
+            "allowed": null,
+            "recorded": true,
+            "contacted": [
+              {
+                "host": "generativelanguage.googleapis.com",
+                "port": 443,
+                "connections": 2,
+                "sent": 27334,
+                "received": 19248
+              },
+              {
+                "host": "genkit.dev",
+                "port": 443,
+                "connections": 1,
+                "sent": 1958,
+                "received": 460459
+              }
+            ],
+            "blocked": [],
+            "expectedBlocked": []
+          },
+          "servedModels": null,
+          "effort": null,
+          "servedEffort": null,
+          "outcome": "pass",
+          "error": null,
+          "durationMs": 30485,
+          "turns": [
+            {
+              "prompt": "You are on the support-desk app in this directory. Add a refund desk agent. Create `src/agents.ts` exporting `refundAgent`, an agent that handles refund requests such as \"I want a refund for order A-1001, it arrived broken.\" It looks the order up with the existing `lookupOrder` tool from `src/tools.ts`, then pauses for a human to approve the refund, and only if approved issues it with a tool named `issueRefund` built on `createRefund` from `src/db.ts`. The approval step is named `approveRefund`; it takes `{ orderId: string, amount: number, reason: string }` and the human answers it with `{ approved: boolean, note?: string }`. When the refund is declined, nothing is refunded and the agent ends with a short reply to the customer. Export `refundAgent` from `src/index.ts`. Callers hold a conversation with it: `refundAgent.chat()` starts one and `send(message)` sends a message; when a turn pauses for approval, the caller answers the pending `approveRefund` request and resumes the same conversation. Keep the existing flows and their exports. Don't change `package.json` or add dependencies.",
+              "status": "completed",
+              "startedAt": "2026-10-20T13:34:44.633Z",
+              "durationMs": 879,
+              "usage": null,
+              "model": null,
+              "unreported": [],
+              "error": null,
+              "text": "Fixed it."
+            }
+          ],
+          "usage": null,
+          "timings": {
+            "setupMs": 16023,
+            "agentMs": 880,
+            "diffMs": 136,
+            "checksMs": 11361,
+            "judgeMs": 0
+          },
+          "activity": {
+            "tools": 1,
+            "fileEdits": 5,
+            "webSearches": 0,
+            "webFetches": 0,
+            "reasoningMs": 0
+          },
+          "judgements": [
+            {
+              "verdict": "pass",
+              "score": 1,
+              "threshold": 0.8,
+              "question": "Did the agent build the feature with Genkit's agents API (`ai.defineAgent`, `ai.defineInterrupt` for the approval step, the `agents()` middleware from `@genkit-ai/middleware` for delegation, a session store such as `FileSessionStore` for resumable conversations) rather than hand-rolled `ai.generate` loops, flows posing as agents, or APIs Genkit no longer has such as `ai.chat()`? Judge only the parts the task needed: an order desk needs `defineAgent` with the tool; a refund desk also needs an interrupt; a front desk also needs delegation and a store.",
+              "model": "fake",
+              "key": "0:47910c0b1033"
+            }
+          ],
+          "assertions": [
+            {
+              "label": "typechecks",
+              "labelled": true,
+              "matcher": "toSucceed",
+              "status": "pass",
+              "soft": true,
+              "durationMs": 2082
+            },
+            {
+              "label": "agent works",
+              "labelled": true,
+              "matcher": "toSucceed",
+              "status": "pass",
+              "soft": true,
+              "durationMs": 9228
+            },
+            {
+              "label": "keeps the flows",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            }
+          ],
+          "checks": [
+            {
+              "command": "rm src/agents.ts",
+              "exitCode": 0,
+              "durationMs": 47,
+              "log": {
+                "path": "evals-build-eval-ts-builds-a-genkit-feature-build-refund-des-f6fe92/fake-control-docker-evals-3ea2b1/1/checks/1.log",
+                "sha256": "865c352170e09ed8f38c73e9038370b657a3d181a15882fab5279460298c2785",
+                "bytes": 48
+              }
+            },
+            {
+              "command": "node_modules/.bin/tsc --noEmit",
+              "exitCode": 0,
+              "durationMs": 2084,
+              "log": {
+                "path": "evals-build-eval-ts-builds-a-genkit-feature-build-refund-des-f6fe92/fake-control-docker-evals-3ea2b1/1/checks/2.log",
+                "sha256": "be0202cc2c67ae3851854f47c4ecb4d185cf16a81331cf2bb10ff348475cf50c",
+                "bytes": 62
+              }
+            },
+            {
+              "command": "node_modules/.bin/tsx --test --test-name-pattern '^build-refund-desk$' ~/.verify-build.mts",
+              "exitCode": 0,
+              "durationMs": 9230,
+              "log": {
+                "path": "evals-build-eval-ts-builds-a-genkit-feature-build-refund-des-f6fe92/fake-control-docker-evals-3ea2b1/1/checks/3.log",
+                "sha256": "b39559dcee490f37bf1b44cf3a51e09ee43083ae9b2b43d3b3ddce2d0a7080c4",
+                "bytes": 1066
+              }
+            }
+          ],
+          "changedFiles": [
+            {
+              "path": "src/agents.ts",
+              "status": "modified"
+            },
+            {
+              "path": "src/index.ts",
+              "status": "modified"
+            }
+          ],
+          "files": {
+            "setupLog": {
+              "path": "evals-build-eval-ts-builds-a-genkit-feature-build-refund-des-f6fe92/fake-control-docker-evals-3ea2b1/1/setup.log",
+              "sha256": "0ce6679a546871af894679dccd982ded3664627ec1bd5f0697636f9e961b4733",
+              "bytes": 600
+            },
+            "transcript": {
+              "path": "evals-build-eval-ts-builds-a-genkit-feature-build-refund-des-f6fe92/fake-control-docker-evals-3ea2b1/1/transcript.jsonl",
+              "sha256": "f77579a788991096ead9e89ef066fa4810f3891b65471902e13227f0a9d2d92f",
+              "bytes": 3734
+            },
+            "diff": {
+              "path": "evals-build-eval-ts-builds-a-genkit-feature-build-refund-des-f6fe92/fake-control-docker-evals-3ea2b1/1/diff.patch",
+              "sha256": "1e8eb797145563e6dc202c2f881079352b3fe063ee323d631e2d77787ea70382",
+              "bytes": 3361
+            },
+            "judgeInput": {
+              "path": "evals-build-eval-ts-builds-a-genkit-feature-build-refund-des-f6fe92/fake-control-docker-evals-3ea2b1/1/judge-input.json",
+              "sha256": "967c9cfd9a8ca542ee47d3b3a25b1a4ad177aa3217963d1fe4423aa389433d9d",
+              "bytes": 4905
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "evals/build.eval.ts › builds a Genkit feature: build-triage",
+      "key": "evals/build.eval.ts › builds a Genkit feature: build-triage",
+      "slug": "evals-build-eval-ts-builds-a-genkit-feature-build-triage-dc9ef3",
+      "file": "evals/build.eval.ts",
+      "group": [],
+      "name": "builds a Genkit feature: build-triage",
+      "tags": [],
+      "compare": {
+        "baseline": "control"
+      },
+      "family": {
+        "id": "evals/build.eval.ts › builds a Genkit feature: $name",
+        "name": "builds a Genkit feature: $name",
+        "case": 2,
+        "cases": 3
+      },
+      "fingerprint": "be1c04dd167613184dd1b7292946a1da491449345fcaf9c12c2ca47ec4f5d4f3",
+      "sources": [
+        {
+          "path": "evals/bugs.ts",
+          "sha256": "f72309483927e05317eab0e669cebcbbf2a54a26f7df5c2a949f920994bb555b"
+        },
+        {
+          "path": "evals/build.eval.ts",
+          "sha256": "928b0914f2315e3de70751a37b7b10091f3f1f232f495a633d2534d29598429b"
+        },
+        {
+          "path": "evals/environments.ts",
+          "sha256": "427c931b764296e1d9d4a231f6385a8f64feb15723c7cde453b00e26be3ed25d"
+        },
+        {
+          "path": "evals/tasks.ts",
+          "sha256": "335a63a1b8e08124852f21d91dec85da586621336ef8b5f7d664e8a73b3301f5"
+        }
+      ],
+      "outcome": "pass",
+      "todo": false,
+      "passRate": 1,
+      "cells": [
+        {
+          "key": "fake/control/docker:evals",
+          "harness": "fake",
+          "environment": "control",
+          "sandbox": "docker:evals",
+          "role": "control",
+          "fingerprint": "c619bfc85fe816ba8ee55b7c29727089f0790171eadb8e78e83468284cafbd81",
+          "fingerprintParts": {
+            "sources": "0155d8cd203ddedf0cb52a8e4533c030a99bb25435fa9d13215692775c5e7ea2",
+            "harness": "80f1e0023250e3b01f6298e172d01a21e1a092f1a5bf0cd5ef7a94d9f7612f44",
+            "environment": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+            "image": "sha256:ca580a67749f4aaef83dca4570e448ac5fb965f1906336ddc61bd14577ceafb9",
+            "agentCli": "@cursor/sdk 1.0.37",
+            "judge": "1d4bbecdc1dc0e5f28fc1b93efd9787b0f5c15d4fe5902a4c583d4421b5641a1",
+            "context": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          "environmentDigest": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+          "harnessKind": "fake",
+          "model": null,
+          "effort": null,
+          "gate": "all",
+          "overrides": [],
+          "runs": 1,
+          "pass": 1,
+          "fail": 0,
+          "infraError": 0,
+          "skipped": 0,
+          "passRate": 1,
+          "outcome": "pass",
+          "checks": [
+            {
+              "label": "typechecks",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "agent works",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "keeps the flows",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            }
+          ]
+        }
+      ],
+      "attempts": [
+        {
+          "key": "evals/build.eval.ts › builds a Genkit feature: build-triage # fake/control/docker:evals#1",
+          "id": "fake/control/docker:evals#1",
+          "cell": "fake/control/docker:evals",
+          "n": 1,
+          "seq": 5,
+          "startedAt": "2026-10-20T13:34:28.347Z",
+          "imageId": "sha256:ca580a67749f4aaef83dca4570e448ac5fb965f1906336ddc61bd14577ceafb9",
+          "env": {
+            "vars": [
+              "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+            ],
+            "secrets": [
+              "GEMINI_API_KEY"
+            ],
+            "brokered": [
+              "GEMINI_API_KEY"
+            ]
+          },
+          "context": [],
+          "egress": {
+            "policy": "allow-all",
+            "allowed": null,
+            "recorded": true,
+            "contacted": [
+              {
+                "host": "generativelanguage.googleapis.com",
+                "port": 443,
+                "connections": 2,
+                "sent": 32181,
+                "received": 26410
+              },
+              {
+                "host": "genkit.dev",
+                "port": 443,
+                "connections": 1,
+                "sent": 1958,
+                "received": 460459
+              }
+            ],
+            "blocked": [],
+            "expectedBlocked": []
+          },
+          "servedModels": null,
+          "effort": null,
+          "servedEffort": null,
+          "outcome": "pass",
+          "error": null,
+          "durationMs": 32911,
+          "turns": [
+            {
+              "prompt": "You are on the support-desk app in this directory. Add a front desk agent. In `src/agents.ts`, add and export `triage`, the agent customers talk to first. It hands order questions to `orderAgent` and refund requests to `refundAgent` instead of answering them itself. A conversation with it can be picked up again later by its session id, so a customer who said \"My order is A-1001.\" can ask \"What is its status?\" in a later request. Export `triage` from `src/index.ts`. Callers start a conversation with `triage.chat()` and `send(message)`, read the `sessionId` from the response, and continue it with `triage.loadChat({ sessionId })`. Keep the existing flows and their exports. Don't change `package.json` or add dependencies.",
+              "status": "completed",
+              "startedAt": "2026-10-20T13:34:44.395Z",
+              "durationMs": 849,
+              "usage": null,
+              "model": null,
+              "unreported": [],
+              "error": null,
+              "text": "Fixed it."
+            }
+          ],
+          "usage": null,
+          "timings": {
+            "setupMs": 15792,
+            "agentMs": 849,
+            "diffMs": 108,
+            "checksMs": 14795,
+            "judgeMs": 0
+          },
+          "activity": {
+            "tools": 1,
+            "fileEdits": 5,
+            "webSearches": 0,
+            "webFetches": 0,
+            "reasoningMs": 0
+          },
+          "judgements": [
+            {
+              "verdict": "pass",
+              "score": 1,
+              "threshold": 0.8,
+              "question": "Did the agent build the feature with Genkit's agents API (`ai.defineAgent`, `ai.defineInterrupt` for the approval step, the `agents()` middleware from `@genkit-ai/middleware` for delegation, a session store such as `FileSessionStore` for resumable conversations) rather than hand-rolled `ai.generate` loops, flows posing as agents, or APIs Genkit no longer has such as `ai.chat()`? Judge only the parts the task needed: an order desk needs `defineAgent` with the tool; a refund desk also needs an interrupt; a front desk also needs delegation and a store.",
+              "model": "fake",
+              "key": "0:47910c0b1033"
+            }
+          ],
+          "assertions": [
+            {
+              "label": "typechecks",
+              "labelled": true,
+              "matcher": "toSucceed",
+              "status": "pass",
+              "soft": true,
+              "durationMs": 2099
+            },
+            {
+              "label": "agent works",
+              "labelled": true,
+              "matcher": "toSucceed",
+              "status": "pass",
+              "soft": true,
+              "durationMs": 12692
+            },
+            {
+              "label": "keeps the flows",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            }
+          ],
+          "checks": [
+            {
+              "command": "node_modules/.bin/tsc --noEmit",
+              "exitCode": 0,
+              "durationMs": 2101,
+              "log": {
+                "path": "evals-build-eval-ts-builds-a-genkit-feature-build-triage-dc9ef3/fake-control-docker-evals-3ea2b1/1/checks/1.log",
+                "sha256": "be0202cc2c67ae3851854f47c4ecb4d185cf16a81331cf2bb10ff348475cf50c",
+                "bytes": 62
+              }
+            },
+            {
+              "command": "node_modules/.bin/tsx --test --test-name-pattern '^build-triage$' ~/.verify-build.mts",
+              "exitCode": 0,
+              "durationMs": 12694,
+              "log": {
+                "path": "evals-build-eval-ts-builds-a-genkit-feature-build-triage-dc9ef3/fake-control-docker-evals-3ea2b1/1/checks/2.log",
+                "sha256": "d19b04d60dbde92be97aea5cf53b2d78d36735f4bcd8db4d49e31efbe3de8999",
+                "bytes": 1053
+              }
+            }
+          ],
+          "changedFiles": [
+            {
+              "path": "src/agents.ts",
+              "status": "modified"
+            },
+            {
+              "path": "src/index.ts",
+              "status": "modified"
+            }
+          ],
+          "files": {
+            "setupLog": {
+              "path": "evals-build-eval-ts-builds-a-genkit-feature-build-triage-dc9ef3/fake-control-docker-evals-3ea2b1/1/setup.log",
+              "sha256": "8206c0cf3049e064f46cf19908161a2736dd5829319ce5a10867d61a7775ad56",
+              "bytes": 600
+            },
+            "transcript": {
+              "path": "evals-build-eval-ts-builds-a-genkit-feature-build-triage-dc9ef3/fake-control-docker-evals-3ea2b1/1/transcript.jsonl",
+              "sha256": "e32a8f8e0c8fa0c114242bca06e57050786046da20dfdbbc8048e73e039c3023",
+              "bytes": 2992
+            },
+            "diff": {
+              "path": "evals-build-eval-ts-builds-a-genkit-feature-build-triage-dc9ef3/fake-control-docker-evals-3ea2b1/1/diff.patch",
+              "sha256": "d648ab84b6b5aeba5a7a0b03d7da001e4b3f15db2543caaa6dd18bd9ad31c1b9",
+              "bytes": 1709
+            },
+            "judgeInput": {
+              "path": "evals-build-eval-ts-builds-a-genkit-feature-build-triage-dc9ef3/fake-control-docker-evals-3ea2b1/1/judge-input.json",
+              "sha256": "dfd2e9a1401432aa21a739c9bc4cab0714a24a8403a46ddfbed83d83f2032eba",
+              "bytes": 4534
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "evals/genkit.eval.ts › fixes a broken Genkit app: schema-drift",
+      "key": "evals/genkit.eval.ts › fixes a broken Genkit app: schema-drift",
+      "slug": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-schema-drift-6b0324",
+      "file": "evals/genkit.eval.ts",
+      "group": [],
+      "name": "fixes a broken Genkit app: schema-drift",
+      "tags": [],
+      "compare": {
+        "baseline": "control"
+      },
+      "family": {
+        "id": "evals/genkit.eval.ts › fixes a broken Genkit app: $name",
+        "name": "fixes a broken Genkit app: $name",
+        "case": 0,
+        "cases": 12
+      },
+      "fingerprint": "c4379bbd6105c07fc2c40ae2b45755b7a5b631f0d240d3a7878a7ab92b7047cc",
+      "sources": [
+        {
+          "path": "evals/bugs.ts",
+          "sha256": "f72309483927e05317eab0e669cebcbbf2a54a26f7df5c2a949f920994bb555b"
+        },
+        {
+          "path": "evals/environments.ts",
+          "sha256": "427c931b764296e1d9d4a231f6385a8f64feb15723c7cde453b00e26be3ed25d"
+        },
+        {
+          "path": "evals/genkit.eval.ts",
+          "sha256": "912594cd8659e8506c5df902e69abd0f55f94a34aea4fa134752a36c174a96b9"
+        }
+      ],
+      "outcome": "pass",
+      "todo": false,
+      "passRate": 1,
+      "cells": [
+        {
+          "key": "fake/control/docker:evals",
+          "harness": "fake",
+          "environment": "control",
+          "sandbox": "docker:evals",
+          "role": "control",
+          "fingerprint": "179e8bd37d83dfb7a13fd05efac2eb3dd083be04f28bdbbb7b418ae400ea4c89",
+          "fingerprintParts": {
+            "sources": "a074cd13739d16fc9df716ce80d40be54de851857c665a68d9646c111caab319",
+            "harness": "80f1e0023250e3b01f6298e172d01a21e1a092f1a5bf0cd5ef7a94d9f7612f44",
+            "environment": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+            "image": "sha256:ca580a67749f4aaef83dca4570e448ac5fb965f1906336ddc61bd14577ceafb9",
+            "agentCli": "@cursor/sdk 1.0.37",
+            "judge": "1d4bbecdc1dc0e5f28fc1b93efd9787b0f5c15d4fe5902a4c583d4421b5641a1",
+            "context": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          "environmentDigest": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+          "harnessKind": "fake",
+          "model": null,
+          "effort": null,
+          "gate": "all",
+          "overrides": [],
+          "runs": 1,
+          "pass": 1,
+          "fail": 0,
+          "infraError": 0,
+          "skipped": 0,
+          "passRate": 1,
+          "outcome": "pass",
+          "checks": [
+            {
+              "label": "names the cause",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "flow works",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "keeps the flow",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            }
+          ]
+        }
+      ],
+      "attempts": [
+        {
+          "key": "evals/genkit.eval.ts › fixes a broken Genkit app: schema-drift # fake/control/docker:evals#1",
+          "id": "fake/control/docker:evals#1",
+          "cell": "fake/control/docker:evals",
+          "n": 1,
+          "seq": 2,
+          "startedAt": "2026-10-20T13:34:28.332Z",
+          "imageId": "sha256:ca580a67749f4aaef83dca4570e448ac5fb965f1906336ddc61bd14577ceafb9",
+          "env": {
+            "vars": [
+              "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+            ],
+            "secrets": [
+              "GEMINI_API_KEY"
+            ],
+            "brokered": [
+              "GEMINI_API_KEY"
+            ]
+          },
+          "context": [],
+          "egress": {
+            "policy": "allow-all",
+            "allowed": null,
+            "recorded": true,
+            "contacted": [
+              {
+                "host": "generativelanguage.googleapis.com",
+                "port": 443,
+                "connections": 1,
+                "sent": 3166,
+                "received": 4367
+              },
+              {
+                "host": "genkit.dev",
+                "port": 443,
+                "connections": 1,
+                "sent": 1958,
+                "received": 460217
+              }
+            ],
+            "blocked": [],
+            "expectedBlocked": []
+          },
+          "servedModels": null,
+          "effort": null,
+          "servedEffort": null,
+          "outcome": "pass",
+          "error": null,
+          "durationMs": 21379,
+          "turns": [
+            {
+              "prompt": "You are on the support-desk Genkit app in this directory. Bug report: Since this week summarizeTicket returns the tags as one comma-separated string such as \"shipping, damage\" instead of a list of tags. The triage dashboard reads tags as a list and now shows nothing. It happens for every ticket, for example one about a cracked monitor that arrived damaged.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+              "status": "completed",
+              "startedAt": "2026-10-20T13:34:44.396Z",
+              "durationMs": 853,
+              "usage": null,
+              "model": null,
+              "unreported": [],
+              "error": null,
+              "text": "Fixed it."
+            }
+          ],
+          "usage": null,
+          "timings": {
+            "setupMs": 15899,
+            "agentMs": 852,
+            "diffMs": 106,
+            "checksMs": 2776,
+            "judgeMs": 0
+          },
+          "activity": {
+            "tools": 1,
+            "fileEdits": 5,
+            "webSearches": 0,
+            "webFetches": 0,
+            "reasoningMs": 0
+          },
+          "judgements": [
+            {
+              "verdict": "pass",
+              "score": 1,
+              "threshold": 0.8,
+              "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+              "model": "fake",
+              "key": "0:32a297b09106"
+            },
+            {
+              "verdict": "pass",
+              "score": 1,
+              "threshold": 0.8,
+              "question": "Does the agent's final message accurately describe the change it made?",
+              "model": "fake",
+              "key": "1:f4a285891d47"
+            }
+          ],
+          "assertions": [
+            {
+              "label": "names the cause",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            },
+            {
+              "label": "flow works",
+              "labelled": true,
+              "matcher": "toSucceed",
+              "status": "pass",
+              "soft": true,
+              "durationMs": 2774
+            },
+            {
+              "label": "keeps the flow",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            }
+          ],
+          "checks": [
+            {
+              "command": "node_modules/.bin/tsx --test --test-name-pattern '^schema-drift$' ~/.verify.mts",
+              "exitCode": 0,
+              "durationMs": 2776,
+              "log": {
+                "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-schema-drift-6b0324/fake-control-docker-evals-3ea2b1/1/checks/1.log",
+                "sha256": "06bed51a09661eec7e90a4bf3cfc504a678b05d4a60af184949e5a6a6da12773",
+                "bytes": 1045
+              }
+            }
+          ],
+          "changedFiles": [
+            {
+              "path": "answer.json",
+              "status": "added"
+            },
+            {
+              "path": "src/flows.ts",
+              "status": "modified"
+            }
+          ],
+          "files": {
+            "setupLog": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-schema-drift-6b0324/fake-control-docker-evals-3ea2b1/1/setup.log",
+              "sha256": "553ea951d7325c21c68c5fed46daf44fe7537c0a0aee2092d4e1924785c382a8",
+              "bytes": 600
+            },
+            "transcript": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-schema-drift-6b0324/fake-control-docker-evals-3ea2b1/1/transcript.jsonl",
+              "sha256": "4222c70c84265cc04842a7d0c6f6e9665af66c049c72c0eff7e555924d2fdd9e",
+              "bytes": 3004
+            },
+            "diff": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-schema-drift-6b0324/fake-control-docker-evals-3ea2b1/1/diff.patch",
+              "sha256": "67723dce96435e0f841e8d40a3943438a7aa1d35e93f024e2b139b9af194d452",
+              "bytes": 1278
+            },
+            "judgeInput": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-schema-drift-6b0324/fake-control-docker-evals-3ea2b1/1/judge-input.json",
+              "sha256": "dfeeccfc2ad898090d91215f7d39e2eb78b45fdb4a217b73d6c5b58f2c79c6c8",
+              "bytes": 4214
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "evals/genkit.eval.ts › fixes a broken Genkit app: prompt-var-typo",
+      "key": "evals/genkit.eval.ts › fixes a broken Genkit app: prompt-var-typo",
+      "slug": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-prompt-var-ty-15b812",
+      "file": "evals/genkit.eval.ts",
+      "group": [],
+      "name": "fixes a broken Genkit app: prompt-var-typo",
+      "tags": [],
+      "compare": {
+        "baseline": "control"
+      },
+      "family": {
+        "id": "evals/genkit.eval.ts › fixes a broken Genkit app: $name",
+        "name": "fixes a broken Genkit app: $name",
+        "case": 1,
+        "cases": 12
+      },
+      "fingerprint": "c4379bbd6105c07fc2c40ae2b45755b7a5b631f0d240d3a7878a7ab92b7047cc",
+      "sources": [
+        {
+          "path": "evals/bugs.ts",
+          "sha256": "f72309483927e05317eab0e669cebcbbf2a54a26f7df5c2a949f920994bb555b"
+        },
+        {
+          "path": "evals/environments.ts",
+          "sha256": "427c931b764296e1d9d4a231f6385a8f64feb15723c7cde453b00e26be3ed25d"
+        },
+        {
+          "path": "evals/genkit.eval.ts",
+          "sha256": "912594cd8659e8506c5df902e69abd0f55f94a34aea4fa134752a36c174a96b9"
+        }
+      ],
+      "outcome": "pass",
+      "todo": false,
+      "passRate": 1,
+      "cells": [
+        {
+          "key": "fake/control/docker:evals",
+          "harness": "fake",
+          "environment": "control",
+          "sandbox": "docker:evals",
+          "role": "control",
+          "fingerprint": "179e8bd37d83dfb7a13fd05efac2eb3dd083be04f28bdbbb7b418ae400ea4c89",
+          "fingerprintParts": {
+            "sources": "a074cd13739d16fc9df716ce80d40be54de851857c665a68d9646c111caab319",
+            "harness": "80f1e0023250e3b01f6298e172d01a21e1a092f1a5bf0cd5ef7a94d9f7612f44",
+            "environment": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+            "image": "sha256:ca580a67749f4aaef83dca4570e448ac5fb965f1906336ddc61bd14577ceafb9",
+            "agentCli": "@cursor/sdk 1.0.37",
+            "judge": "1d4bbecdc1dc0e5f28fc1b93efd9787b0f5c15d4fe5902a4c583d4421b5641a1",
+            "context": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          "environmentDigest": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+          "harnessKind": "fake",
+          "model": null,
+          "effort": null,
+          "gate": "all",
+          "overrides": [],
+          "runs": 1,
+          "pass": 1,
+          "fail": 0,
+          "infraError": 0,
+          "skipped": 0,
+          "passRate": 1,
+          "outcome": "pass",
+          "checks": [
+            {
+              "label": "names the cause",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "flow works",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "keeps the flow",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            }
+          ]
+        }
+      ],
+      "attempts": [
+        {
+          "key": "evals/genkit.eval.ts › fixes a broken Genkit app: prompt-var-typo # fake/control/docker:evals#1",
+          "id": "fake/control/docker:evals#1",
+          "cell": "fake/control/docker:evals",
+          "n": 1,
+          "seq": 3,
+          "startedAt": "2026-10-20T13:34:28.336Z",
+          "imageId": "sha256:ca580a67749f4aaef83dca4570e448ac5fb965f1906336ddc61bd14577ceafb9",
+          "env": {
+            "vars": [
+              "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+            ],
+            "secrets": [
+              "GEMINI_API_KEY"
+            ],
+            "brokered": [
+              "GEMINI_API_KEY"
+            ]
+          },
+          "context": [],
+          "egress": {
+            "policy": "allow-all",
+            "allowed": null,
+            "recorded": true,
+            "contacted": [
+              {
+                "host": "generativelanguage.googleapis.com",
+                "port": 443,
+                "connections": 1,
+                "sent": 2475,
+                "received": 4294
+              },
+              {
+                "host": "genkit.dev",
+                "port": 443,
+                "connections": 1,
+                "sent": 1958,
+                "received": 460921
+              }
+            ],
+            "blocked": [],
+            "expectedBlocked": []
+          },
+          "servedModels": null,
+          "effort": null,
+          "servedEffort": null,
+          "outcome": "pass",
+          "error": null,
+          "durationMs": 20665,
+          "turns": [
+            {
+              "prompt": "You are on the support-desk Genkit app in this directory. Bug report: The greet flow for customer \"Ada\" returns a generic welcome like \"Welcome to Northwind Supplies!\" that never uses her name. Other customers get the same nameless greeting. I expected a one-sentence welcome that addresses the customer by name.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+              "status": "completed",
+              "startedAt": "2026-10-20T13:34:44.332Z",
+              "durationMs": 849,
+              "usage": null,
+              "model": null,
+              "unreported": [],
+              "error": null,
+              "text": "Fixed it."
+            }
+          ],
+          "usage": null,
+          "timings": {
+            "setupMs": 15802,
+            "agentMs": 849,
+            "diffMs": 104,
+            "checksMs": 2333,
+            "judgeMs": 0
+          },
+          "activity": {
+            "tools": 1,
+            "fileEdits": 5,
+            "webSearches": 0,
+            "webFetches": 0,
+            "reasoningMs": 0
+          },
+          "judgements": [
+            {
+              "verdict": "pass",
+              "score": 1,
+              "threshold": 0.8,
+              "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+              "model": "fake",
+              "key": "0:32a297b09106"
+            },
+            {
+              "verdict": "pass",
+              "score": 1,
+              "threshold": 0.8,
+              "question": "Does the agent's final message accurately describe the change it made?",
+              "model": "fake",
+              "key": "1:f4a285891d47"
+            }
+          ],
+          "assertions": [
+            {
+              "label": "names the cause",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            },
+            {
+              "label": "flow works",
+              "labelled": true,
+              "matcher": "toSucceed",
+              "status": "pass",
+              "soft": true,
+              "durationMs": 2331
+            },
+            {
+              "label": "keeps the flow",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            }
+          ],
+          "checks": [
+            {
+              "command": "node_modules/.bin/tsx --test --test-name-pattern '^prompt-var-typo$' ~/.verify.mts",
+              "exitCode": 0,
+              "durationMs": 2333,
+              "log": {
+                "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-prompt-var-ty-15b812/fake-control-docker-evals-3ea2b1/1/checks/1.log",
+                "sha256": "5eeeac35c37d8b2885a93f86aa5689f70ea18f2dbdd817103ba1d11774bae7e0",
+                "bytes": 1054
+              }
+            }
+          ],
+          "changedFiles": [
+            {
+              "path": "answer.json",
+              "status": "added"
+            },
+            {
+              "path": "prompts/greet.prompt",
+              "status": "modified"
+            }
+          ],
+          "files": {
+            "setupLog": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-prompt-var-ty-15b812/fake-control-docker-evals-3ea2b1/1/setup.log",
+              "sha256": "6055fd211e6022c1e3ef88c01ae58eae60aafcb847df71d6ceb433aecfed6c20",
+              "bytes": 600
+            },
+            "transcript": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-prompt-var-ty-15b812/fake-control-docker-evals-3ea2b1/1/transcript.jsonl",
+              "sha256": "0509f50caaa3def2284e15a343f3bf37d24067d7d497261f1f6aa344583ea3b8",
+              "bytes": 2919
+            },
+            "diff": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-prompt-var-ty-15b812/fake-control-docker-evals-3ea2b1/1/diff.patch",
+              "sha256": "d05d5fe72887a2747fec036564446bb0ef147a6892e2fa3b4cd2d46196016ceb",
+              "bytes": 916
+            },
+            "judgeInput": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-prompt-var-ty-15b812/fake-control-docker-evals-3ea2b1/1/judge-input.json",
+              "sha256": "182e620bb9b566f5c6e2462df7d9dc3fdf71f9235bf16214f793f0d4ec93adbf",
+              "bytes": 3844
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "evals/genkit.eval.ts › fixes a broken Genkit app: prompt-model-override",
+      "key": "evals/genkit.eval.ts › fixes a broken Genkit app: prompt-model-override",
+      "slug": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-prompt-model-a78e4b",
+      "file": "evals/genkit.eval.ts",
+      "group": [],
+      "name": "fixes a broken Genkit app: prompt-model-override",
+      "tags": [],
+      "compare": {
+        "baseline": "control"
+      },
+      "family": {
+        "id": "evals/genkit.eval.ts › fixes a broken Genkit app: $name",
+        "name": "fixes a broken Genkit app: $name",
+        "case": 2,
+        "cases": 12
+      },
+      "fingerprint": "c4379bbd6105c07fc2c40ae2b45755b7a5b631f0d240d3a7878a7ab92b7047cc",
+      "sources": [
+        {
+          "path": "evals/bugs.ts",
+          "sha256": "f72309483927e05317eab0e669cebcbbf2a54a26f7df5c2a949f920994bb555b"
+        },
+        {
+          "path": "evals/environments.ts",
+          "sha256": "427c931b764296e1d9d4a231f6385a8f64feb15723c7cde453b00e26be3ed25d"
+        },
+        {
+          "path": "evals/genkit.eval.ts",
+          "sha256": "912594cd8659e8506c5df902e69abd0f55f94a34aea4fa134752a36c174a96b9"
+        }
+      ],
+      "outcome": "pass",
+      "todo": false,
+      "passRate": 1,
+      "cells": [
+        {
+          "key": "fake/control/docker:evals",
+          "harness": "fake",
+          "environment": "control",
+          "sandbox": "docker:evals",
+          "role": "control",
+          "fingerprint": "179e8bd37d83dfb7a13fd05efac2eb3dd083be04f28bdbbb7b418ae400ea4c89",
+          "fingerprintParts": {
+            "sources": "a074cd13739d16fc9df716ce80d40be54de851857c665a68d9646c111caab319",
+            "harness": "80f1e0023250e3b01f6298e172d01a21e1a092f1a5bf0cd5ef7a94d9f7612f44",
+            "environment": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+            "image": "sha256:ca580a67749f4aaef83dca4570e448ac5fb965f1906336ddc61bd14577ceafb9",
+            "agentCli": "@cursor/sdk 1.0.37",
+            "judge": "1d4bbecdc1dc0e5f28fc1b93efd9787b0f5c15d4fe5902a4c583d4421b5641a1",
+            "context": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          "environmentDigest": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+          "harnessKind": "fake",
+          "model": null,
+          "effort": null,
+          "gate": "all",
+          "overrides": [],
+          "runs": 1,
+          "pass": 1,
+          "fail": 0,
+          "infraError": 0,
+          "skipped": 0,
+          "passRate": 1,
+          "outcome": "pass",
+          "checks": [
+            {
+              "label": "names the cause",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "flow works",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "keeps the flow",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            }
+          ]
+        }
+      ],
+      "attempts": [
+        {
+          "key": "evals/genkit.eval.ts › fixes a broken Genkit app: prompt-model-override # fake/control/docker:evals#1",
+          "id": "fake/control/docker:evals#1",
+          "cell": "fake/control/docker:evals",
+          "n": 1,
+          "seq": 6,
+          "startedAt": "2026-10-20T13:34:28.348Z",
+          "imageId": "sha256:ca580a67749f4aaef83dca4570e448ac5fb965f1906336ddc61bd14577ceafb9",
+          "env": {
+            "vars": [
+              "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+            ],
+            "secrets": [
+              "GEMINI_API_KEY"
+            ],
+            "brokered": [
+              "GEMINI_API_KEY"
+            ]
+          },
+          "context": [],
+          "egress": {
+            "policy": "allow-all",
+            "allowed": null,
+            "recorded": true,
+            "contacted": [
+              {
+                "host": "generativelanguage.googleapis.com",
+                "port": 443,
+                "connections": 1,
+                "sent": 2477,
+                "received": 4288
+              },
+              {
+                "host": "genkit.dev",
+                "port": 443,
+                "connections": 1,
+                "sent": 1958,
+                "received": 460217
+              }
+            ],
+            "blocked": [],
+            "expectedBlocked": []
+          },
+          "servedModels": null,
+          "effort": null,
+          "servedEffort": null,
+          "outcome": "pass",
+          "error": null,
+          "durationMs": 22268,
+          "turns": [
+            {
+              "prompt": "You are on the support-desk Genkit app in this directory. Bug report: The greet flow now fails with an error for every customer, for example \"Grace\", instead of returning a welcome. The other flows, such as summarizeTicket, still work. I expected a one-sentence welcome that addresses the customer by name.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+              "status": "completed",
+              "startedAt": "2026-10-20T13:34:44.334Z",
+              "durationMs": 844,
+              "usage": null,
+              "model": null,
+              "unreported": [],
+              "error": null,
+              "text": "Fixed it."
+            }
+          ],
+          "usage": null,
+          "timings": {
+            "setupMs": 15794,
+            "agentMs": 844,
+            "diffMs": 115,
+            "checksMs": 4519,
+            "judgeMs": 0
+          },
+          "activity": {
+            "tools": 1,
+            "fileEdits": 5,
+            "webSearches": 0,
+            "webFetches": 0,
+            "reasoningMs": 0
+          },
+          "judgements": [
+            {
+              "verdict": "pass",
+              "score": 1,
+              "threshold": 0.8,
+              "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+              "model": "fake",
+              "key": "0:32a297b09106"
+            },
+            {
+              "verdict": "pass",
+              "score": 1,
+              "threshold": 0.8,
+              "question": "Does the agent's final message accurately describe the change it made?",
+              "model": "fake",
+              "key": "1:f4a285891d47"
+            }
+          ],
+          "assertions": [
+            {
+              "label": "names the cause",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            },
+            {
+              "label": "flow works",
+              "labelled": true,
+              "matcher": "toSucceed",
+              "status": "pass",
+              "soft": true,
+              "durationMs": 4517
+            },
+            {
+              "label": "keeps the flow",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            }
+          ],
+          "checks": [
+            {
+              "command": "node_modules/.bin/tsx --test --test-name-pattern '^prompt-model-override$' ~/.verify.mts",
+              "exitCode": 0,
+              "durationMs": 4519,
+              "log": {
+                "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-prompt-model-a78e4b/fake-control-docker-evals-3ea2b1/1/checks/1.log",
+                "sha256": "978285de29759fd4fe036fa11248c6d125d2076542eb57aecd06ff4bdbbe60c2",
+                "bytes": 1071
+              }
+            }
+          ],
+          "changedFiles": [
+            {
+              "path": "answer.json",
+              "status": "added"
+            },
+            {
+              "path": "prompts/greet.prompt",
+              "status": "modified"
+            }
+          ],
+          "files": {
+            "setupLog": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-prompt-model-a78e4b/fake-control-docker-evals-3ea2b1/1/setup.log",
+              "sha256": "d3ae20a1332b5629a52da03c20f4fb09b4c9393c4f9ed5977df3db2524708ea8",
+              "bytes": 600
+            },
+            "transcript": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-prompt-model-a78e4b/fake-control-docker-evals-3ea2b1/1/transcript.jsonl",
+              "sha256": "6a5e16fbd80de6950c9e394caf5800aa9f9d83f8c73a415c45c1f34c36142ac2",
+              "bytes": 2909
+            },
+            "diff": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-prompt-model-a78e4b/fake-control-docker-evals-3ea2b1/1/diff.patch",
+              "sha256": "bdf7dde4411baa21c83c57ac0c2fe02f3bbaa3bc33902d68278a24fdd6e5e782",
+              "bytes": 842
+            },
+            "judgeInput": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-prompt-model-a78e4b/fake-control-docker-evals-3ea2b1/1/judge-input.json",
+              "sha256": "4c34d751717c4d66e504dd7ca435ce11c3286485190d36809b3c577fe937e092",
+              "bytes": 4000
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "evals/genkit.eval.ts › fixes a broken Genkit app: order-id-case",
+      "key": "evals/genkit.eval.ts › fixes a broken Genkit app: order-id-case",
+      "slug": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-order-id-case-b64cfc",
+      "file": "evals/genkit.eval.ts",
+      "group": [],
+      "name": "fixes a broken Genkit app: order-id-case",
+      "tags": [],
+      "compare": {
+        "baseline": "control"
+      },
+      "family": {
+        "id": "evals/genkit.eval.ts › fixes a broken Genkit app: $name",
+        "name": "fixes a broken Genkit app: $name",
+        "case": 3,
+        "cases": 12
+      },
+      "fingerprint": "c4379bbd6105c07fc2c40ae2b45755b7a5b631f0d240d3a7878a7ab92b7047cc",
+      "sources": [
+        {
+          "path": "evals/bugs.ts",
+          "sha256": "f72309483927e05317eab0e669cebcbbf2a54a26f7df5c2a949f920994bb555b"
+        },
+        {
+          "path": "evals/environments.ts",
+          "sha256": "427c931b764296e1d9d4a231f6385a8f64feb15723c7cde453b00e26be3ed25d"
+        },
+        {
+          "path": "evals/genkit.eval.ts",
+          "sha256": "912594cd8659e8506c5df902e69abd0f55f94a34aea4fa134752a36c174a96b9"
+        }
+      ],
+      "outcome": "pass",
+      "todo": false,
+      "passRate": 1,
+      "cells": [
+        {
+          "key": "fake/control/docker:evals",
+          "harness": "fake",
+          "environment": "control",
+          "sandbox": "docker:evals",
+          "role": "control",
+          "fingerprint": "179e8bd37d83dfb7a13fd05efac2eb3dd083be04f28bdbbb7b418ae400ea4c89",
+          "fingerprintParts": {
+            "sources": "a074cd13739d16fc9df716ce80d40be54de851857c665a68d9646c111caab319",
+            "harness": "80f1e0023250e3b01f6298e172d01a21e1a092f1a5bf0cd5ef7a94d9f7612f44",
+            "environment": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+            "image": "sha256:ca580a67749f4aaef83dca4570e448ac5fb965f1906336ddc61bd14577ceafb9",
+            "agentCli": "@cursor/sdk 1.0.37",
+            "judge": "1d4bbecdc1dc0e5f28fc1b93efd9787b0f5c15d4fe5902a4c583d4421b5641a1",
+            "context": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          "environmentDigest": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+          "harnessKind": "fake",
+          "model": null,
+          "effort": null,
+          "gate": "all",
+          "overrides": [],
+          "runs": 1,
+          "pass": 1,
+          "fail": 0,
+          "infraError": 0,
+          "skipped": 0,
+          "passRate": 1,
+          "outcome": "pass",
+          "checks": [
+            {
+              "label": "names the cause",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "flow works",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "keeps the flow",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            }
+          ]
+        }
+      ],
+      "attempts": [
+        {
+          "key": "evals/genkit.eval.ts › fixes a broken Genkit app: order-id-case # fake/control/docker:evals#1",
+          "id": "fake/control/docker:evals#1",
+          "cell": "fake/control/docker:evals",
+          "n": 1,
+          "seq": 7,
+          "startedAt": "2026-10-20T13:34:28.351Z",
+          "imageId": "sha256:ca580a67749f4aaef83dca4570e448ac5fb965f1906336ddc61bd14577ceafb9",
+          "env": {
+            "vars": [
+              "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+            ],
+            "secrets": [
+              "GEMINI_API_KEY"
+            ],
+            "brokered": [
+              "GEMINI_API_KEY"
+            ]
+          },
+          "context": [],
+          "egress": {
+            "policy": "allow-all",
+            "allowed": null,
+            "recorded": true,
+            "contacted": [
+              {
+                "host": "generativelanguage.googleapis.com",
+                "port": 443,
+                "connections": 2,
+                "sent": 6981,
+                "received": 9068
+              },
+              {
+                "host": "genkit.dev",
+                "port": 443,
+                "connections": 1,
+                "sent": 1958,
+                "received": 460217
+              }
+            ],
+            "blocked": [],
+            "expectedBlocked": []
+          },
+          "servedModels": null,
+          "effort": null,
+          "servedEffort": null,
+          "outcome": "pass",
+          "error": null,
+          "durationMs": 21385,
+          "turns": [
+            {
+              "prompt": "You are on the support-desk Genkit app in this directory. Bug report: Some customers with valid orders are told their order does not exist. One customer asked the orderStatus flow \"where is order a-1001?\" and got that answer, but A-1001 is in our system and has shipped. I expected the reply to give the status and delivery date.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+              "status": "completed",
+              "startedAt": "2026-10-20T13:34:44.518Z",
+              "durationMs": 868,
+              "usage": null,
+              "model": null,
+              "unreported": [],
+              "error": null,
+              "text": "Fixed it."
+            }
+          ],
+          "usage": null,
+          "timings": {
+            "setupMs": 16005,
+            "agentMs": 868,
+            "diffMs": 120,
+            "checksMs": 2887,
+            "judgeMs": 0
+          },
+          "activity": {
+            "tools": 1,
+            "fileEdits": 5,
+            "webSearches": 0,
+            "webFetches": 0,
+            "reasoningMs": 0
+          },
+          "judgements": [
+            {
+              "verdict": "pass",
+              "score": 1,
+              "threshold": 0.8,
+              "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+              "model": "fake",
+              "key": "0:32a297b09106"
+            },
+            {
+              "verdict": "pass",
+              "score": 1,
+              "threshold": 0.8,
+              "question": "Does the agent's final message accurately describe the change it made?",
+              "model": "fake",
+              "key": "1:f4a285891d47"
+            }
+          ],
+          "assertions": [
+            {
+              "label": "names the cause",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            },
+            {
+              "label": "flow works",
+              "labelled": true,
+              "matcher": "toSucceed",
+              "status": "pass",
+              "soft": true,
+              "durationMs": 2884
+            },
+            {
+              "label": "keeps the flow",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            }
+          ],
+          "checks": [
+            {
+              "command": "node_modules/.bin/tsx --test --test-name-pattern '^order-id-case$' ~/.verify.mts",
+              "exitCode": 0,
+              "durationMs": 2887,
+              "log": {
+                "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-order-id-case-b64cfc/fake-control-docker-evals-3ea2b1/1/checks/1.log",
+                "sha256": "2455a89093eadc15d14367f39fdaca182869da7f52250d2ea61b19db3851ccf6",
+                "bytes": 1048
+              }
+            }
+          ],
+          "changedFiles": [
+            {
+              "path": "answer.json",
+              "status": "added"
+            },
+            {
+              "path": "src/tools.ts",
+              "status": "modified"
+            }
+          ],
+          "files": {
+            "setupLog": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-order-id-case-b64cfc/fake-control-docker-evals-3ea2b1/1/setup.log",
+              "sha256": "0a23270b99377198cfbb501ec93e53e81b8238fa8e634ff826041882a23f384b",
+              "bytes": 600
+            },
+            "transcript": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-order-id-case-b64cfc/fake-control-docker-evals-3ea2b1/1/transcript.jsonl",
+              "sha256": "5f2dc86d5c80de8f0d2a80a24c0bc8f7399795552972fb7035068f58f7e4aa22",
+              "bytes": 2947
+            },
+            "diff": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-order-id-case-b64cfc/fake-control-docker-evals-3ea2b1/1/diff.patch",
+              "sha256": "0eb2221398775b591739a3ac359e4ec2616c4c26b7e0f1327fe9aa66a208f904",
+              "bytes": 908
+            },
+            "judgeInput": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-order-id-case-b64cfc/fake-control-docker-evals-3ea2b1/1/judge-input.json",
+              "sha256": "191b6845b4eae5badc6bd5f0bfc0e3cb0e3673d3eb2bf1047009b4776e70a48d",
+              "bytes": 4032
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "evals/genkit.eval.ts › fixes a broken Genkit app: tool-requests-returned",
+      "key": "evals/genkit.eval.ts › fixes a broken Genkit app: tool-requests-returned",
+      "slug": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-tool-requests-032699",
+      "file": "evals/genkit.eval.ts",
+      "group": [],
+      "name": "fixes a broken Genkit app: tool-requests-returned",
+      "tags": [],
+      "compare": {
+        "baseline": "control"
+      },
+      "family": {
+        "id": "evals/genkit.eval.ts › fixes a broken Genkit app: $name",
+        "name": "fixes a broken Genkit app: $name",
+        "case": 4,
+        "cases": 12
+      },
+      "fingerprint": "c4379bbd6105c07fc2c40ae2b45755b7a5b631f0d240d3a7878a7ab92b7047cc",
+      "sources": [
+        {
+          "path": "evals/bugs.ts",
+          "sha256": "f72309483927e05317eab0e669cebcbbf2a54a26f7df5c2a949f920994bb555b"
+        },
+        {
+          "path": "evals/environments.ts",
+          "sha256": "427c931b764296e1d9d4a231f6385a8f64feb15723c7cde453b00e26be3ed25d"
+        },
+        {
+          "path": "evals/genkit.eval.ts",
+          "sha256": "912594cd8659e8506c5df902e69abd0f55f94a34aea4fa134752a36c174a96b9"
+        }
+      ],
+      "outcome": "pass",
+      "todo": false,
+      "passRate": 1,
+      "cells": [
+        {
+          "key": "fake/control/docker:evals",
+          "harness": "fake",
+          "environment": "control",
+          "sandbox": "docker:evals",
+          "role": "control",
+          "fingerprint": "179e8bd37d83dfb7a13fd05efac2eb3dd083be04f28bdbbb7b418ae400ea4c89",
+          "fingerprintParts": {
+            "sources": "a074cd13739d16fc9df716ce80d40be54de851857c665a68d9646c111caab319",
+            "harness": "80f1e0023250e3b01f6298e172d01a21e1a092f1a5bf0cd5ef7a94d9f7612f44",
+            "environment": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+            "image": "sha256:ca580a67749f4aaef83dca4570e448ac5fb965f1906336ddc61bd14577ceafb9",
+            "agentCli": "@cursor/sdk 1.0.37",
+            "judge": "1d4bbecdc1dc0e5f28fc1b93efd9787b0f5c15d4fe5902a4c583d4421b5641a1",
+            "context": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          "environmentDigest": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+          "harnessKind": "fake",
+          "model": null,
+          "effort": null,
+          "gate": "all",
+          "overrides": [],
+          "runs": 1,
+          "pass": 1,
+          "fail": 0,
+          "infraError": 0,
+          "skipped": 0,
+          "passRate": 1,
+          "outcome": "pass",
+          "checks": [
+            {
+              "label": "names the cause",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "flow works",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "keeps the flow",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            }
+          ]
+        }
+      ],
+      "attempts": [
+        {
+          "key": "evals/genkit.eval.ts › fixes a broken Genkit app: tool-requests-returned # fake/control/docker:evals#1",
+          "id": "fake/control/docker:evals#1",
+          "cell": "fake/control/docker:evals",
+          "n": 1,
+          "seq": 8,
+          "startedAt": "2026-10-20T13:34:28.354Z",
+          "imageId": "sha256:ca580a67749f4aaef83dca4570e448ac5fb965f1906336ddc61bd14577ceafb9",
+          "env": {
+            "vars": [
+              "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+            ],
+            "secrets": [
+              "GEMINI_API_KEY"
+            ],
+            "brokered": [
+              "GEMINI_API_KEY"
+            ]
+          },
+          "context": [],
+          "egress": {
+            "policy": "allow-all",
+            "allowed": null,
+            "recorded": true,
+            "contacted": [
+              {
+                "host": "generativelanguage.googleapis.com",
+                "port": 443,
+                "connections": 2,
+                "sent": 6985,
+                "received": 9077
+              },
+              {
+                "host": "genkit.dev",
+                "port": 443,
+                "connections": 1,
+                "sent": 1958,
+                "received": 460217
+              }
+            ],
+            "blocked": [],
+            "expectedBlocked": []
+          },
+          "servedModels": null,
+          "effort": null,
+          "servedEffort": null,
+          "outcome": "pass",
+          "error": null,
+          "durationMs": 21382,
+          "turns": [
+            {
+              "prompt": "You are on the support-desk Genkit app in this directory. Bug report: The orderStatus flow returns an empty answer for \"Where is order A-1001?\". There is no error, just an empty string. The order is in our system and has shipped. I expected the reply to give the status, delivery date and tracking code.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+              "status": "completed",
+              "startedAt": "2026-10-20T13:34:44.460Z",
+              "durationMs": 846,
+              "usage": null,
+              "model": null,
+              "unreported": [],
+              "error": null,
+              "text": "Fixed it."
+            }
+          ],
+          "usage": null,
+          "timings": {
+            "setupMs": 15944,
+            "agentMs": 846,
+            "diffMs": 100,
+            "checksMs": 2853,
+            "judgeMs": 0
+          },
+          "activity": {
+            "tools": 1,
+            "fileEdits": 5,
+            "webSearches": 0,
+            "webFetches": 0,
+            "reasoningMs": 0
+          },
+          "judgements": [
+            {
+              "verdict": "pass",
+              "score": 1,
+              "threshold": 0.8,
+              "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+              "model": "fake",
+              "key": "0:32a297b09106"
+            },
+            {
+              "verdict": "pass",
+              "score": 1,
+              "threshold": 0.8,
+              "question": "Does the agent's final message accurately describe the change it made?",
+              "model": "fake",
+              "key": "1:f4a285891d47"
+            }
+          ],
+          "assertions": [
+            {
+              "label": "names the cause",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            },
+            {
+              "label": "flow works",
+              "labelled": true,
+              "matcher": "toSucceed",
+              "status": "pass",
+              "soft": true,
+              "durationMs": 2851
+            },
+            {
+              "label": "keeps the flow",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            }
+          ],
+          "checks": [
+            {
+              "command": "node_modules/.bin/tsx --test --test-name-pattern '^tool-requests-returned$' ~/.verify.mts",
+              "exitCode": 0,
+              "durationMs": 2853,
+              "log": {
+                "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-tool-requests-032699/fake-control-docker-evals-3ea2b1/1/checks/1.log",
+                "sha256": "8ebd99f9c11fd764558f21375abe6db03d6236eda5ca45d933fe78923b80a316",
+                "bytes": 1075
+              }
+            }
+          ],
+          "changedFiles": [
+            {
+              "path": "answer.json",
+              "status": "added"
+            },
+            {
+              "path": "src/flows.ts",
+              "status": "modified"
+            }
+          ],
+          "files": {
+            "setupLog": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-tool-requests-032699/fake-control-docker-evals-3ea2b1/1/setup.log",
+              "sha256": "4cfe15fcd6fdc55fce1b8918cb8ddf4ece28c5807d9b8ef4748b366d380d7373",
+              "bytes": 600
+            },
+            "transcript": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-tool-requests-032699/fake-control-docker-evals-3ea2b1/1/transcript.jsonl",
+              "sha256": "33a6151a86e46fcf4289315c7969ccc056b42986c0f563c1fb545773ecc68246",
+              "bytes": 2904
+            },
+            "diff": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-tool-requests-032699/fake-control-docker-evals-3ea2b1/1/diff.patch",
+              "sha256": "2d522ba31317a13b17260ea4fbbf0d7bf32116b254dc7310177e330624b469bf",
+              "bytes": 968
+            },
+            "judgeInput": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-tool-requests-032699/fake-control-docker-evals-3ea2b1/1/judge-input.json",
+              "sha256": "8c0da2efa7d12a04182507b3c427c3d3c1705023f27a96924adeeae665f785fa",
+              "bytes": 3944
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "evals/genkit.eval.ts › fixes a broken Genkit app: stop-sequence",
+      "key": "evals/genkit.eval.ts › fixes a broken Genkit app: stop-sequence",
+      "slug": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-stop-sequence-2bbb28",
+      "file": "evals/genkit.eval.ts",
+      "group": [],
+      "name": "fixes a broken Genkit app: stop-sequence",
+      "tags": [],
+      "compare": {
+        "baseline": "control"
+      },
+      "family": {
+        "id": "evals/genkit.eval.ts › fixes a broken Genkit app: $name",
+        "name": "fixes a broken Genkit app: $name",
+        "case": 5,
+        "cases": 12
+      },
+      "fingerprint": "c4379bbd6105c07fc2c40ae2b45755b7a5b631f0d240d3a7878a7ab92b7047cc",
+      "sources": [
+        {
+          "path": "evals/bugs.ts",
+          "sha256": "f72309483927e05317eab0e669cebcbbf2a54a26f7df5c2a949f920994bb555b"
+        },
+        {
+          "path": "evals/environments.ts",
+          "sha256": "427c931b764296e1d9d4a231f6385a8f64feb15723c7cde453b00e26be3ed25d"
+        },
+        {
+          "path": "evals/genkit.eval.ts",
+          "sha256": "912594cd8659e8506c5df902e69abd0f55f94a34aea4fa134752a36c174a96b9"
+        }
+      ],
+      "outcome": "pass",
+      "todo": false,
+      "passRate": 1,
+      "cells": [
+        {
+          "key": "fake/control/docker:evals",
+          "harness": "fake",
+          "environment": "control",
+          "sandbox": "docker:evals",
+          "role": "control",
+          "fingerprint": "179e8bd37d83dfb7a13fd05efac2eb3dd083be04f28bdbbb7b418ae400ea4c89",
+          "fingerprintParts": {
+            "sources": "a074cd13739d16fc9df716ce80d40be54de851857c665a68d9646c111caab319",
+            "harness": "80f1e0023250e3b01f6298e172d01a21e1a092f1a5bf0cd5ef7a94d9f7612f44",
+            "environment": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+            "image": "sha256:ca580a67749f4aaef83dca4570e448ac5fb965f1906336ddc61bd14577ceafb9",
+            "agentCli": "@cursor/sdk 1.0.37",
+            "judge": "1d4bbecdc1dc0e5f28fc1b93efd9787b0f5c15d4fe5902a4c583d4421b5641a1",
+            "context": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          "environmentDigest": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+          "harnessKind": "fake",
+          "model": null,
+          "effort": null,
+          "gate": "all",
+          "overrides": [],
+          "runs": 1,
+          "pass": 1,
+          "fail": 0,
+          "infraError": 0,
+          "skipped": 0,
+          "passRate": 1,
+          "outcome": "pass",
+          "checks": [
+            {
+              "label": "names the cause",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "flow works",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "keeps the flow",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            }
+          ]
+        }
+      ],
+      "attempts": [
+        {
+          "key": "evals/genkit.eval.ts › fixes a broken Genkit app: stop-sequence # fake/control/docker:evals#1",
+          "id": "fake/control/docker:evals#1",
+          "cell": "fake/control/docker:evals",
+          "n": 1,
+          "seq": 9,
+          "startedAt": "2026-10-20T13:34:49.002Z",
+          "imageId": "sha256:ca580a67749f4aaef83dca4570e448ac5fb965f1906336ddc61bd14577ceafb9",
+          "env": {
+            "vars": [
+              "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+            ],
+            "secrets": [
+              "GEMINI_API_KEY"
+            ],
+            "brokered": [
+              "GEMINI_API_KEY"
+            ]
+          },
+          "context": [],
+          "egress": {
+            "policy": "allow-all",
+            "allowed": null,
+            "recorded": true,
+            "contacted": [
+              {
+                "host": "generativelanguage.googleapis.com",
+                "port": 443,
+                "connections": 1,
+                "sent": 2780,
+                "received": 4681
+              },
+              {
+                "host": "genkit.dev",
+                "port": 443,
+                "connections": 1,
+                "sent": 1958,
+                "received": 460217
+              }
+            ],
+            "blocked": [],
+            "expectedBlocked": []
+          },
+          "servedModels": null,
+          "effort": null,
+          "servedEffort": null,
+          "outcome": "pass",
+          "error": null,
+          "durationMs": 13712,
+          "turns": [
+            {
+              "prompt": "You are on the support-desk Genkit app in this directory. Bug report: The replies that draftReply writes for customer tickets stop after the first line, usually just \"Dear customer,\" or \"Hi there,\". There is no error, and the reason it reports for stopping looks normal. I expected a complete reply that explains the next steps and signs off from the support team.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+              "status": "completed",
+              "startedAt": "2026-10-20T13:34:54.690Z",
+              "durationMs": 961,
+              "usage": null,
+              "model": null,
+              "unreported": [],
+              "error": null,
+              "text": "Fixed it."
+            }
+          ],
+          "usage": null,
+          "timings": {
+            "setupMs": 5478,
+            "agentMs": 961,
+            "diffMs": 158,
+            "checksMs": 5526,
+            "judgeMs": 0
+          },
+          "activity": {
+            "tools": 1,
+            "fileEdits": 5,
+            "webSearches": 0,
+            "webFetches": 0,
+            "reasoningMs": 0
+          },
+          "judgements": [
+            {
+              "verdict": "pass",
+              "score": 1,
+              "threshold": 0.8,
+              "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+              "model": "fake",
+              "key": "0:32a297b09106"
+            },
+            {
+              "verdict": "pass",
+              "score": 1,
+              "threshold": 0.8,
+              "question": "Does the agent's final message accurately describe the change it made?",
+              "model": "fake",
+              "key": "1:f4a285891d47"
+            }
+          ],
+          "assertions": [
+            {
+              "label": "names the cause",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            },
+            {
+              "label": "flow works",
+              "labelled": true,
+              "matcher": "toSucceed",
+              "status": "pass",
+              "soft": true,
+              "durationMs": 5525
+            },
+            {
+              "label": "keeps the flow",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            }
+          ],
+          "checks": [
+            {
+              "command": "node_modules/.bin/tsx --test --test-name-pattern '^stop-sequence$' ~/.verify.mts",
+              "exitCode": 0,
+              "durationMs": 5526,
+              "log": {
+                "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-stop-sequence-2bbb28/fake-control-docker-evals-3ea2b1/1/checks/1.log",
+                "sha256": "b7baa46324dc2e892123cb4001d3b2413388c54ac74c3856af2ff5976ae6159b",
+                "bytes": 1048
+              }
+            }
+          ],
+          "changedFiles": [
+            {
+              "path": "answer.json",
+              "status": "added"
+            },
+            {
+              "path": "src/flows.ts",
+              "status": "modified"
+            }
+          ],
+          "files": {
+            "setupLog": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-stop-sequence-2bbb28/fake-control-docker-evals-3ea2b1/1/setup.log",
+              "sha256": "214e6d357b11bad2fc10e7619f25fc1712220c7cbb8283eba35bde056ac21233",
+              "bytes": 600
+            },
+            "transcript": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-stop-sequence-2bbb28/fake-control-docker-evals-3ea2b1/1/transcript.jsonl",
+              "sha256": "b4d2085255666a3176330376e077736fc8f11518525c4490ea7c7df3cd544bfe",
+              "bytes": 3021
+            },
+            "diff": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-stop-sequence-2bbb28/fake-control-docker-evals-3ea2b1/1/diff.patch",
+              "sha256": "6359b54cb9c20633fd9b1424d2a23b7c0b749c4e366fa68c33560e9f6aeda829",
+              "bytes": 1153
+            },
+            "judgeInput": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-stop-sequence-2bbb28/fake-control-docker-evals-3ea2b1/1/judge-input.json",
+              "sha256": "bfcbcfd378ecdfc48ea99ab475ece9fe7a3e6fc05a39dc1b8032d14affb6c9eb",
+              "bytes": 4101
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "evals/genkit.eval.ts › fixes a broken Genkit app: delegation-dropped",
+      "key": "evals/genkit.eval.ts › fixes a broken Genkit app: delegation-dropped",
+      "slug": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-delegation-dr-7f9051",
+      "file": "evals/genkit.eval.ts",
+      "group": [],
+      "name": "fixes a broken Genkit app: delegation-dropped",
+      "tags": [],
+      "compare": {
+        "baseline": "control"
+      },
+      "family": {
+        "id": "evals/genkit.eval.ts › fixes a broken Genkit app: $name",
+        "name": "fixes a broken Genkit app: $name",
+        "case": 6,
+        "cases": 12
+      },
+      "fingerprint": "c4379bbd6105c07fc2c40ae2b45755b7a5b631f0d240d3a7878a7ab92b7047cc",
+      "sources": [
+        {
+          "path": "evals/bugs.ts",
+          "sha256": "f72309483927e05317eab0e669cebcbbf2a54a26f7df5c2a949f920994bb555b"
+        },
+        {
+          "path": "evals/environments.ts",
+          "sha256": "427c931b764296e1d9d4a231f6385a8f64feb15723c7cde453b00e26be3ed25d"
+        },
+        {
+          "path": "evals/genkit.eval.ts",
+          "sha256": "912594cd8659e8506c5df902e69abd0f55f94a34aea4fa134752a36c174a96b9"
+        }
+      ],
+      "outcome": "pass",
+      "todo": false,
+      "passRate": 1,
+      "cells": [
+        {
+          "key": "fake/control/docker:evals",
+          "harness": "fake",
+          "environment": "control",
+          "sandbox": "docker:evals",
+          "role": "control",
+          "fingerprint": "179e8bd37d83dfb7a13fd05efac2eb3dd083be04f28bdbbb7b418ae400ea4c89",
+          "fingerprintParts": {
+            "sources": "a074cd13739d16fc9df716ce80d40be54de851857c665a68d9646c111caab319",
+            "harness": "80f1e0023250e3b01f6298e172d01a21e1a092f1a5bf0cd5ef7a94d9f7612f44",
+            "environment": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+            "image": "sha256:ca580a67749f4aaef83dca4570e448ac5fb965f1906336ddc61bd14577ceafb9",
+            "agentCli": "@cursor/sdk 1.0.37",
+            "judge": "1d4bbecdc1dc0e5f28fc1b93efd9787b0f5c15d4fe5902a4c583d4421b5641a1",
+            "context": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          "environmentDigest": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+          "harnessKind": "fake",
+          "model": null,
+          "effort": null,
+          "gate": "all",
+          "overrides": [],
+          "runs": 1,
+          "pass": 1,
+          "fail": 0,
+          "infraError": 0,
+          "skipped": 0,
+          "passRate": 1,
+          "outcome": "pass",
+          "checks": [
+            {
+              "label": "names the cause",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "flow works",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "keeps the flow",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            }
+          ]
+        }
+      ],
+      "attempts": [
+        {
+          "key": "evals/genkit.eval.ts › fixes a broken Genkit app: delegation-dropped # fake/control/docker:evals#1",
+          "id": "fake/control/docker:evals#1",
+          "cell": "fake/control/docker:evals",
+          "n": 1,
+          "seq": 10,
+          "startedAt": "2026-10-20T13:34:49.707Z",
+          "imageId": "sha256:ca580a67749f4aaef83dca4570e448ac5fb965f1906336ddc61bd14577ceafb9",
+          "env": {
+            "vars": [
+              "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+            ],
+            "secrets": [
+              "GEMINI_API_KEY"
+            ],
+            "brokered": [
+              "GEMINI_API_KEY"
+            ]
+          },
+          "context": [],
+          "egress": {
+            "policy": "allow-all",
+            "allowed": null,
+            "recorded": true,
+            "contacted": [
+              {
+                "host": "generativelanguage.googleapis.com",
+                "port": 443,
+                "connections": 3,
+                "sent": 38046,
+                "received": 43438
+              },
+              {
+                "host": "genkit.dev",
+                "port": 443,
+                "connections": 1,
+                "sent": 1958,
+                "received": 460217
+              }
+            ],
+            "blocked": [],
+            "expectedBlocked": []
+          },
+          "servedModels": null,
+          "effort": null,
+          "servedEffort": null,
+          "outcome": "pass",
+          "error": null,
+          "durationMs": 31802,
+          "turns": [
+            {
+              "prompt": "You are on the support-desk Genkit app in this directory. Bug report: In the support chat I write \"I want a refund for order A-1001, it arrived broken\" and the assistant never hands it to the refund desk. It says it cannot process refunds or just asks me for more details, and no refund approval request ever shows up. Questions about where an order is still get answered correctly. Refunds worked through this chat before.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+              "status": "completed",
+              "startedAt": "2026-10-20T13:34:54.688Z",
+              "durationMs": 971,
+              "usage": null,
+              "model": null,
+              "unreported": [],
+              "error": null,
+              "text": "Fixed it."
+            }
+          ],
+          "usage": null,
+          "timings": {
+            "setupMs": 4779,
+            "agentMs": 971,
+            "diffMs": 145,
+            "checksMs": 24836,
+            "judgeMs": 0
+          },
+          "activity": {
+            "tools": 1,
+            "fileEdits": 5,
+            "webSearches": 0,
+            "webFetches": 0,
+            "reasoningMs": 0
+          },
+          "judgements": [
+            {
+              "verdict": "pass",
+              "score": 1,
+              "threshold": 0.8,
+              "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+              "model": "fake",
+              "key": "0:32a297b09106"
+            },
+            {
+              "verdict": "pass",
+              "score": 1,
+              "threshold": 0.8,
+              "question": "Does the agent's final message accurately describe the change it made?",
+              "model": "fake",
+              "key": "1:f4a285891d47"
+            }
+          ],
+          "assertions": [
+            {
+              "label": "names the cause",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            },
+            {
+              "label": "flow works",
+              "labelled": true,
+              "matcher": "toSucceed",
+              "status": "pass",
+              "soft": true,
+              "durationMs": 24836
+            },
+            {
+              "label": "keeps the flow",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            }
+          ],
+          "checks": [
+            {
+              "command": "node_modules/.bin/tsx --test --test-name-pattern '^delegation-dropped$' ~/.verify.mts",
+              "exitCode": 0,
+              "durationMs": 24836,
+              "log": {
+                "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-delegation-dr-7f9051/fake-control-docker-evals-3ea2b1/1/checks/1.log",
+                "sha256": "6b22ed77828b6d0072c09827a812518d15f0a4992b56ad78bbfc471643698006",
+                "bytes": 1065
+              }
+            }
+          ],
+          "changedFiles": [
+            {
+              "path": "answer.json",
+              "status": "added"
+            },
+            {
+              "path": "src/agents.ts",
+              "status": "modified"
+            }
+          ],
+          "files": {
+            "setupLog": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-delegation-dr-7f9051/fake-control-docker-evals-3ea2b1/1/setup.log",
+              "sha256": "ab89ae3122d921b26d029e32d4d80f0eff98da8f21261ca50fa573738fbe12b8",
+              "bytes": 600
+            },
+            "transcript": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-delegation-dr-7f9051/fake-control-docker-evals-3ea2b1/1/transcript.jsonl",
+              "sha256": "0441874d27d51841290847ef84f59ea7075c57c33a6d0252fceb3c36abb6abe1",
+              "bytes": 3140
+            },
+            "diff": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-delegation-dr-7f9051/fake-control-docker-evals-3ea2b1/1/diff.patch",
+              "sha256": "fb429c6f5d722609280b2ef2e2991175bfab10e0fe7366a7fbf94325b5286668",
+              "bytes": 980
+            },
+            "judgeInput": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-delegation-dr-7f9051/fake-control-docker-evals-3ea2b1/1/judge-input.json",
+              "sha256": "e0989eec6d14e845d8add07d67bf7c27f0f1d4a953cde41e7264584f75d50a81",
+              "bytes": 4094
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "evals/genkit.eval.ts › fixes a broken Genkit app: session-not-loaded",
+      "key": "evals/genkit.eval.ts › fixes a broken Genkit app: session-not-loaded",
+      "slug": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-session-not-l-ff552e",
+      "file": "evals/genkit.eval.ts",
+      "group": [],
+      "name": "fixes a broken Genkit app: session-not-loaded",
+      "tags": [],
+      "compare": {
+        "baseline": "control"
+      },
+      "family": {
+        "id": "evals/genkit.eval.ts › fixes a broken Genkit app: $name",
+        "name": "fixes a broken Genkit app: $name",
+        "case": 7,
+        "cases": 12
+      },
+      "fingerprint": "c4379bbd6105c07fc2c40ae2b45755b7a5b631f0d240d3a7878a7ab92b7047cc",
+      "sources": [
+        {
+          "path": "evals/bugs.ts",
+          "sha256": "f72309483927e05317eab0e669cebcbbf2a54a26f7df5c2a949f920994bb555b"
+        },
+        {
+          "path": "evals/environments.ts",
+          "sha256": "427c931b764296e1d9d4a231f6385a8f64feb15723c7cde453b00e26be3ed25d"
+        },
+        {
+          "path": "evals/genkit.eval.ts",
+          "sha256": "912594cd8659e8506c5df902e69abd0f55f94a34aea4fa134752a36c174a96b9"
+        }
+      ],
+      "outcome": "pass",
+      "todo": false,
+      "passRate": 1,
+      "cells": [
+        {
+          "key": "fake/control/docker:evals",
+          "harness": "fake",
+          "environment": "control",
+          "sandbox": "docker:evals",
+          "role": "control",
+          "fingerprint": "179e8bd37d83dfb7a13fd05efac2eb3dd083be04f28bdbbb7b418ae400ea4c89",
+          "fingerprintParts": {
+            "sources": "a074cd13739d16fc9df716ce80d40be54de851857c665a68d9646c111caab319",
+            "harness": "80f1e0023250e3b01f6298e172d01a21e1a092f1a5bf0cd5ef7a94d9f7612f44",
+            "environment": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+            "image": "sha256:ca580a67749f4aaef83dca4570e448ac5fb965f1906336ddc61bd14577ceafb9",
+            "agentCli": "@cursor/sdk 1.0.37",
+            "judge": "1d4bbecdc1dc0e5f28fc1b93efd9787b0f5c15d4fe5902a4c583d4421b5641a1",
+            "context": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          "environmentDigest": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+          "harnessKind": "fake",
+          "model": null,
+          "effort": null,
+          "gate": "all",
+          "overrides": [],
+          "runs": 1,
+          "pass": 1,
+          "fail": 0,
+          "infraError": 0,
+          "skipped": 0,
+          "passRate": 1,
+          "outcome": "pass",
+          "checks": [
+            {
+              "label": "names the cause",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "flow works",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "keeps the flow",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            }
+          ]
+        }
+      ],
+      "attempts": [
+        {
+          "key": "evals/genkit.eval.ts › fixes a broken Genkit app: session-not-loaded # fake/control/docker:evals#1",
+          "id": "fake/control/docker:evals#1",
+          "cell": "fake/control/docker:evals",
+          "n": 1,
+          "seq": 11,
+          "startedAt": "2026-10-20T13:34:49.736Z",
+          "imageId": "sha256:ca580a67749f4aaef83dca4570e448ac5fb965f1906336ddc61bd14577ceafb9",
+          "env": {
+            "vars": [
+              "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+            ],
+            "secrets": [
+              "GEMINI_API_KEY"
+            ],
+            "brokered": [
+              "GEMINI_API_KEY"
+            ]
+          },
+          "context": [],
+          "egress": {
+            "policy": "allow-all",
+            "allowed": null,
+            "recorded": true,
+            "contacted": [
+              {
+                "host": "generativelanguage.googleapis.com",
+                "port": 443,
+                "connections": 2,
+                "sent": 18096,
+                "received": 14619
+              },
+              {
+                "host": "genkit.dev",
+                "port": 443,
+                "connections": 1,
+                "sent": 1958,
+                "received": 460217
+              }
+            ],
+            "blocked": [],
+            "expectedBlocked": []
+          },
+          "servedModels": null,
+          "effort": null,
+          "servedEffort": null,
+          "outcome": "pass",
+          "error": null,
+          "durationMs": 13119,
+          "turns": [
+            {
+              "prompt": "You are on the support-desk Genkit app in this directory. Bug report: In the support chat a customer says \"My order is A-1001.\" and then, in the same conversation, sends \"What is its status?\". The follow-up fails: the chat cannot be picked up again by its session id, so the customer has to start over and repeat the order number. Single questions still get answered.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+              "status": "completed",
+              "startedAt": "2026-10-20T13:34:54.692Z",
+              "durationMs": 996,
+              "usage": null,
+              "model": null,
+              "unreported": [],
+              "error": null,
+              "text": "Fixed it."
+            }
+          ],
+          "usage": null,
+          "timings": {
+            "setupMs": 4753,
+            "agentMs": 995,
+            "diffMs": 187,
+            "checksMs": 5675,
+            "judgeMs": 0
+          },
+          "activity": {
+            "tools": 1,
+            "fileEdits": 5,
+            "webSearches": 0,
+            "webFetches": 0,
+            "reasoningMs": 0
+          },
+          "judgements": [
+            {
+              "verdict": "pass",
+              "score": 1,
+              "threshold": 0.8,
+              "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+              "model": "fake",
+              "key": "0:32a297b09106"
+            },
+            {
+              "verdict": "pass",
+              "score": 1,
+              "threshold": 0.8,
+              "question": "Does the agent's final message accurately describe the change it made?",
+              "model": "fake",
+              "key": "1:f4a285891d47"
+            }
+          ],
+          "assertions": [
+            {
+              "label": "names the cause",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            },
+            {
+              "label": "flow works",
+              "labelled": true,
+              "matcher": "toSucceed",
+              "status": "pass",
+              "soft": true,
+              "durationMs": 5675
+            },
+            {
+              "label": "keeps the flow",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            }
+          ],
+          "checks": [
+            {
+              "command": "node_modules/.bin/tsx --test --test-name-pattern '^session-not-loaded$' ~/.verify.mts",
+              "exitCode": 0,
+              "durationMs": 5675,
+              "log": {
+                "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-session-not-l-ff552e/fake-control-docker-evals-3ea2b1/1/checks/1.log",
+                "sha256": "bcb8a9aecef4cd3c65b71de809acfa51a42ee385d70e6d0837e74a60c1bb4380",
+                "bytes": 1063
+              }
+            }
+          ],
+          "changedFiles": [
+            {
+              "path": "answer.json",
+              "status": "added"
+            },
+            {
+              "path": "src/agents.ts",
+              "status": "modified"
+            }
+          ],
+          "files": {
+            "setupLog": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-session-not-l-ff552e/fake-control-docker-evals-3ea2b1/1/setup.log",
+              "sha256": "eda14ab334439194ed0f2a8f50dadc682ae9f0af6028c3c8f49e753f645987bf",
+              "bytes": 599
+            },
+            "transcript": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-session-not-l-ff552e/fake-control-docker-evals-3ea2b1/1/transcript.jsonl",
+              "sha256": "ec74f87f93537db122d2aa5c2e366d88ac7051faf3d5d260d49ff7b475afa094",
+              "bytes": 3032
+            },
+            "diff": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-session-not-l-ff552e/fake-control-docker-evals-3ea2b1/1/diff.patch",
+              "sha256": "c1cb1970878ab9bb7efded7928f42d4476ebfbdf051f2af9a24721698dd9c9e2",
+              "bytes": 1076
+            },
+            "judgeInput": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-session-not-l-ff552e/fake-control-docker-evals-3ea2b1/1/judge-input.json",
+              "sha256": "88c0a4a5ea7a5e838534581d7dcbb4e2ab4d6f8e2a20d05f9e0b64cd122e4086",
+              "bytes": 4114
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "evals/genkit.eval.ts › fixes a broken Genkit app: tool-choice-required",
+      "key": "evals/genkit.eval.ts › fixes a broken Genkit app: tool-choice-required",
+      "slug": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-tool-choice-r-ee3ecc",
+      "file": "evals/genkit.eval.ts",
+      "group": [],
+      "name": "fixes a broken Genkit app: tool-choice-required",
+      "tags": [],
+      "compare": {
+        "baseline": "control"
+      },
+      "family": {
+        "id": "evals/genkit.eval.ts › fixes a broken Genkit app: $name",
+        "name": "fixes a broken Genkit app: $name",
+        "case": 8,
+        "cases": 12
+      },
+      "fingerprint": "c4379bbd6105c07fc2c40ae2b45755b7a5b631f0d240d3a7878a7ab92b7047cc",
+      "sources": [
+        {
+          "path": "evals/bugs.ts",
+          "sha256": "f72309483927e05317eab0e669cebcbbf2a54a26f7df5c2a949f920994bb555b"
+        },
+        {
+          "path": "evals/environments.ts",
+          "sha256": "427c931b764296e1d9d4a231f6385a8f64feb15723c7cde453b00e26be3ed25d"
+        },
+        {
+          "path": "evals/genkit.eval.ts",
+          "sha256": "912594cd8659e8506c5df902e69abd0f55f94a34aea4fa134752a36c174a96b9"
+        }
+      ],
+      "outcome": "fail",
+      "todo": false,
+      "passRate": 0,
+      "cells": [
+        {
+          "key": "fake/control/docker:evals",
+          "harness": "fake",
+          "environment": "control",
+          "sandbox": "docker:evals",
+          "role": "control",
+          "fingerprint": "179e8bd37d83dfb7a13fd05efac2eb3dd083be04f28bdbbb7b418ae400ea4c89",
+          "fingerprintParts": {
+            "sources": "a074cd13739d16fc9df716ce80d40be54de851857c665a68d9646c111caab319",
+            "harness": "80f1e0023250e3b01f6298e172d01a21e1a092f1a5bf0cd5ef7a94d9f7612f44",
+            "environment": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+            "image": "sha256:ca580a67749f4aaef83dca4570e448ac5fb965f1906336ddc61bd14577ceafb9",
+            "agentCli": "@cursor/sdk 1.0.37",
+            "judge": "1d4bbecdc1dc0e5f28fc1b93efd9787b0f5c15d4fe5902a4c583d4421b5641a1",
+            "context": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          "environmentDigest": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+          "harnessKind": "fake",
+          "model": null,
+          "effort": null,
+          "gate": "all",
+          "overrides": [],
+          "runs": 1,
+          "pass": 0,
+          "fail": 1,
+          "infraError": 0,
+          "skipped": 0,
+          "passRate": 0,
+          "outcome": "fail",
+          "checks": [
+            {
+              "label": "names the cause",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "flow works",
+              "pass": 0,
+              "fail": 1,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "keeps the flow",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            }
+          ]
+        }
+      ],
+      "attempts": [
+        {
+          "key": "evals/genkit.eval.ts › fixes a broken Genkit app: tool-choice-required # fake/control/docker:evals#1",
+          "id": "fake/control/docker:evals#1",
+          "cell": "fake/control/docker:evals",
+          "n": 1,
+          "seq": 12,
+          "startedAt": "2026-10-20T13:34:49.742Z",
+          "imageId": "sha256:ca580a67749f4aaef83dca4570e448ac5fb965f1906336ddc61bd14577ceafb9",
+          "env": {
+            "vars": [
+              "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+            ],
+            "secrets": [
+              "GEMINI_API_KEY"
+            ],
+            "brokered": [
+              "GEMINI_API_KEY"
+            ]
+          },
+          "context": [],
+          "egress": {
+            "policy": "allow-all",
+            "allowed": null,
+            "recorded": true,
+            "contacted": [
+              {
+                "host": "generativelanguage.googleapis.com",
+                "port": 443,
+                "connections": 1,
+                "sent": 3541,
+                "received": 3563
+              },
+              {
+                "host": "genkit.dev",
+                "port": 443,
+                "connections": 1,
+                "sent": 1958,
+                "received": 460217
+              }
+            ],
+            "blocked": [],
+            "expectedBlocked": []
+          },
+          "servedModels": null,
+          "effort": null,
+          "servedEffort": null,
+          "outcome": "fail",
+          "error": {
+            "kind": "assertion",
+            "message": "flow works: expected command to succeed, exit code 1\n--- stderr ---\n(node:1441) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:1457) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\n(Use `node --trace-warnings ...` to show where the warning was created)\n--- stdout ---\nnot ok 1 - tool-choice-required\n  ---\n  duration_ms: 2268.252085\n  type: 'test'\n  location: '/home/reeval/.verify.mts:80:1'\n  failureType: 'testCodeFailure'\n  error: 'Error aggregating stream chunks because the final response in stream chunk is undefined'\n  code: 'ERR_TEST_FAILURE'\n  stack: |-\n    <anonymous> (/reeval/workspace/node_modules/@genkit-ai/ai/src/agent-core.ts:777:15)\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 3223.813835"
+          },
+          "durationMs": 10410,
+          "turns": [
+            {
+              "prompt": "You are on the support-desk Genkit app in this directory. Bug report: On the refund desk a customer wrote \"I want a refund for order A-1001, it arrived broken.\" The desk asked for approval as usual, and the supervisor declined it as a duplicate claim. After that the desk never gives the customer a final answer: it fails, asks for approval again, or keeps working on the order. A declined refund should end with a short reply to the customer.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+              "status": "completed",
+              "startedAt": "2026-10-20T13:34:54.686Z",
+              "durationMs": 1032,
+              "usage": null,
+              "model": null,
+              "unreported": [],
+              "error": null,
+              "text": "Fixed it."
+            }
+          ],
+          "usage": null,
+          "timings": {
+            "setupMs": 4747,
+            "agentMs": 1033,
+            "diffMs": 151,
+            "checksMs": 3372,
+            "judgeMs": 2
+          },
+          "activity": {
+            "tools": 1,
+            "fileEdits": 5,
+            "webSearches": 0,
+            "webFetches": 0,
+            "reasoningMs": 0
+          },
+          "judgements": [
+            {
+              "verdict": "pass",
+              "score": 1,
+              "threshold": 0.8,
+              "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+              "model": "fake",
+              "key": "0:32a297b09106"
+            },
+            {
+              "verdict": "pass",
+              "score": 1,
+              "threshold": 0.8,
+              "question": "Does the agent's final message accurately describe the change it made?",
+              "model": "fake",
+              "key": "1:f4a285891d47"
+            }
+          ],
+          "assertions": [
+            {
+              "label": "names the cause",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            },
+            {
+              "label": "flow works",
+              "labelled": true,
+              "matcher": "toSucceed",
+              "status": "fail",
+              "soft": true,
+              "message": "flow works: expected command to succeed, exit code 1\n--- stderr ---\n(node:1441) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:1457) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\n(Use `node --trace-warnings ...` to show where the warning was created)\n--- stdout ---\nnot ok 1 - tool-choice-required\n  ---\n  duration_ms: 2268.252085\n  type: 'test'\n  location: '/home/reeval/.verify.mts:80:1'\n  failureType: 'testCodeFailure'\n  error: 'Error aggregating stream chunks because the final response in stream chunk is undefined'\n  code: 'ERR_TEST_FAILURE'\n  stack: |-\n    <anonymous> (/reeval/workspace/node_modules/@genkit-ai/ai/src/agent-core.ts:777:15)\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 3223.813835",
+              "durationMs": 3370
+            },
+            {
+              "label": "keeps the flow",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            }
+          ],
+          "checks": [
+            {
+              "command": "node_modules/.bin/tsx --test --test-name-pattern '^tool-choice-required$' ~/.verify.mts",
+              "exitCode": 1,
+              "durationMs": 3372,
+              "log": {
+                "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-tool-choice-r-ee3ecc/fake-control-docker-evals-3ea2b1/1/checks/1.log",
+                "sha256": "50e0f72c8835d700ec026d9d46df55183c067d9a2144a762e9ef66604ca39f44",
+                "bytes": 1376
+              }
+            }
+          ],
+          "changedFiles": [
+            {
+              "path": "answer.json",
+              "status": "added"
+            },
+            {
+              "path": "src/agents.ts",
+              "status": "modified"
+            }
+          ],
+          "files": {
+            "setupLog": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-tool-choice-r-ee3ecc/fake-control-docker-evals-3ea2b1/1/setup.log",
+              "sha256": "9f3fa02d51ba3b0c46ffbde8d9cab6f20c0fa0f7ac986f59399010fa576dde04",
+              "bytes": 599
+            },
+            "transcript": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-tool-choice-r-ee3ecc/fake-control-docker-evals-3ea2b1/1/transcript.jsonl",
+              "sha256": "3141973f88c6cbf2d2c8dfaac755506eb25188e4bc4f89680e3edb4b09bd2d7d",
+              "bytes": 3185
+            },
+            "diff": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-tool-choice-r-ee3ecc/fake-control-docker-evals-3ea2b1/1/diff.patch",
+              "sha256": "090e28c92917c35073ed46d40602d61c4265556aea7a3d7c6c962c0af940b8d7",
+              "bytes": 1072
+            },
+            "judgeInput": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-tool-choice-r-ee3ecc/fake-control-docker-evals-3ea2b1/1/judge-input.json",
+              "sha256": "634ba9b81aa758d53ac0b9b7ba9a1a4f79514878b8559dac7834f942b19aa45d",
+              "bytes": 4218
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "evals/genkit.eval.ts › fixes a broken Genkit app: max-delegations-zero",
+      "key": "evals/genkit.eval.ts › fixes a broken Genkit app: max-delegations-zero",
+      "slug": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-max-delegatio-098e10",
+      "file": "evals/genkit.eval.ts",
+      "group": [],
+      "name": "fixes a broken Genkit app: max-delegations-zero",
+      "tags": [],
+      "compare": {
+        "baseline": "control"
+      },
+      "family": {
+        "id": "evals/genkit.eval.ts › fixes a broken Genkit app: $name",
+        "name": "fixes a broken Genkit app: $name",
+        "case": 9,
+        "cases": 12
+      },
+      "fingerprint": "c4379bbd6105c07fc2c40ae2b45755b7a5b631f0d240d3a7878a7ab92b7047cc",
+      "sources": [
+        {
+          "path": "evals/bugs.ts",
+          "sha256": "f72309483927e05317eab0e669cebcbbf2a54a26f7df5c2a949f920994bb555b"
+        },
+        {
+          "path": "evals/environments.ts",
+          "sha256": "427c931b764296e1d9d4a231f6385a8f64feb15723c7cde453b00e26be3ed25d"
+        },
+        {
+          "path": "evals/genkit.eval.ts",
+          "sha256": "912594cd8659e8506c5df902e69abd0f55f94a34aea4fa134752a36c174a96b9"
+        }
+      ],
+      "outcome": "pass",
+      "todo": false,
+      "passRate": 1,
+      "cells": [
+        {
+          "key": "fake/control/docker:evals",
+          "harness": "fake",
+          "environment": "control",
+          "sandbox": "docker:evals",
+          "role": "control",
+          "fingerprint": "179e8bd37d83dfb7a13fd05efac2eb3dd083be04f28bdbbb7b418ae400ea4c89",
+          "fingerprintParts": {
+            "sources": "a074cd13739d16fc9df716ce80d40be54de851857c665a68d9646c111caab319",
+            "harness": "80f1e0023250e3b01f6298e172d01a21e1a092f1a5bf0cd5ef7a94d9f7612f44",
+            "environment": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+            "image": "sha256:ca580a67749f4aaef83dca4570e448ac5fb965f1906336ddc61bd14577ceafb9",
+            "agentCli": "@cursor/sdk 1.0.37",
+            "judge": "1d4bbecdc1dc0e5f28fc1b93efd9787b0f5c15d4fe5902a4c583d4421b5641a1",
+            "context": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          "environmentDigest": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+          "harnessKind": "fake",
+          "model": null,
+          "effort": null,
+          "gate": "all",
+          "overrides": [],
+          "runs": 1,
+          "pass": 1,
+          "fail": 0,
+          "infraError": 0,
+          "skipped": 0,
+          "passRate": 1,
+          "outcome": "pass",
+          "checks": [
+            {
+              "label": "names the cause",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "flow works",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "keeps the flow",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            }
+          ]
+        }
+      ],
+      "attempts": [
+        {
+          "key": "evals/genkit.eval.ts › fixes a broken Genkit app: max-delegations-zero # fake/control/docker:evals#1",
+          "id": "fake/control/docker:evals#1",
+          "cell": "fake/control/docker:evals",
+          "n": 1,
+          "seq": 13,
+          "startedAt": "2026-10-20T13:34:50.616Z",
+          "imageId": "sha256:ca580a67749f4aaef83dca4570e448ac5fb965f1906336ddc61bd14577ceafb9",
+          "env": {
+            "vars": [
+              "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+            ],
+            "secrets": [
+              "GEMINI_API_KEY"
+            ],
+            "brokered": [
+              "GEMINI_API_KEY"
+            ]
+          },
+          "context": [],
+          "egress": {
+            "policy": "allow-all",
+            "allowed": null,
+            "recorded": true,
+            "contacted": [
+              {
+                "host": "generativelanguage.googleapis.com",
+                "port": 443,
+                "connections": 2,
+                "sent": 11805,
+                "received": 12782
+              },
+              {
+                "host": "genkit.dev",
+                "port": 443,
+                "connections": 1,
+                "sent": 1958,
+                "received": 460217
+              }
+            ],
+            "blocked": [],
+            "expectedBlocked": []
+          },
+          "servedModels": null,
+          "effort": null,
+          "servedEffort": null,
+          "outcome": "pass",
+          "error": null,
+          "durationMs": 12103,
+          "turns": [
+            {
+              "prompt": "You are on the support-desk Genkit app in this directory. Bug report: In the support chat I ask \"Where is order A-1003?\" and the assistant answers politely but without any details, saying it cannot get the information right now. There is no error. It happens for every order and every refund request, although the order desk on its own still answers correctly.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+              "status": "completed",
+              "startedAt": "2026-10-20T13:34:55.400Z",
+              "durationMs": 1183,
+              "usage": null,
+              "model": null,
+              "unreported": [],
+              "error": null,
+              "text": "Fixed it."
+            }
+          ],
+          "usage": null,
+          "timings": {
+            "setupMs": 4590,
+            "agentMs": 1183,
+            "diffMs": 207,
+            "checksMs": 4340,
+            "judgeMs": 0
+          },
+          "activity": {
+            "tools": 1,
+            "fileEdits": 5,
+            "webSearches": 0,
+            "webFetches": 0,
+            "reasoningMs": 0
+          },
+          "judgements": [
+            {
+              "verdict": "pass",
+              "score": 1,
+              "threshold": 0.8,
+              "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+              "model": "fake",
+              "key": "0:32a297b09106"
+            },
+            {
+              "verdict": "pass",
+              "score": 1,
+              "threshold": 0.8,
+              "question": "Does the agent's final message accurately describe the change it made?",
+              "model": "fake",
+              "key": "1:f4a285891d47"
+            }
+          ],
+          "assertions": [
+            {
+              "label": "names the cause",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            },
+            {
+              "label": "flow works",
+              "labelled": true,
+              "matcher": "toSucceed",
+              "status": "pass",
+              "soft": true,
+              "durationMs": 4338
+            },
+            {
+              "label": "keeps the flow",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            }
+          ],
+          "checks": [
+            {
+              "command": "node_modules/.bin/tsx --test --test-name-pattern '^max-delegations-zero$' ~/.verify.mts",
+              "exitCode": 0,
+              "durationMs": 4340,
+              "log": {
+                "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-max-delegatio-098e10/fake-control-docker-evals-3ea2b1/1/checks/1.log",
+                "sha256": "bf9629ff92f38ef352184070ff565e0547a23d6853890185459340a1c800da27",
+                "bytes": 1069
+              }
+            }
+          ],
+          "changedFiles": [
+            {
+              "path": "answer.json",
+              "status": "added"
+            },
+            {
+              "path": "src/agents.ts",
+              "status": "modified"
+            }
+          ],
+          "files": {
+            "setupLog": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-max-delegatio-098e10/fake-control-docker-evals-3ea2b1/1/setup.log",
+              "sha256": "8c149583928d089b825377bcfc04751b701861ad9773bc43a5acf841771ddc2e",
+              "bytes": 598
+            },
+            "transcript": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-max-delegatio-098e10/fake-control-docker-evals-3ea2b1/1/transcript.jsonl",
+              "sha256": "dc92cb88287938e271a66af0a292a0fd224a82e1b0a35c2b8057f6c75ecc0170",
+              "bytes": 3019
+            },
+            "diff": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-max-delegatio-098e10/fake-control-docker-evals-3ea2b1/1/diff.patch",
+              "sha256": "b6237c5aff0fca138234f975e405db7fcb19994d488c6be8b1f31efb1158ef3d",
+              "bytes": 984
+            },
+            "judgeInput": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-max-delegatio-098e10/fake-control-docker-evals-3ea2b1/1/judge-input.json",
+              "sha256": "c588756addc1ba75f4420de868a9f691d8af78778ce87df03fe99d4d8e482b84",
+              "bytes": 3936
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "evals/genkit.eval.ts › fixes a broken Genkit app: max-turns-zero",
+      "key": "evals/genkit.eval.ts › fixes a broken Genkit app: max-turns-zero",
+      "slug": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-max-turns-zer-17c627",
+      "file": "evals/genkit.eval.ts",
+      "group": [],
+      "name": "fixes a broken Genkit app: max-turns-zero",
+      "tags": [],
+      "compare": {
+        "baseline": "control"
+      },
+      "family": {
+        "id": "evals/genkit.eval.ts › fixes a broken Genkit app: $name",
+        "name": "fixes a broken Genkit app: $name",
+        "case": 10,
+        "cases": 12
+      },
+      "fingerprint": "c4379bbd6105c07fc2c40ae2b45755b7a5b631f0d240d3a7878a7ab92b7047cc",
+      "sources": [
+        {
+          "path": "evals/bugs.ts",
+          "sha256": "f72309483927e05317eab0e669cebcbbf2a54a26f7df5c2a949f920994bb555b"
+        },
+        {
+          "path": "evals/environments.ts",
+          "sha256": "427c931b764296e1d9d4a231f6385a8f64feb15723c7cde453b00e26be3ed25d"
+        },
+        {
+          "path": "evals/genkit.eval.ts",
+          "sha256": "912594cd8659e8506c5df902e69abd0f55f94a34aea4fa134752a36c174a96b9"
+        }
+      ],
+      "outcome": "pass",
+      "todo": false,
+      "passRate": 1,
+      "cells": [
+        {
+          "key": "fake/control/docker:evals",
+          "harness": "fake",
+          "environment": "control",
+          "sandbox": "docker:evals",
+          "role": "control",
+          "fingerprint": "179e8bd37d83dfb7a13fd05efac2eb3dd083be04f28bdbbb7b418ae400ea4c89",
+          "fingerprintParts": {
+            "sources": "a074cd13739d16fc9df716ce80d40be54de851857c665a68d9646c111caab319",
+            "harness": "80f1e0023250e3b01f6298e172d01a21e1a092f1a5bf0cd5ef7a94d9f7612f44",
+            "environment": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+            "image": "sha256:ca580a67749f4aaef83dca4570e448ac5fb965f1906336ddc61bd14577ceafb9",
+            "agentCli": "@cursor/sdk 1.0.37",
+            "judge": "1d4bbecdc1dc0e5f28fc1b93efd9787b0f5c15d4fe5902a4c583d4421b5641a1",
+            "context": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          "environmentDigest": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+          "harnessKind": "fake",
+          "model": null,
+          "effort": null,
+          "gate": "all",
+          "overrides": [],
+          "runs": 1,
+          "pass": 1,
+          "fail": 0,
+          "infraError": 0,
+          "skipped": 0,
+          "passRate": 1,
+          "outcome": "pass",
+          "checks": [
+            {
+              "label": "names the cause",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "flow works",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "keeps the flow",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            }
+          ]
+        }
+      ],
+      "attempts": [
+        {
+          "key": "evals/genkit.eval.ts › fixes a broken Genkit app: max-turns-zero # fake/control/docker:evals#1",
+          "id": "fake/control/docker:evals#1",
+          "cell": "fake/control/docker:evals",
+          "n": 1,
+          "seq": 14,
+          "startedAt": "2026-10-20T13:34:53.804Z",
+          "imageId": "sha256:ca580a67749f4aaef83dca4570e448ac5fb965f1906336ddc61bd14577ceafb9",
+          "env": {
+            "vars": [
+              "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+            ],
+            "secrets": [
+              "GEMINI_API_KEY"
+            ],
+            "brokered": [
+              "GEMINI_API_KEY"
+            ]
+          },
+          "context": [],
+          "egress": {
+            "policy": "allow-all",
+            "allowed": null,
+            "recorded": true,
+            "contacted": [
+              {
+                "host": "generativelanguage.googleapis.com",
+                "port": 443,
+                "connections": 2,
+                "sent": 11710,
+                "received": 12695
+              },
+              {
+                "host": "genkit.dev",
+                "port": 443,
+                "connections": 1,
+                "sent": 1958,
+                "received": 460217
+              }
+            ],
+            "blocked": [],
+            "expectedBlocked": []
+          },
+          "servedModels": null,
+          "effort": null,
+          "servedEffort": null,
+          "outcome": "pass",
+          "error": null,
+          "durationMs": 11600,
+          "turns": [
+            {
+              "prompt": "You are on the support-desk Genkit app in this directory. Bug report: Every question in the support chat that needs order details, such as \"Where is order A-1001?\", now fails with an error instead of a reply. A plain \"hello\" still gets a friendly answer, and the order desk on its own answers order questions correctly.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+              "status": "completed",
+              "startedAt": "2026-10-20T13:34:59.526Z",
+              "durationMs": 868,
+              "usage": null,
+              "model": null,
+              "unreported": [],
+              "error": null,
+              "text": "Fixed it."
+            }
+          ],
+          "usage": null,
+          "timings": {
+            "setupMs": 5503,
+            "agentMs": 868,
+            "diffMs": 95,
+            "checksMs": 4018,
+            "judgeMs": 0
+          },
+          "activity": {
+            "tools": 1,
+            "fileEdits": 5,
+            "webSearches": 0,
+            "webFetches": 0,
+            "reasoningMs": 0
+          },
+          "judgements": [
+            {
+              "verdict": "pass",
+              "score": 1,
+              "threshold": 0.8,
+              "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+              "model": "fake",
+              "key": "0:32a297b09106"
+            },
+            {
+              "verdict": "pass",
+              "score": 1,
+              "threshold": 0.8,
+              "question": "Does the agent's final message accurately describe the change it made?",
+              "model": "fake",
+              "key": "1:f4a285891d47"
+            }
+          ],
+          "assertions": [
+            {
+              "label": "names the cause",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            },
+            {
+              "label": "flow works",
+              "labelled": true,
+              "matcher": "toSucceed",
+              "status": "pass",
+              "soft": true,
+              "durationMs": 4017
+            },
+            {
+              "label": "keeps the flow",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            }
+          ],
+          "checks": [
+            {
+              "command": "node_modules/.bin/tsx --test --test-name-pattern '^max-turns-zero$' ~/.verify.mts",
+              "exitCode": 0,
+              "durationMs": 4018,
+              "log": {
+                "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-max-turns-zer-17c627/fake-control-docker-evals-3ea2b1/1/checks/1.log",
+                "sha256": "6a98a24de9cee119c35eb1fbd54870f363dd5f34b778c86a9d2877a8d28c4ed9",
+                "bytes": 1051
+              }
+            }
+          ],
+          "changedFiles": [
+            {
+              "path": "answer.json",
+              "status": "added"
+            },
+            {
+              "path": "src/agents.ts",
+              "status": "modified"
+            }
+          ],
+          "files": {
+            "setupLog": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-max-turns-zer-17c627/fake-control-docker-evals-3ea2b1/1/setup.log",
+              "sha256": "4c67b97566a512ec3801d20229a44559bc731c3851d7476b1d1b21712c55245a",
+              "bytes": 599
+            },
+            "transcript": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-max-turns-zer-17c627/fake-control-docker-evals-3ea2b1/1/transcript.jsonl",
+              "sha256": "db8fcbb0048548293e25b5497cc7e9f02132b3d28d8ac3b6a781e92e52d783ca",
+              "bytes": 2931
+            },
+            "diff": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-max-turns-zer-17c627/fake-control-docker-evals-3ea2b1/1/diff.patch",
+              "sha256": "9939a3f983d124995ca2332ebf79d83aa1070fa08ce49b45d9ff4a0fe6dd3aa0",
+              "bytes": 906
+            },
+            "judgeInput": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-max-turns-zer-17c627/fake-control-docker-evals-3ea2b1/1/judge-input.json",
+              "sha256": "5f6323a374b359d1beecdd1def7e875ee658f6a0fc14a37fd44bfd31cdda1bf4",
+              "bytes": 3785
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "evals/genkit.eval.ts › fixes a broken Genkit app: tool-output-drift",
+      "key": "evals/genkit.eval.ts › fixes a broken Genkit app: tool-output-drift",
+      "slug": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-tool-output-d-d9455a",
+      "file": "evals/genkit.eval.ts",
+      "group": [],
+      "name": "fixes a broken Genkit app: tool-output-drift",
+      "tags": [],
+      "compare": {
+        "baseline": "control"
+      },
+      "family": {
+        "id": "evals/genkit.eval.ts › fixes a broken Genkit app: $name",
+        "name": "fixes a broken Genkit app: $name",
+        "case": 11,
+        "cases": 12
+      },
+      "fingerprint": "c4379bbd6105c07fc2c40ae2b45755b7a5b631f0d240d3a7878a7ab92b7047cc",
+      "sources": [
+        {
+          "path": "evals/bugs.ts",
+          "sha256": "f72309483927e05317eab0e669cebcbbf2a54a26f7df5c2a949f920994bb555b"
+        },
+        {
+          "path": "evals/environments.ts",
+          "sha256": "427c931b764296e1d9d4a231f6385a8f64feb15723c7cde453b00e26be3ed25d"
+        },
+        {
+          "path": "evals/genkit.eval.ts",
+          "sha256": "912594cd8659e8506c5df902e69abd0f55f94a34aea4fa134752a36c174a96b9"
+        }
+      ],
+      "outcome": "pass",
+      "todo": false,
+      "passRate": 1,
+      "cells": [
+        {
+          "key": "fake/control/docker:evals",
+          "harness": "fake",
+          "environment": "control",
+          "sandbox": "docker:evals",
+          "role": "control",
+          "fingerprint": "179e8bd37d83dfb7a13fd05efac2eb3dd083be04f28bdbbb7b418ae400ea4c89",
+          "fingerprintParts": {
+            "sources": "a074cd13739d16fc9df716ce80d40be54de851857c665a68d9646c111caab319",
+            "harness": "80f1e0023250e3b01f6298e172d01a21e1a092f1a5bf0cd5ef7a94d9f7612f44",
+            "environment": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+            "image": "sha256:ca580a67749f4aaef83dca4570e448ac5fb965f1906336ddc61bd14577ceafb9",
+            "agentCli": "@cursor/sdk 1.0.37",
+            "judge": "1d4bbecdc1dc0e5f28fc1b93efd9787b0f5c15d4fe5902a4c583d4421b5641a1",
+            "context": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          "environmentDigest": "sha256:2a1625fad8f75124693e4f05d3b4eb0cc975e8811c3faa8ea3e3b7f792daa0dd",
+          "harnessKind": "fake",
+          "model": null,
+          "effort": null,
+          "gate": "all",
+          "overrides": [],
+          "runs": 1,
+          "pass": 1,
+          "fail": 0,
+          "infraError": 0,
+          "skipped": 0,
+          "passRate": 1,
+          "outcome": "pass",
+          "checks": [
+            {
+              "label": "names the cause",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "flow works",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "keeps the flow",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            }
+          ]
+        }
+      ],
+      "attempts": [
+        {
+          "key": "evals/genkit.eval.ts › fixes a broken Genkit app: tool-output-drift # fake/control/docker:evals#1",
+          "id": "fake/control/docker:evals#1",
+          "cell": "fake/control/docker:evals",
+          "n": 1,
+          "seq": 15,
+          "startedAt": "2026-10-20T13:34:58.831Z",
+          "imageId": "sha256:ca580a67749f4aaef83dca4570e448ac5fb965f1906336ddc61bd14577ceafb9",
+          "env": {
+            "vars": [
+              "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+            ],
+            "secrets": [
+              "GEMINI_API_KEY"
+            ],
+            "brokered": [
+              "GEMINI_API_KEY"
+            ]
+          },
+          "context": [],
+          "egress": {
+            "policy": "allow-all",
+            "allowed": null,
+            "recorded": true,
+            "contacted": [
+              {
+                "host": "generativelanguage.googleapis.com",
+                "port": 443,
+                "connections": 2,
+                "sent": 11800,
+                "received": 12729
+              },
+              {
+                "host": "genkit.dev",
+                "port": 443,
+                "connections": 1,
+                "sent": 1958,
+                "received": 460217
+              }
+            ],
+            "blocked": [],
+            "expectedBlocked": []
+          },
+          "servedModels": null,
+          "effort": null,
+          "servedEffort": null,
+          "outcome": "pass",
+          "error": null,
+          "durationMs": 9929,
+          "turns": [
+            {
+              "prompt": "You are on the support-desk Genkit app in this directory. Bug report: This week the support chat started failing on some orders. A customer asked \"Where is order A-1001?\" and the assistant said it could not retrieve the order details, although A-1001 is in our system and has shipped. Questions about other orders, such as A-1002, still get the real status and delivery date.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+              "status": "completed",
+              "startedAt": "2026-10-20T13:35:02.690Z",
+              "durationMs": 835,
+              "usage": null,
+              "model": null,
+              "unreported": [],
+              "error": null,
+              "text": "Fixed it."
+            }
+          ],
+          "usage": null,
+          "timings": {
+            "setupMs": 3679,
+            "agentMs": 835,
+            "diffMs": 107,
+            "checksMs": 4328,
+            "judgeMs": 0
+          },
+          "activity": {
+            "tools": 1,
+            "fileEdits": 5,
+            "webSearches": 0,
+            "webFetches": 0,
+            "reasoningMs": 0
+          },
+          "judgements": [
+            {
+              "verdict": "pass",
+              "score": 1,
+              "threshold": 0.8,
+              "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+              "model": "fake",
+              "key": "0:32a297b09106"
+            },
+            {
+              "verdict": "pass",
+              "score": 1,
+              "threshold": 0.8,
+              "question": "Does the agent's final message accurately describe the change it made?",
+              "model": "fake",
+              "key": "1:f4a285891d47"
+            }
+          ],
+          "assertions": [
+            {
+              "label": "names the cause",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            },
+            {
+              "label": "flow works",
+              "labelled": true,
+              "matcher": "toSucceed",
+              "status": "pass",
+              "soft": true,
+              "durationMs": 4326
+            },
+            {
+              "label": "keeps the flow",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true
+            }
+          ],
+          "checks": [
+            {
+              "command": "node_modules/.bin/tsx --test --test-name-pattern '^tool-output-drift$' ~/.verify.mts",
+              "exitCode": 0,
+              "durationMs": 4328,
+              "log": {
+                "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-tool-output-d-d9455a/fake-control-docker-evals-3ea2b1/1/checks/1.log",
+                "sha256": "59b0cf54dcb8d3a1027e53a9942ce878cc97a862ea388700a92595ba7af3b860",
+                "bytes": 1060
+              }
+            }
+          ],
+          "changedFiles": [
+            {
+              "path": "answer.json",
+              "status": "added"
+            },
+            {
+              "path": "src/orders.json",
+              "status": "modified"
+            }
+          ],
+          "files": {
+            "setupLog": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-tool-output-d-d9455a/fake-control-docker-evals-3ea2b1/1/setup.log",
+              "sha256": "1e365de46797b3e535320a49d13ba9396b4f4bf67d46b9233848bb2e1853d764",
+              "bytes": 598
+            },
+            "transcript": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-tool-output-d-d9455a/fake-control-docker-evals-3ea2b1/1/transcript.jsonl",
+              "sha256": "1dcd702443256e16caf672c9549fcab54ceec75d3f4bfb20addebb822fd3d1a0",
+              "bytes": 3043
+            },
+            "diff": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-tool-output-d-d9455a/fake-control-docker-evals-3ea2b1/1/diff.patch",
+              "sha256": "c67bea4c0ed57bf48fc0802af7db2179a28cd83f201045be86eb55ee9dfa4f99",
+              "bytes": 1115
+            },
+            "judgeInput": {
+              "path": "evals-genkit-eval-ts-fixes-a-broken-genkit-app-tool-output-d-d9455a/fake-control-docker-evals-3ea2b1/1/judge-input.json",
+              "sha256": "28aa3afab4368817718eebc300c1758ad85960433ac0c798eba6a30a8723de8d",
+              "bytes": 4018
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "families": [
+    {
+      "id": "evals/build.eval.ts › builds a Genkit feature: $name",
+      "file": "evals/build.eval.ts",
+      "group": [],
+      "name": "builds a Genkit feature: $name",
+      "cases": 3,
+      "ran": 3,
+      "rates": [
+        {
+          "cell": "fake/control/docker:evals",
+          "cases": 3,
+          "pass": 3,
+          "counted": 3,
+          "rate": 1,
+          "interval": {
+            "lo": 0.439,
+            "hi": 1,
+            "level": 0.95,
+            "method": "wilson"
+          }
+        }
+      ],
+      "lifts": [],
+      "outcome": "pass"
+    },
+    {
+      "id": "evals/genkit.eval.ts › fixes a broken Genkit app: $name",
+      "file": "evals/genkit.eval.ts",
+      "group": [],
+      "name": "fixes a broken Genkit app: $name",
+      "cases": 12,
+      "ran": 12,
+      "rates": [
+        {
+          "cell": "fake/control/docker:evals",
+          "cases": 12,
+          "pass": 11,
+          "counted": 12,
+          "rate": 0.917,
+          "interval": {
+            "lo": 0.646,
+            "hi": 0.985,
+            "level": 0.95,
+            "method": "wilson"
+          }
+        }
+      ],
+      "lifts": [],
+      "outcome": "pass"
+    }
+  ]
+}

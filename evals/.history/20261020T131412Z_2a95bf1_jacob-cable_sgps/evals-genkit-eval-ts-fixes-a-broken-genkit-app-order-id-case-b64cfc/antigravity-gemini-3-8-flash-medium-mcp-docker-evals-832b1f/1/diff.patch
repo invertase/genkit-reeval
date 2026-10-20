@@ -1,0 +1,23 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..687fc7a
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/tools.ts",
++  "snippet": "  async ({ orderId }) => ORDERS[orderId] ?? null,",
++  "cause": "The lookupOrder tool performed a case-sensitive lookup against database keys without normalizing customer input to uppercase, causing lowercase order IDs like 'a-1001' to not be found.",
++  "evidence": "In src/orders.json, order keys are uppercase ('A-1001'), so evaluating ORDERS[orderId] with lowercase 'a-1001' returns undefined and causes lookupOrder to return null."
++}
+diff --git a/src/tools.ts b/src/tools.ts
+index 86c44fb..cafb4a7 100644
+--- a/src/tools.ts
++++ b/src/tools.ts
+@@ -20,5 +20,5 @@ export const lookupOrder = ai.defineTool(
+       })
+       .nullable(),
+   },
+-  async ({ orderId }) => ORDERS[orderId] ?? null,
++  async ({ orderId }) => ORDERS[orderId.trim().toUpperCase()] ?? null,
+ );

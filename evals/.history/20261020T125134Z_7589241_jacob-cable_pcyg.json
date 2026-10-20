@@ -1,0 +1,471 @@
+{
+  "kind": "es-run",
+  "schemaVersion": 1,
+  "runId": "20261020T125134Z_7589241_jacob-cable_pcyg",
+  "status": "complete",
+  "startedAt": "2026-10-20T12:51:34.200Z",
+  "endedAt": "2026-10-20T12:53:11.514Z",
+  "durationMs": 97314,
+  "author": "jacob-cable",
+  "git": {
+    "sha": "7589241d3d18073b9df73e115f9541672347b111",
+    "branch": "main",
+    "dirty": true,
+    "diffHash": "ba56cb3aee0c3ab62d40d5c58305ce131e81108c93b4a5e74c86180bfbfe651b",
+    "worktreePatch": {
+      "path": "worktree.patch",
+      "sha256": "ba56cb3aee0c3ab62d40d5c58305ce131e81108c93b4a5e74c86180bfbfe651b",
+      "bytes": 878
+    },
+    "worktreePatchNote": null,
+    "commitTime": "2026-10-20T13:41:28+01:00",
+    "shallow": false,
+    "remote": null
+  },
+  "runner": {
+    "kind": "local",
+    "hostHash": "2c818801e9b8"
+  },
+  "dependencies": {
+    "lockfiles": [
+      {
+        "path": "pnpm-lock.yaml",
+        "sha256": "29e4483045e44a4f6df8369648c063808a5fb8d44694e13ba938fb54d7765888"
+      }
+    ]
+  },
+  "stack": {
+    "es": "0.9.0",
+    "node": "24.9.0",
+    "runtime": {
+      "name": "node",
+      "version": "24.9.0"
+    },
+    "language": {
+      "name": "typescript"
+    },
+    "os": "darwin",
+    "arch": "arm64",
+    "images": [
+      {
+        "ref": "reeval-install:daa5b7789ebb6dba",
+        "id": "sha256:5779d29e72d529933eb614529652fad89fed15316a6cb3050c8b19b9d59210e3",
+        "agentCli": "2.1.290 (Claude Code)",
+        "base": "reeval-sandbox:claude-code-1.0.152-patch.8edc594f",
+        "install": [
+          "npm i -g genkit-cli@1.44.1"
+        ],
+        "dockerfile": null,
+        "repoDigests": []
+      }
+    ],
+    "packages": {
+      "@vitest/expect": "5.0.2",
+      "jiti": "2.7.0",
+      "@reeval/harness-antigravity": "0.1.6",
+      "@reeval/harness-opencode": "0.2.7",
+      "@reeval/harness-goose": "0.1.2",
+      "@reeval/harness-pi": "0.2.6",
+      "@reeval/harness-cursor-sdk": "0.1.4",
+      "@ai-sdk/harness-claude-code": "1.0.152-patch.8edc594f",
+      "@reeval/harness-codex": "0.1.6",
+      "ai": "7.0.140",
+      "@ai-sdk/harness": "1.0.148",
+      "@ai-sdk/google": "4.0.93",
+      "@ai-sdk/typesafe-ai": "3.0.18"
+    },
+    "harnesses": [
+      {
+        "id": "claude-code:claude-sonnet-5",
+        "kind": "claude-code",
+        "model": "claude-sonnet-5",
+        "effort": null,
+        "resolvedModels": [],
+        "resolvedEffort": []
+      }
+    ],
+    "judge": {
+      "model": "google/gemini-3.8-flash",
+      "resolvedModels": [],
+      "threshold": 0.7,
+      "version": "040f4c93d76f"
+    },
+    "context": [
+      {
+        "path": "CLAUDE.md",
+        "sha256": "71cd594de1577284a5ff40793e45d9f8e798d9d04658998f84e27ee1451d0ed4"
+      },
+      {
+        "path": "~/.claude/skills/.ai-sdk-harness-skills.json",
+        "sha256": "5ddf48ce4d7015c17873d3c8b1c02e421c433763e17d96c4ef377bbddabb44fe"
+      }
+    ],
+    "fingerprintScope": [
+      "eval-source",
+      "harness",
+      "environment",
+      "agent-cli",
+      "image-id",
+      "judge",
+      "context"
+    ]
+  },
+  "environments": [
+    {
+      "name": "mcp",
+      "parent": "rules",
+      "overrides": [],
+      "digest": "sha256:388cb0871a109293555bedbce927ebeb10baea8a893b6875ec1b14465b0333fb",
+      "setup": [
+        "npm install --no-audit --no-fund",
+        "genkit --non-interactive config set analyticsOptOut true",
+        "genkit --non-interactive docs:list js >/dev/null"
+      ],
+      "skills": [],
+      "mcp": [
+        "genkit"
+      ],
+      "files": [
+        {
+          "path": ".gitignore",
+          "sha256": "2324373b38e6a6e40c2533a3440dde4733c59a33d59dffb95f2a87564eadf8b1"
+        },
+        {
+          "path": "package-lock.json",
+          "sha256": "7080b43e98fcb153fb7926630f4cdee8b9f8248824fee662d61e3046d53c54f6"
+        },
+        {
+          "path": "package.json",
+          "sha256": "12829aa396015aca5c0fd8161b11c040acc5d5f0ffcbe8aaf34d2bf68a5bf1f9"
+        },
+        {
+          "path": "prompts/greet.prompt",
+          "sha256": "0e4330eab89a5d0443dac4ae3e0b948a7769e0ae7d6db72e4868065a6de587c4"
+        },
+        {
+          "path": "src/agents.ts",
+          "sha256": "8a8bbed0be0d55841e68867eb66c725db3844d8937e41023f7c9e26cbefbb23d"
+        },
+        {
+          "path": "src/ai.ts",
+          "sha256": "279503e1481fd36866447ad99e3c9062fcce1492337b420bc4b7cf5d5c1b665f"
+        },
+        {
+          "path": "src/db.ts",
+          "sha256": "f822166aef9e14bffb2a3259facfff3284ad56fa5aafdc9fcd819b5f8f89bca9"
+        },
+        {
+          "path": "src/flows.ts",
+          "sha256": "5e6bffefd47a06ff2e2f8aafbf8ecfc4ef5cffc9918a8cd32f21579a5fa9f932"
+        },
+        {
+          "path": "src/index.ts",
+          "sha256": "ae90d6cb599cca69414e7b2688d600597b80d03b13420afccb4178212c74743b"
+        },
+        {
+          "path": "src/orders.json",
+          "sha256": "db96fdc2bd8de3bd0e2f5e3e478bab0658705cd9cbb6e060a54454b61fb54c85"
+        },
+        {
+          "path": "src/tools.ts",
+          "sha256": "bd30895bd2041fead14058472f80f976e6702675235c97018d09fdad2e1dc809"
+        },
+        {
+          "path": "tsconfig.json",
+          "sha256": "4a1fe8a611430f39f2b16ecbb9c966222d20a64585dd5b7377e2da42679a925c"
+        },
+        {
+          "path": "CLAUDE.md",
+          "sha256": "71cd594de1577284a5ff40793e45d9f8e798d9d04658998f84e27ee1451d0ed4"
+        }
+      ],
+      "vars": [
+        "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+      ],
+      "secrets": [
+        "GEMINI_API_KEY"
+      ],
+      "brokered": [
+        "GEMINI_API_KEY"
+      ],
+      "unset": [],
+      "egress": "allow-all"
+    }
+  ],
+  "profile": {
+    "name": "smoke",
+    "reason": "--profile",
+    "defaults": {},
+    "limit": {
+      "runs": 1,
+      "harness": [
+        "claude-code:claude-sonnet-5"
+      ]
+    }
+  },
+  "plan": {
+    "evals": 1,
+    "cells": 1,
+    "attempts": 1,
+    "estimateMs": 122437,
+    "sandboxWarnings": []
+  },
+  "budget": null,
+  "config": {
+    "sandbox": "docker+2417e918",
+    "environment": null,
+    "runs": 1,
+    "judgeModel": "google/gemini-3.8-flash",
+    "threshold": 0.7,
+    "timeoutMs": 900000,
+    "concurrency": 8,
+    "configHash": "4a8260d112f97c9b3af04e6d1942797a8a4c2ecf8f745bccec03d53d58355e05"
+  },
+  "cost": {
+    "inputTokens": 139937,
+    "outputTokens": 1869,
+    "usage": {
+      "input": 8,
+      "output": 1869,
+      "cacheRead": 104169,
+      "cacheWrite": 35760,
+      "reasoning": null
+    },
+    "source": "reported"
+  },
+  "artifacts": "all",
+  "redaction": {
+    "version": 1
+  },
+  "summary": {
+    "evals": 1,
+    "attempts": 1,
+    "pass": 1,
+    "fail": 0,
+    "notGated": 0,
+    "infraError": 0,
+    "skipped": 0
+  },
+  "evals": [
+    {
+      "id": "evals/mcp-probe.eval.ts › mcp-probe",
+      "key": "evals/mcp-probe.eval.ts › mcp-probe",
+      "slug": "evals-mcp-probe-eval-ts-mcp-probe-39f177",
+      "file": "evals/mcp-probe.eval.ts",
+      "group": [],
+      "name": "mcp-probe",
+      "tags": [],
+      "fingerprint": "c253970715e17952ecce8c6b95f238c6746f52f80b4351d348a584a4d1f14159",
+      "sources": [
+        {
+          "path": "evals/environments.ts",
+          "sha256": "35130d80fc33ee136d2a8dd1bbd1250e9c8c6f23ce5e2e9d078e0e134ec0f9bd"
+        },
+        {
+          "path": "evals/mcp-probe.eval.ts",
+          "sha256": "660d99ec458448f3fcf798fb7135cfc290b906c173b19bf9edc6e966b3fdfd8e"
+        }
+      ],
+      "outcome": "pass",
+      "todo": false,
+      "passRate": 1,
+      "cells": [
+        {
+          "key": "claude-code:claude-sonnet-5/mcp/docker+2417e918",
+          "harness": "claude-code:claude-sonnet-5",
+          "environment": "mcp",
+          "sandbox": "docker+2417e918",
+          "role": "control",
+          "fingerprint": "fefb8b935dd2fc597dbf5912c36f4ae768f3f9c9284950f9f68d2d9f9329b700",
+          "fingerprintParts": {
+            "sources": "3f5e4f5f58c6a7ee95cf1f386a5e5615930ad8b80d476335bb2f2cd59242dbf4",
+            "harness": "50475852c1172f3f08c90b27a6d061da05a2f61bbff8ad3aa593320f8b5cbe43",
+            "environment": "sha256:388cb0871a109293555bedbce927ebeb10baea8a893b6875ec1b14465b0333fb",
+            "image": "sha256:5779d29e72d529933eb614529652fad89fed15316a6cb3050c8b19b9d59210e3",
+            "agentCli": "2.1.290 (Claude Code)",
+            "judge": "ac864c7c38fdd09373305392f2fc7a5f08e0adcb108c6cfef3280d4cbba6b81c",
+            "context": "07c230f6ff89db3f0a3b519aa8f68de3c7b04959da7614232694bd7bc416431f"
+          },
+          "environmentDigest": "sha256:388cb0871a109293555bedbce927ebeb10baea8a893b6875ec1b14465b0333fb",
+          "harnessKind": "claude-code",
+          "model": "claude-sonnet-5",
+          "effort": null,
+          "gate": "all",
+          "overrides": [],
+          "runs": 1,
+          "pass": 1,
+          "fail": 0,
+          "infraError": 0,
+          "skipped": 0,
+          "passRate": 1,
+          "outcome": "pass",
+          "checks": [
+            {
+              "label": "toHaveCalledMcp genkit",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "tool list",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            }
+          ]
+        }
+      ],
+      "attempts": [
+        {
+          "key": "evals/mcp-probe.eval.ts › mcp-probe # claude-code:claude-sonnet-5/mcp/docker+2417e918#1",
+          "id": "claude-code:claude-sonnet-5/mcp/docker+2417e918#1",
+          "cell": "claude-code:claude-sonnet-5/mcp/docker+2417e918",
+          "n": 1,
+          "seq": 1,
+          "startedAt": "2026-10-20T12:52:31.594Z",
+          "imageId": "sha256:5779d29e72d529933eb614529652fad89fed15316a6cb3050c8b19b9d59210e3",
+          "env": {
+            "vars": [
+              "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+            ],
+            "secrets": [
+              "GEMINI_API_KEY"
+            ],
+            "brokered": [
+              "GEMINI_API_KEY"
+            ]
+          },
+          "context": [
+            {
+              "path": "~/.claude/skills/.ai-sdk-harness-skills.json",
+              "sha256": "5ddf48ce4d7015c17873d3c8b1c02e421c433763e17d96c4ef377bbddabb44fe"
+            },
+            {
+              "path": "CLAUDE.md",
+              "sha256": "71cd594de1577284a5ff40793e45d9f8e798d9d04658998f84e27ee1451d0ed4"
+            }
+          ],
+          "egress": {
+            "policy": "allow-all",
+            "allowed": null,
+            "recorded": true,
+            "contacted": [
+              {
+                "host": "api.anthropic.com",
+                "port": 443,
+                "connections": 3,
+                "sent": 431623,
+                "received": 31840
+              },
+              {
+                "host": "genkit.dev",
+                "port": 443,
+                "connections": 1,
+                "sent": 1958,
+                "received": 461141
+              },
+              {
+                "host": "registry.npmjs.org",
+                "port": 443,
+                "connections": 15,
+                "sent": 173309,
+                "received": 54443615
+              }
+            ],
+            "blocked": [],
+            "expectedBlocked": []
+          },
+          "servedModels": null,
+          "effort": null,
+          "servedEffort": null,
+          "outcome": "pass",
+          "error": null,
+          "durationMs": 39917,
+          "turns": [
+            {
+              "prompt": "List the exact names of every MCP tool you can call, one per line, nothing else. Then call the genkit MCP server's list_flows tool and append its raw result. Write all of it to mcp-probe.txt in the project root. Do not edit any other file.",
+              "status": "completed",
+              "startedAt": "2026-10-20T12:52:49.357Z",
+              "durationMs": 21360,
+              "usage": {
+                "input": 8,
+                "output": 1869,
+                "cacheRead": 104169,
+                "cacheWrite": 35760,
+                "reasoning": null
+              },
+              "model": null,
+              "unreported": [],
+              "error": null,
+              "text": "Done. `mcp-probe.txt` now contains the 9 `mcp__genkit__*` MCP tool names (the only MCP server available), followed by `list_flows`'s raw result — it returned \"No runtimes found\" since no Genkit app is currently running."
+            }
+          ],
+          "usage": {
+            "input": 8,
+            "output": 1869,
+            "cacheRead": 104169,
+            "cacheWrite": 35760,
+            "reasoning": null
+          },
+          "timings": {
+            "setupMs": 17761,
+            "agentMs": 21360,
+            "diffMs": 113,
+            "checksMs": 0,
+            "judgeMs": 0
+          },
+          "activity": {
+            "tools": 2,
+            "fileEdits": 1,
+            "webSearches": 0,
+            "webFetches": 0,
+            "reasoningMs": 14567
+          },
+          "judgements": [],
+          "assertions": [
+            {
+              "label": "toHaveCalledMcp genkit",
+              "labelled": false,
+              "matcher": "toHaveCalledMcp",
+              "status": "pass",
+              "soft": true
+            },
+            {
+              "label": "tool list",
+              "labelled": true,
+              "matcher": "toMatch",
+              "status": "pass",
+              "soft": true
+            }
+          ],
+          "checks": [],
+          "changedFiles": [
+            {
+              "path": "mcp-probe.txt",
+              "status": "added"
+            }
+          ],
+          "files": {
+            "setupLog": {
+              "path": "evals-mcp-probe-eval-ts-mcp-probe-39f177/claude-code-claude-sonnet-5-mcp-docker-2417e918-29ed68/1/setup.log",
+              "sha256": "b5db408ab5ba9b9668f3cd810783e9b506f3b7bf1cf29669f4de115bfe6ded02",
+              "bytes": 4090
+            },
+            "transcript": {
+              "path": "evals-mcp-probe-eval-ts-mcp-probe-39f177/claude-code-claude-sonnet-5-mcp-docker-2417e918-29ed68/1/transcript.jsonl",
+              "sha256": "0773b30dd62b5f016f0521efe904f01f276785e02193f082c006c92221b7f13d",
+              "bytes": 3502
+            },
+            "diff": {
+              "path": "evals-mcp-probe-eval-ts-mcp-probe-39f177/claude-code-claude-sonnet-5-mcp-docker-2417e918-29ed68/1/diff.patch",
+              "sha256": "6b732262f9cf74aece68d9002e8719fd0c3dde686a3247de325488c78d9d424a",
+              "bytes": 601
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
