@@ -4,7 +4,7 @@ Does Genkit's agent tooling help a coding agent? We put real agents on a Genkit 
 
 ## Three things to act on
 
-1. **`GENKIT.md` makes the agent cheaper, not better.** It fixes every bug the control fixes, at under half the tokens, by reading source instead of running the app. Its root-cause evidence is weaker. If the goal is a cheaper fix, ship the rules. If the goal is an agent that verifies, the rules push the wrong way. ([Sonnet, 12 bugs](evals/.history/20261020T124201Z_7589241_jacob-cable_bcx7/summary.md))
+1. **`GENKIT.md` makes the agent cheaper, not better.** It fixes every bug the control fixes, at under half the tokens, by reading source instead of running the app. Its root-cause evidence is weaker. If the goal is a cheaper fix, ship the rules. If the goal is an agent that verifies, the rules push the wrong way. ([Sonnet, one bug, four conditions](evals/.history/20261020T124201Z_7589241_jacob-cable_bcx7/summary.md))
 
 2. **One docs page changes what the agent builds. Nothing today gets the agent to that page.** The arm that read `js/agents/multi-agent.md` used the `agents()` middleware; the rest grepped `node_modules` for "handoff" and hand-rolled delegation. `search_genkit_docs` and `genkit docs:search` both crash in 1.44.1 with `(doc.description || "").toLowerCase is not a function`, and `list_genkit_docs` is too large to read. Fix `searchDocs` and the server starts to pay for itself. ([Sonnet build](evals/.history/20261020T132814Z_c5f4f2b_jacob-cable_ffh4/summary.md), [Haiku build](evals/.history/20261020T135301Z_8d2bef2_jacob-cable_w1kj/summary.md), [search crash](evals/.history/20261020T130047Z_2a95bf1_jacob-cable_8wte/summary.md))
 
