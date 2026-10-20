@@ -2,8 +2,8 @@ import { defineConfig } from 'reeval'
 import { antigravity, claudeCode, codex, cursor } from 'reeval/harness'
 import { docker } from 'reeval/sandbox'
 
-/** Every arm shares one image with the Genkit CLI on PATH; the arms differ only in what the agent is told. */
-export const sandbox = docker({ install: ['npm i -g genkit-cli@1.44.1'] })
+/** Every arm shares one image with the Genkit CLI on PATH and the fixture's dependencies; the arms differ only in what the agent is told. */
+export const sandbox = docker({ dockerfile: './evals/Dockerfile' })
 
 export default defineConfig({
   include: ['evals/**/*.eval.ts'],

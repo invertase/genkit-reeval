@@ -77,7 +77,7 @@ Everything the study holds fixed, with where it came from. `evals/rules/GENKIT.m
 
 | Thing | Pin | Source |
 |---|---|---|
-| genkit-cli (in the sandbox, `npm i -g genkit-cli@1.44.1`; also a root devDependency) | `1.44.1` | npm |
+| genkit-cli (in the sandbox image, `evals/Dockerfile`; also a root devDependency) | `1.44.1` | npm |
 | genkit (app dependency) | `1.42.0` | npm |
 | @genkit-ai/google-genai (app dependency) | `1.42.0` | npm |
 | @genkit-ai/middleware (app dependency) | `0.10.0` | npm |

@@ -14,7 +14,7 @@ export const control = defineEnvironment('control', ({ directory, secret }) => (
     GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS: 'true',
   },
   setup: [
-    { run: 'npm install --no-audit --no-fund', timeout: '5m' },
+    'cp -r /opt/support-desk/node_modules .',
     'genkit --non-interactive config set analyticsOptOut true',
     'genkit --non-interactive docs:list js >/dev/null',
   ],

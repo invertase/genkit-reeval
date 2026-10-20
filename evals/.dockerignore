@@ -1,0 +1,4 @@
+*
+!Dockerfile
+!app/package.json
+!app/package-lock.json
