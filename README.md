@@ -15,7 +15,7 @@ One attempt per cell, on Claude Code (Sonnet 5 and Haiku 5.5) and Antigravity. E
 - **The bugs do not separate the arms on pass rate**: every arm fixed every bug it was given. They separate on effort and on whether the agent ran the app. The `rules` arm read source, skipped the repro and spent 0.42x the tokens; `control`, `mcp` and `skill` ran it. ([Sonnet](evals/.history/20261020T124201Z_7589241_jacob-cable_bcx7/summary.md))
 - **The build task separates on idiom.** All four Haiku arms built a working front desk; one did it the Genkit way. ([Haiku](evals/.history/20261020T135301Z_8d2bef2_jacob-cable_w1kj/summary.md))
 
-Two things we knew before any run: `GENKIT.md` tells the agent not to run `genkit` commands and to use the `start_runtime` MCP tool, while the skill tells it to run `genkit flow:run` and `genkit trace:get`; and `GENKIT.md` as the CLI writes it differs from the website copy. Quotes and pins are in `FINDINGS.md`.
+Two things we knew before any run: `GENKIT.md` tells the agent not to run `genkit` commands and to use the `start_runtime` MCP tool, while the skill tells it to run `genkit flow:run` and `genkit trace:get`; and `GENKIT.md` as the CLI writes it differs from the website copy. Quotes and pins are in [`FINDINGS.md`](FINDINGS.md).
 
 ## See it yourself
 
@@ -43,20 +43,20 @@ The server is never measured without the rules, because `GENKIT.md` is what tell
 
 Two families of cases, 15 in all. Twelve seeded bugs, six in the flows API and six in the agents API: the agent gets a bug report that never names Genkit tooling, must fix it and write `answer.json`. Three build tasks: the app starts without an agent, and the agent must add an order desk, a refund desk with human approval, or a front desk that delegates and resumes sessions. The agents API is newer than the models' training data, so the build tasks are where the tooling's knowledge should show.
 
-Pass is deterministic. A hidden `node:test` file is placed into the sandbox after the agent's turn and drives the flow or agent against real Gemini; the agent never sees it. Two more checks guard against cheating: the answer names the right file, and the flows survive. LLM judges and one pairwise question per family are recorded, never counted toward pass. `STUDY.md` has the prompts, the bug table and the build-task table.
+Pass is deterministic. A hidden `node:test` file is placed into the sandbox after the agent's turn and drives the flow or agent against real Gemini; the agent never sees it. Two more checks guard against cheating: the answer names the right file, and the flows survive. LLM judges and one pairwise question per family are recorded, never counted toward pass. [`STUDY.md`](STUDY.md) has the prompts, the bug table and the build-task table.
 
 The study itself is a few files, for anyone who wants to read what the agent is told and what counts as a pass:
 
 | File | What it holds |
 |---|---|
-| `evals/genkit.eval.ts` | The bug family: the prompt, the four arms, the checks, the evidence judge. |
-| `evals/build.eval.ts` | The build family: the prompt, the checks, the idiom judge, the pairwise question. |
-| `evals/bugs.ts`, `evals/tasks.ts` | The 12 seeded bugs and the 3 build tasks, with each symptom and the fix the oracle applies. |
-| `evals/environments.ts` | What each arm adds to `control`: the rules file, the MCP server, the skill. |
-| `evals/verify.mts`, `evals/verify-build.mts` | The hidden `node:test` files the agent never sees. |
-| `evals/rules/GENKIT.md` | The rules file the `rules` and `mcp` arms get, pinned. |
-| `evals/app/` | The fixture: the support-desk app. |
-| `reeval.config.ts` | The five agents, the Docker sandbox, the profiles. |
+| [`evals/genkit.eval.ts`](evals/genkit.eval.ts) | The bug family: the prompt, the four arms, the checks, the evidence judge. |
+| [`evals/build.eval.ts`](evals/build.eval.ts) | The build family: the prompt, the checks, the idiom judge, the pairwise question. |
+| [`evals/bugs.ts`](evals/bugs.ts), [`evals/tasks.ts`](evals/tasks.ts) | The 12 seeded bugs and the 3 build tasks, with each symptom and the fix the oracle applies. |
+| [`evals/environments.ts`](evals/environments.ts) | What each arm adds to `control`: the rules file, the MCP server, the skill. |
+| [`evals/verify.mts`](evals/verify.mts), [`evals/verify-build.mts`](evals/verify-build.mts) | The hidden `node:test` files the agent never sees. |
+| [`evals/rules/GENKIT.md`](evals/rules/GENKIT.md) | The rules file the `rules` and `mcp` arms get, pinned. |
+| [`evals/app/`](evals/app) | The fixture: the support-desk app. |
+| [`reeval.config.ts`](reeval.config.ts) | The five agents, the Docker sandbox, the profiles. |
 
 Scale: 15 cases x 4 arms x 5 agents (Claude Code on Sonnet 5 and on Haiku 5.5, Antigravity, Cursor, Codex) x 5 attempts = 1500 attempts, about 9.5 hours at concurrency 8. Haiku is there because tooling should matter most to the agent that cannot hold the whole app in its head.
 
@@ -95,4 +95,4 @@ pnpm reeval run --profile full claude-code:claude-sonnet-5
 pnpm reeval record <run>                  # copy a scratch run into evals/.history/ to commit it
 ```
 
-`RUNBOOK.md` has the full sequence, sizes and queries. `FINDINGS.md` lists what building and smoking the study taught us about the tooling. `STUDY.md` has the design detail.
+[`RUNBOOK.md`](RUNBOOK.md) has the full sequence, sizes and queries. [`FINDINGS.md`](FINDINGS.md) lists what building and smoking the study taught us about the tooling. [`STUDY.md`](STUDY.md) has the design detail.
