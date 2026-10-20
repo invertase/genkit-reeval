@@ -45,6 +45,19 @@ Two families of cases, 15 in all. Twelve seeded bugs, six in the flows API and s
 
 Pass is deterministic. A hidden `node:test` file is placed into the sandbox after the agent's turn and drives the flow or agent against real Gemini; the agent never sees it. Two more checks guard against cheating: the answer names the right file, and the flows survive. LLM judges and one pairwise question per family are recorded, never counted toward pass. `STUDY.md` has the prompts, the bug table and the build-task table.
 
+The study itself is a few files, for anyone who wants to read what the agent is told and what counts as a pass:
+
+| File | What it holds |
+|---|---|
+| `evals/genkit.eval.ts` | The bug family: the prompt, the four arms, the checks, the evidence judge. |
+| `evals/build.eval.ts` | The build family: the prompt, the checks, the idiom judge, the pairwise question. |
+| `evals/bugs.ts`, `evals/tasks.ts` | The 12 seeded bugs and the 3 build tasks, with each symptom and the fix the oracle applies. |
+| `evals/environments.ts` | What each arm adds to `control`: the rules file, the MCP server, the skill. |
+| `evals/verify.mts`, `evals/verify-build.mts` | The hidden `node:test` files the agent never sees. |
+| `evals/rules/GENKIT.md` | The rules file the `rules` and `mcp` arms get, pinned. |
+| `evals/app/` | The fixture: the support-desk app. |
+| `reeval.config.ts` | The five agents, the Docker sandbox, the profiles. |
+
 Scale: 15 cases x 4 arms x 5 agents (Claude Code on Sonnet 5 and on Haiku 5.5, Antigravity, Cursor, Codex) x 5 attempts = 1500 attempts, about 9.5 hours at concurrency 8. Haiku is there because tooling should matter most to the agent that cannot hold the whole app in its head.
 
 ## What reeval does here
