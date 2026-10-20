@@ -26,7 +26,9 @@ pnpm reeval doctor             # every line ✓
 pnpm reeval image build        # four images, one install layer each: npm i -g genkit-cli@1.44.1
 ```
 
-`GOOGLE_GENERATIVE_AI_API_KEY` serves the app in the sandbox (brokered as `GEMINI_API_KEY`), the judge and `reeval analyze`. `GEMINI_API_KEY` is for the Antigravity harness. If a plan reports an image as not built while `docker images` lists it, see invertase/reeval issue (the lead will add the number).
+`GOOGLE_GENERATIVE_AI_API_KEY` serves the app in the sandbox (brokered as `GEMINI_API_KEY`), the judge and `reeval analyze`. `GEMINI_API_KEY` is for the Antigravity harness.
+
+Docker Desktop on this Mac sometimes drops an image tag reference: `docker images` lists the tag, `docker image inspect <tag>` says no such image, and every plan reports the image as not built. Re-tag it from its id with `docker tag <id> <repository:tag>` and re-run; no rebuild is needed.
 
 ## Oracle and canary
 
@@ -90,75 +92,17 @@ pnpm reeval studio build --out site    # static site with every transcript and d
 
 Pass is all three checks, which is what `lift` and `family_lift` pool. Fix rate is the `flow works` check alone. The two judges are recorded, never asserted; a failed attempt with a low verdict shows `error_kind = 'judge'` in `failing_attempts`, so read `first_failed_check` for the real cause.
 
-Each query below reads one run: find it with `SELECT run_id, profile, started_at, attempts FROM runs ORDER BY started_at DESC LIMIT 5` and paste it in place of `'<run id>'`. `cells.environment` is the bare arm name. For a flows-vs-agents breakdown, add `e.name` (the bug) to a `SELECT` with `JOIN evals e ON e.run_id = c.run_id AND e.key = c.eval_key`, or read `lift` per bug.
+The README tables come from the four queries in `queries/`. Each reads one run: find it with `SELECT run_id, profile, started_at, attempts FROM runs ORDER BY started_at DESC LIMIT 5`, then run a query with the id in place of `<run id>`:
 
-Fix rate per harness and arm:
-
-```sql
-SELECT c.harness, c.environment AS arm,
-       SUM(k.pass) AS fixed, SUM(k.pass + k.fail) AS counted, SUM(k.error) AS error, SUM(k.not_run) AS not_run
-FROM cell_checks k
-JOIN cells c ON c.run_id = k.run_id AND c.eval_key = k.eval_key AND c.key = k.cell_key
-WHERE k.run_id = '<run id>' AND k.label = 'flow works'
-GROUP BY c.harness, arm
-ORDER BY c.harness, CASE c.environment WHEN 'control' THEN 0 WHEN 'rules' THEN 1 WHEN 'mcp' THEN 2 WHEN 'skill' THEN 3 END
+```bash
+pnpm reeval query "$(sed "s/<run id>/$RUN/g" queries/fix-rate.sql)"
 ```
 
-Adoption, as the share of attempts with at least one MCP call or one `genkit` subcommand (check `SELECT DISTINCT tool, target FROM tool_calls WHERE tool LIKE '%genkit%' OR target LIKE '%genkit%'` first; names differ by harness):
+| File | Fills | Note |
+|---|---|---|
+| `queries/fix-rate.sql` | fix rate per harness and arm | `cells.environment` is the bare arm name |
+| `queries/adoption.sql` | share of attempts that used the MCP tools or the CLI | tool and target names differ by harness; the file says what to check first |
+| `queries/effort.sql` | the `x` ratios | mean of per-bug ratios; per-bug verdicts are in `effort` |
+| `queries/judge.sql` | mean evidence score | swap the `LIKE` for the summary judge |
 
-```sql
-SELECT c.harness, c.environment AS arm, COUNT(*) AS attempts,
-       SUM(COALESCE(a.mcp_calls, 0) > 0) AS used_mcp, SUM(COALESCE(a.cli_calls, 0) > 0) AS used_cli
-FROM attempts t
-JOIN cells c ON c.run_id = t.run_id AND c.eval_key = t.eval_key AND c.key = t.cell_key
-LEFT JOIN (
-  SELECT run_id, attempt_key,
-         SUM(tool LIKE 'mcp__genkit__%') AS mcp_calls,
-         SUM(tool NOT LIKE 'mcp__%' AND (target LIKE '%genkit flow:%' OR target LIKE '%genkit trace:%'
-             OR target LIKE '%genkit start%' OR target LIKE '%genkit docs:%' OR target LIKE '%genkit mcp%')) AS cli_calls
-  FROM tool_calls WHERE run_id = '<run id>' GROUP BY run_id, attempt_key
-) a ON a.run_id = t.run_id AND a.attempt_key = t.key
-WHERE t.run_id = '<run id>'
-GROUP BY c.harness, arm
-ORDER BY c.harness, CASE c.environment WHEN 'control' THEN 0 WHEN 'rules' THEN 1 WHEN 'mcp' THEN 2 WHEN 'skill' THEN 3 END
-```
-
-Effort (mean of per-bug ratios; per-bug verdicts are in `effort`):
-
-```sql
-SELECT harness, environment AS arm,
-       ROUND(AVG(tokens_ratio), 2) AS tokens_x, ROUND(AVG(agent_s_ratio), 2) AS time_x, ROUND(AVG(tools_ratio), 2) AS tools_x
-FROM effort
-WHERE run_id = '<run id>' AND role = 'variant'
-GROUP BY harness, arm
-```
-
-Mean `evidence-based diagnosis` score (for the summary judge, filter on `'Does the agent''s final message%'`):
-
-```sql
-SELECT c.harness, c.environment AS arm, COUNT(*) AS judged, ROUND(AVG(j.score), 2) AS evidence_score
-FROM judgements j
-JOIN attempts t ON t.run_id = j.run_id AND t.key = j.attempt_key
-JOIN cells c ON c.run_id = t.run_id AND c.eval_key = t.eval_key AND c.key = t.cell_key
-WHERE j.run_id = '<run id>' AND j.question LIKE 'Did the agent establish the root cause%'
-GROUP BY c.harness, arm
-```
-
-Fill the README tables from these: fix rate from the first query, `x` ratios from the third, adoption from the second.
-
-## The 12 bugs
-
-| Bug | File | What is wrong | What a trace or run shows |
-|---|---|---|---|
-| `schema-drift` | `src/flows.ts` | `tags` schema is a string, not a list | the structured output has `tags: "a, b"` |
-| `prompt-var-typo` | `prompts/greet.prompt` | `{{custmerName}}` | the rendered prompt has an empty name |
-| `prompt-model-override` | `prompts/greet.prompt` | front matter pins `googleai/gemini-1.5-flash` | the `greet` generate span fails; its request names a model the app never configured |
-| `order-id-case` | `src/tools.ts` | `lookupOrder` no longer trims and upper-cases the id | tool input `a-1001`, output `null` |
-| `tool-requests-returned` | `src/flows.ts` | `returnToolRequests: true` on `orderStatus` | the generate span ends on a `toolRequest` part; no tool span; empty text |
-| `stop-sequence` | `src/flows.ts` | `stopSequences: ['\n']` on `draftReply` | `finishReason: 'stop'` after one line; the request config carries the stop sequence |
-| `delegation-dropped` | `src/agents.ts` | `agents()` lists only `orderAgent` | no `delegate_to_refundAgent` tool in the request |
-| `session-not-loaded` | `src/agents.ts` | `triage` has no `store` | `loadChat` throws: a persistent store is required |
-| `tool-choice-required` | `src/agents.ts` | `toolChoice: 'required'` on `refundAgent` | every request carries `toolChoice: 'required'`; after the decline, tool calls until `maxTurns`, then `AgentError` `ABORTED` |
-| `max-delegations-zero` | `src/agents.ts` | `maxDelegations: 0` on `triage` | the `delegate_to_*` tool answers "Delegation limit reached (0)"; no sub-agent span |
-| `max-turns-zero` | `src/agents.ts` | `maxTurns: 0` on `triage` | `send` throws `AgentError` `ABORTED` on the first delegation |
-| `tool-output-drift` | `src/orders.json` | A-1001 `total` is a string | `lookupOrder` fails schema validation; triage reports an agent error |
+For a flows-vs-agents breakdown, add `e.name` (the bug) to a `SELECT` with `JOIN evals e ON e.run_id = c.run_id AND e.key = c.eval_key`, or read `lift` per bug. The 12 bugs are listed in the README; `evals/bugs.ts` is the source of truth.

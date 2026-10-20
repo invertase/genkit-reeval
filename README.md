@@ -27,7 +27,7 @@ The symptom never names Genkit tooling. The seeded diff is not in the agent's vi
 | `mcp` | `rules` plus the `genkit mcp` stdio server. This is what `genkit init:ai-tools` installs. |
 | `skill` | `control` plus the `developing-genkit-js` skill, pinned to one commit. |
 
-The server is never measured without the rules, because `GENKIT.md` is what tells the agent the server exists. `rules` alone is not a configuration Genkit ships; it is there to separate the text from the server. Pins and their sources are in `evals/rules/`.
+The server is never measured without the rules, because `GENKIT.md` is what tells the agent the server exists. `rules` alone is not a configuration Genkit ships; it is there to separate the text from the server. Pins and their sources are in `FINDINGS.md`.
 
 ## The 12 bugs
 
