@@ -112,7 +112,16 @@ The full run has not happened yet. Each cell holds `rules / mcp / skill`. `x` is
 
 ## Reading a run
 
-This is what reeval leaves behind, and what the findings above cite. A recorded run is a directory under `evals/.history/`:
+The recorded runs are in this repo, so the fastest way in needs no API key and no Docker:
+
+```bash
+pnpm install
+pnpm reeval studio --open
+```
+
+That opens reeval's studio over `evals/.history/`: every run, each cell's pass rate, lift and effort, the pairwise votes, and every attempt's transcript, diff, checks and judge input. `pnpm reeval studio build --out site` writes the same thing as a static site.
+
+Underneath, a recorded run is a directory under `evals/.history/`:
 
 ```text
 evals/.history/<run>.json                 the record: plan, cells, checks, judgements, tokens
