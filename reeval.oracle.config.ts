@@ -3,6 +3,7 @@
 import { join } from 'node:path'
 import { defineConfig } from 'reeval'
 import { fakeHarness } from 'reeval/harness'
+import { fakeJudge } from 'reeval/judge'
 import { fakeSandbox } from 'reeval/sandbox'
 
 process.env.GENKIT_EVAL_ORACLE = '1'
@@ -15,6 +16,7 @@ export default defineConfig({
   include: ['evals/**/*.eval.ts'],
   harness: fakeHarness({ script: [[{ exec: oracle }]], text: 'Fixed it.' }),
   sandbox: fakeSandbox(),
+  judge: { model: fakeJudge() },
   defaultProfile: { local: 'oracle', ci: 'oracle' },
   profiles: {
     oracle: { limit: controlOnly },

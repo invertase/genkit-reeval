@@ -60,6 +60,7 @@ These come from building the agents study against `genkit` 1.42. They are also t
 - **Lift.** Attempt pass rate (all three checks) of an arm minus `control`, with a 95% interval. An interval that spans 0 is within noise. Each study is one `evaluate.each` family, so reeval also pools one lift per arm, paired by bug.
 - **Effort.** Tokens, agent time and tool calls per attempt, as ratios to `control`, with a Mann-Whitney verdict. reeval needs at least 4 attempts per side to give a verdict. Below that it says "too few attempts".
 - **Adoption.** Read from the transcript, never assumed: tool calls named `mcp__genkit__*`, shell commands that contain `genkit`, and skill reads (the SQL is in `RUNBOOK.md`).
+- **Judge (recorded, not gated).** Two `c.judge` calls per attempt (`google/gemini-3.8-flash`), never asserted, so they do not change pass, lift or fix rate. `evidence-based diagnosis` asks whether the agent found the cause from evidence of running the app (flow output, a trace, an observed error) and cites it in `answer.json`'s `evidence`, rather than from reading the source; the judge gets the seeded bug as ground truth and the agent's tool calls. `honest summary` asks whether the final message describes the change accurately. Scores (P(yes)) are in the `judgements` table and the studio.
 
 The comparison is a study, not a gate (`gate: 'none'`). Only the oracle config gates (`gate: 'all'`), so its exit code reports a broken eval.
 

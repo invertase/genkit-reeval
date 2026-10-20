@@ -8,7 +8,9 @@ Run everything from the repo root. Use `pnpm reeval`, which is the pinned `reeva
 
 What it exercises: the seed applies, the oracle finds the seeded bug itself (the one bug whose broken snippet is in the workspace), its fix is accepted, `answer.json` names the bug's `file` and quotes its broken `snippet`, the verify script runs the repaired flow against the real Gemini API, and the `keeps` regexes hold.
 
-What it does not exercise: the `mcp` and `cli` environments, Docker, the egress gateway, key brokering, the `genkit` CLI warm-up steps (skipped in oracle mode), a real harness, the MCP server, the skill placement.
+It also sets `judge: { model: fakeJudge() }`, so both `c.judge` calls run, score 1 and are recorded with no key and no model call; the study's real judge model is never called.
+
+What it does not exercise: the real judge model, the `mcp` and `cli` environments, Docker, the egress gateway, key brokering, the `genkit` CLI warm-up steps (skipped in oracle mode), a real harness, the MCP server, the skill placement.
 
 The oracle config's `sandbox: fakeSandbox()` replaces the Docker sandbox from `reeval.config.ts`. It also sets `GENKIT_EVAL_ORACLE=1`, which makes `environments.ts` skip the `genkit` warm-up steps (the fake sandbox is the host, so they would write to the host's genkit config) and pass `GOOGLE_GENERATIVE_AI_API_KEY` to the app as `GEMINI_API_KEY` unbrokered (a fake sandbox has no gateway to swap a placeholder). So the oracle and canary runs need a real key and make a few Gemini calls.
 
@@ -137,9 +139,10 @@ pnpm reeval query check_discrimination
 pnpm reeval query skill_reads
 pnpm reeval query contrasts
 pnpm reeval query context_use
+pnpm reeval query judgements
 ```
 
-`family_lift`: one lift per study and arm, paired by bug. `lift`: per-bug points with `lo` and `hi` (a 95% interval; `within_noise = 1` when it spans 0). `effort`: `tokens_ratio`, `agent_s_ratio`, `tools_ratio` and their verdicts. `check_discrimination`: which of the three checks tell the arms apart. `contrasts` (mcp against cli) and `context_use` (calls by class) are in the reeval docs but not in 0.9.0: the query then lists the views that exist. Skip them in that case.
+`family_lift`: one lift per study and arm, paired by bug. `lift`: per-bug points with `lo` and `hi` (a 95% interval; `within_noise = 1` when it spans 0). `effort`: `tokens_ratio`, `agent_s_ratio`, `tools_ratio` and their verdicts. `check_discrimination`: which of the three checks tell the arms apart. `contrasts` (mcp against cli) and `context_use` (calls by class) are in the reeval docs but not in 0.9.0: the query then lists the views that exist. Skip them in that case. `judgements` is a table: one row per judge call, with `question`, `score` (the judge's P(yes)), `verdict` against `threshold` 0.7, and `input_path` (the attempt's `judge-input.json`).
 
 Every query below reads one run. Find its id, then paste it in place of `<run id>`:
 
@@ -199,6 +202,22 @@ FROM effort WHERE run_id = '<run id>' AND role = 'variant' GROUP BY harness, arm
 ```
 
 The effort query averages per-bug ratios: a rough summary. Per-bug verdicts are in `effort`.
+
+Judge scores are recorded, not gated: the study never asserts a verdict, so pass, lift and fix rate stay on the three checks. Mean `evidence-based diagnosis` score per harness and arm:
+
+```sql
+SELECT c.harness,
+       CASE WHEN c.environment LIKE '%-mcp' THEN 'mcp'
+            WHEN c.environment LIKE '%-cli' THEN 'cli' ELSE 'control' END AS arm,
+       COUNT(*) AS judged, ROUND(AVG(j.score), 2) AS evidence_score, SUM(j.verdict = 'pass') AS at_or_above_0_7
+FROM judgements j
+JOIN attempts t ON t.run_id = j.run_id AND t.key = j.attempt_key
+JOIN cells c ON c.run_id = t.run_id AND c.eval_key = t.eval_key AND c.key = t.cell_key
+WHERE j.run_id = '<run id>' AND j.question LIKE 'Did the agent establish the root cause%'
+GROUP BY c.harness, arm ORDER BY c.harness, arm
+```
+
+For the `honest summary` judge, swap the filter for `j.question LIKE 'Does the agent''s final message%'`. Two side effects of recording a judge in reeval 0.9.0: an attempt that fails a check and has a judge verdict below 0.7 shows `error_kind = 'judge'` in `failing_attempts` (read `first_failed_check` for the real cause), and a judge call that still fails after its retries (a provider error) fails the attempt as a `judge` error.
 
 Explain and publish:
 
