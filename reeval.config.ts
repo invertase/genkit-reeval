@@ -20,6 +20,7 @@ export default defineConfig({
   analysis: { model: 'google/gemini-3.8-flash' },
   profiles: {
     smoke: { limit: { runs: 1, harness: ['claude-code:claude-sonnet-5'] } },
+    haiku: { limit: { runs: 1, harness: ['claude-code:claude-haiku-5-5'] } },
     full: { defaults: { runs: 5 }, record: 'always', budget: { attempts: 1600, duration: '12h' } },
   },
 })

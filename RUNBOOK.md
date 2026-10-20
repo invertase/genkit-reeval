@@ -18,7 +18,7 @@ Run everything from the repo root. `pnpm reeval` is the pinned `reeval@0.9.0`. O
 | `... codex:gpt-5.6-luna/mcp` | 15 | 15 | 6 min |
 | `pnpm oracle`, `pnpm canary` | 15 | 15 | minutes (see below) |
 
-The estimate is a flat 3 minutes per attempt. The `full` profile's budget allows 1600 attempts and 12 hours. `smoke` keeps one harness (`claude-code:claude-sonnet-5`) and one attempt per cell; `full` runs 5 attempts per cell and records the run. Positional filters match an eval name (a bug) or a cell key (`<harness>/<arm>/<sandbox>`) and combine with OR, so `schema-drift codex` is wider than either alone.
+The estimate is a flat 3 minutes per attempt. The `full` profile's budget allows 1600 attempts and 12 hours. `smoke` keeps one harness (`claude-code:claude-sonnet-5`) and one attempt per cell, `haiku` does the same on `claude-code:claude-haiku-5-5`; `full` runs 5 attempts per cell and records the run. Positional filters match an eval name (a bug) or a cell key (`<harness>/<arm>/<sandbox>`) and combine with OR, so `schema-drift codex` is wider than either alone. To run one case on one harness, pin the harness with a profile: `pnpm reeval run --profile haiku schema-drift`.
 
 ## Keys and images
 
