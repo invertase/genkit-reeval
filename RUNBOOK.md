@@ -34,7 +34,7 @@ Docker Desktop on this Mac sometimes drops an image tag reference: `docker image
 
 ## Oracle and canary
 
-`reeval.oracle.config.ts` swaps the coding agent for a fake one and runs only the `control` arm on the real Docker sandbox. For a bug, the oracle applies the known fix and writes the right `answer.json`. For a build task, it writes the healthy `src/agents.ts` and `src/index.ts`. Every case must pass. The canary leaves the bug or the build start state in place and writes a wrong answer for a bug. Every case must fail. `GENKIT_EVAL_GATE=all` gates these cells, so the exit code is the result.
+`reeval.oracle.config.ts` swaps the coding agent for a fake one and runs only the `control` arm on the real Docker sandbox. For a bug, the oracle applies the known fix and writes the right `answer.json`. For a build task, it writes the healthy `src/agents.ts` and `src/index.ts`. Every case must pass. The canary leaves the bug in place and writes a wrong answer for it, or writes the task's plausible wrong build (`cheat` in `evals/tasks.ts`, with the requirements it must fail). Every case must fail. `src/agents.ts` is absent at the start of both `build-order-desk` and `build-refund-desk`, so `evals/build.eval.ts` writes the task name to `~/.task`, outside the workspace, for the oracle to read. `GENKIT_EVAL_GATE=all` gates these cells, so the exit code is the result.
 
 ```bash
 pnpm oracle     # expect 15 passed, exit 0
@@ -67,7 +67,7 @@ One case, five arms, one attempt each; then the `mcp` arm on Codex for all 15 ca
 - Antigravity: the harness injects its own `GEMINI_API_KEY`, brokered only to its streaming endpoint; the app reads `SUPPORT_DESK_GEMINI_API_KEY`, so the harness key cannot shadow it. Check an Antigravity attempt starts and a flow run from the agent shell reaches Gemini.
 - Agents bug: does the `mcp` arm call `run_flow` on `tryTriage`/`tryRefundDesk`? Does `get_trace` output fit, or is it truncated? Does the agent read the interrupt's error-looking span as the bug?
 - Build task: before the first turn `src/agents.ts` holds `orderAgent` and `refundAgent` only (or is absent for the other two tasks), and the agent's diff shows only what it wrote. Does it write `ai.chat()` or other API that is gone? Does the `mcp` or `skill` arm look up the agents API before it writes?
-- `pnpm reeval query check_discrimination` lists `locates the file`, `names the cause`, `flow works`, `keeps the flow` for the bugs and `typechecks`, `agent works`, `keeps the flows` for the build tasks; `pnpm reeval query judgements` has two rows per bug attempt and one per build attempt.
+- `pnpm reeval query check_discrimination` lists `locates the file`, `names the cause`, `flow works`, `keeps the flow` for the bugs and `typechecks`, one check per requirement (`evals/tasks.ts` `checks`), `keeps the flows` for the build tasks; `pnpm reeval query judgements` has two rows per bug attempt and one per build attempt.
 
 Then the whole smoke profile: `pnpm reeval run --profile smoke` (60 attempts).
 
@@ -97,7 +97,7 @@ pnpm reeval analyze --save             # one LLM call over the digest, citations
 pnpm reeval studio build --out site    # static site with every transcript and diff (read before publishing)
 ```
 
-Pass is every check, which is what `lift` and `family_lift` pool. Fix rate is the `flow works` check alone; build rate is the `agent works` check alone. The judges are recorded, never asserted; a failed attempt with a low verdict shows `error_kind = 'judge'` in `failing_attempts`, so read `first_failed_check` for the real cause.
+Pass is every check, which is what `lift` and `family_lift` pool. Fix rate is the `flow works` check alone; build rate is the share of attempts that pass every requirement check. The judges are recorded, never asserted; a failed attempt with a low verdict shows `error_kind = 'judge'` in `failing_attempts`, so read `first_failed_check` for the real cause.
 
 The README tables come from the four queries in `queries/`. Each reads one run: find it with `SELECT run_id, profile, started_at, attempts FROM runs ORDER BY started_at DESC LIMIT 5`, then run a query with the id in place of `<run id>`:
 

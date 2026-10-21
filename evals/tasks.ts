@@ -3,7 +3,7 @@ import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, symlinkSync, wri
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { BUGS } from './bugs.ts'
+import { BUGS, seed } from './bugs.ts'
 
 /** One build task: the app starts without a feature and the agent must build it with the agents API. */
 export type Task = {
@@ -17,6 +17,10 @@ export type Task = {
   file: string
   /** must still match `file` after the build (anti-cheat) */
   keeps: RegExp[]
+  /** the requirements `verify-build.mts` checks, each its own `test('<name>: <check>')` */
+  checks: string[]
+  /** a plausible wrong build the canary writes, and which of `checks` it must fail */
+  cheat: { files: Record<string, string>; fails: string[] }
 }
 
 const appDir = new URL('./app/', import.meta.url)
@@ -34,6 +38,11 @@ function cutOnce(text: string, from: string, to: string | null, what: string): s
   const end = to === null ? text.length : text.indexOf(to, start)
   if (end < 0) throw new Error(`${what}: ${JSON.stringify(to)} not found after ${JSON.stringify(from)}`)
   return text.slice(0, start) + text.slice(end)
+}
+
+function replaceOnce(text: string, from: string, to: string): string {
+  if (text.split(from).length !== 2) throw new Error(`${JSON.stringify(from)} not found once`)
+  return text.replace(from, () => to)
 }
 
 const AGENTS_EXPORT = /^export \{([^}]*)\} from '\.\/agents\.js';\n/m
@@ -59,6 +68,22 @@ const FLOWS = ['chat', 'draftReply', 'greet', 'orderStatus', 'summarizeTicket']
 /** Each flow is still exported from `src/index.ts`, by name or through a star export of `./flows.js`. */
 const keepsFlows = FLOWS.map((flow) => new RegExp(`\\b${flow}\\b|export \\* from '\\./flows(\\.js)?'`))
 
+const sessionNotLoaded = BUGS.find((b) => b.name === 'session-not-loaded')
+if (!sessionNotLoaded) throw new Error('no session-not-loaded bug')
+
+/** An order desk with no tools that tells every customer their order has shipped. */
+const GUESSING_ORDER_DESK = `import { ai } from './ai.js';
+
+/** Answers order status questions. */
+export const orderAgent = ai.defineAgent({
+  name: 'orderAgent',
+  description: 'Answers questions about an order: its status, delivery date and tracking code.',
+  system:
+    'You are the Northwind Supplies order desk. Tell the customer their order has shipped, ' +
+    'with tracking code NW-7F3K2Q and ETA 2026-10-22.',
+});
+`
+
 const APP = 'You are on the support-desk app in this directory.'
 const RULES = "Keep the existing flows and their exports. Don't change `package.json` or add dependencies."
 
@@ -74,6 +99,11 @@ export const TASKS: Task[] = [
       RULES,
     file: 'src/index.ts',
     keeps: keepsFlows,
+    checks: ['shipped order', 'processing order', 'unknown order', 'looks the order up'],
+    cheat: {
+      files: { 'src/agents.ts': GUESSING_ORDER_DESK, 'src/index.ts': indexExporting(['orderAgent']) },
+      fails: ['processing order', 'unknown order', 'looks the order up'],
+    },
   },
   {
     name: 'build-refund-desk',
@@ -89,6 +119,18 @@ export const TASKS: Task[] = [
       RULES,
     file: 'src/index.ts',
     keeps: keepsFlows,
+    checks: ['pauses for approval', 'declined refunds nothing', 'approved refunds the order total'],
+    cheat: {
+      files: {
+        'src/agents.ts': replaceOnce(
+          HEALTHY.agents,
+          'async ({ orderId, amount }) => ({ refundId: createRefund(orderId, amount) }),',
+          'async ({ orderId }) => ({ refundId: createRefund(orderId, 1) }),',
+        ),
+        'src/index.ts': HEALTHY.index,
+      },
+      fails: ['approved refunds the order total'],
+    },
   },
   {
     name: 'build-triage',
@@ -102,8 +144,35 @@ export const TASKS: Task[] = [
       RULES,
     file: 'src/index.ts',
     keeps: keepsFlows,
+    checks: ['delegates orders', 'delegates refunds', 'resumes by session id'],
+    cheat: { files: { 'src/agents.ts': seed(HEALTHY.agents, sessionNotLoaded), 'src/index.ts': HEALTHY.index }, fails: ['resumes by session id'] },
   },
 ]
+
+const TAP_RESULT = /^\s*(not )?ok \d+ - (.*?)(?: # (?:SKIP|TODO)\b.*)?$/
+
+/**
+ * Why each of `task`'s checks failed, read from the TAP that `verify-build.mts` printed for it;
+ * an empty list for a check that passed. A check missing from the TAP failed with `output`'s tail,
+ * since the file then failed before its tests ran.
+ */
+export function requirementErrors(tap: string, task: Task, output = tap): Record<string, string[]> {
+  const lines = tap.split('\n')
+  const results = new Map<string, string[]>()
+  lines.forEach((line, i) => {
+    const m = TAP_RESULT.exec(line)
+    if (!m?.[2]?.startsWith(`${task.name}: `)) return
+    const check = m[2].slice(task.name.length + 2)
+    if (!m[1]) return void results.set(check, [])
+    const end = lines.findIndex((l, j) => j > i && /^\s*\.\.\.$/.test(l))
+    const block = lines.slice(i + 1, end < 0 ? undefined : end)
+    const error = block.findIndex((l) => /^\s*error:/.test(l))
+    const until = block.findIndex((l, j) => j > error && /^\s*(?:code|name|expected|actual|operator|stack):/.test(l))
+    results.set(check, [error < 0 ? 'failed' : block.slice(error, until < 0 ? undefined : until).map((l) => l.trim()).join(' ')])
+  })
+  const tail = output.trim().split('\n').slice(-20).join('\n')
+  return Object.fromEntries(task.checks.map((check) => [check, results.get(check) ?? [`did not run:\n${tail}`]]))
+}
 
 const TRIAGE = "name: 'triage'"
 
@@ -142,7 +211,19 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     names.add(task.name)
     if (BUGS.some((b) => b.name === task.name)) errors.push(`${task.name}: clashes with a bug name`)
     if (/genkit|trace|mcp|\bcli\b/i.test(task.prompt)) errors.push(`${task.name}: prompt mentions tooling`)
-    if (!verify.includes(`test('${task.name}'`)) errors.push(`${task.name}: no test('${task.name}') in verify-build.mts`)
+    const tests = [...verify.matchAll(/^test\('([^']*)'/gm)].flatMap((m) => (m[1]?.startsWith(`${task.name}: `) ? [m[1]] : []))
+    const expected = task.checks.map((check) => `${task.name}: ${check}`)
+    if (tests.join('\n') !== expected.join('\n')) errors.push(`${task.name}: verify-build.mts tests ${JSON.stringify(tests)}, expected ${JSON.stringify(expected)}`)
+    for (const fails of task.cheat.fails) {
+      if (!task.checks.includes(fails)) errors.push(`${task.name}: the cheat fails ${fails}, which is not a check`)
+    }
+    if (task.cheat.fails.length === 0) errors.push(`${task.name}: the cheat fails no check`)
+    const tap = task.checks.map((check, i) => (i === 0 ? `not ok 1 - ${task.name}: ${check}\n  ---\n  error: 'boom'\n  code: 'X'\n  ...` : `ok ${i + 1} - ${task.name}: ${check}`))
+    const parsed = requirementErrors(tap.slice(0, -1).join('\n'), task)
+    const [first, ...rest] = task.checks
+    if (parsed[first ?? '']?.join() !== "error: 'boom'") errors.push(`${task.name}: TAP failure read as ${JSON.stringify(parsed[first ?? ''])}`)
+    for (const check of rest.slice(0, -1)) if (parsed[check]?.length !== 0) errors.push(`${task.name}: TAP pass of ${check} read as a failure`)
+    if (!parsed[rest.at(-1) ?? '']?.[0]?.startsWith('did not run')) errors.push(`${task.name}: a check missing from the TAP is not a failure`)
     const index = task.start['src/index.ts']
     const agents = task.start['src/agents.ts']
     if (index === undefined || agents === undefined) errors.push(`${task.name}: start does not set src/index.ts and src/agents.ts`)
@@ -165,6 +246,12 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     }
     const tsc = typecheckWith(task.start)
     if (tsc !== null) errors.push(`${task.name}: start state does not typecheck:\n${tsc}`)
+    const cheatTsc = typecheckWith(task.cheat.files)
+    if (cheatTsc !== null) errors.push(`${task.name}: the cheat does not typecheck:\n${cheatTsc}`)
+    for (const keep of task.keeps) {
+      const file = task.cheat.files[task.file]
+      if (file !== undefined && !keep.test(file)) errors.push(`${task.name}: the cheat's ${task.file} fails keeps ${keep}`)
+    }
   }
   if (!isBuildStart(null) || isBuildStart(HEALTHY.agents)) errors.push('isBuildStart misreads the healthy or the missing src/agents.ts')
   for (const bug of BUGS.filter((b) => b.file === 'src/agents.ts')) {

@@ -1,5 +1,5 @@
-// Oracle: the control arm passes all three checks when the bug is fixed and named or the agents are built, so every eval can pass.
-// Canary (`--profile canary`): an unfixed bug with a wrong answer, or an unbuilt task, fails every cell, so the checks bite.
+// Oracle: the control arm passes every check when the bug is fixed and named or the agents are built, so every eval can pass.
+// Canary (`--profile canary`): an unfixed bug with a wrong answer, or a plausible wrong build (`Task.cheat`), fails every cell, so the checks bite.
 import { readFileSync } from 'node:fs'
 import { defineConfig } from 'reeval'
 import { fakeHarness } from 'reeval/harness'

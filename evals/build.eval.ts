@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import { evaluate, expect } from 'reeval'
 import { control, directed, mcp, rules, skill } from './environments.ts'
 import { hideSeedHistory } from './snapshot.ts'
-import { TASKS } from './tasks.ts'
+import { requirementErrors, TASKS } from './tasks.ts'
 
 const verify = fs.readFileSync(new URL('./verify-build.mts', import.meta.url), 'utf8')
 
@@ -44,20 +44,23 @@ evaluate.each(TASKS)(
       if (removed.exitCode !== 0) throw new Error(`${task.name}: could not remove ${file}: ${removed.stderr}`)
     }
     await hideSeedHistory(c, task.name)
+    // Outside the workspace, so not in the diff: the oracle reads it, since two tasks share a start state.
+    await c.writeFile('~/.task', task.name)
 
     await c.send(task.prompt)
 
     await expect.soft(c.exec('node_modules/.bin/tsc --noEmit'), 'typechecks').toSucceed()
 
     await c.writeFile('~/.verify-build.mts', verify)
-    await expect
-      .soft(c.exec(`node_modules/.bin/tsx --test --test-name-pattern '^${task.name}$' ~/.verify-build.mts`), 'agent works')
-      .toSucceed()
+    const run = await c.exec(`node_modules/.bin/tsx --test --test-reporter=tap --test-name-pattern '^${task.name}:' ~/.verify-build.mts`)
+    for (const [check, errors] of Object.entries(requirementErrors(run.stdout, task, `${run.stdout}\n${run.stderr}`))) {
+      expect.soft(errors, check).toEqual([])
+    }
 
     const built = (await c.readFile(task.file)) ?? ''
     expect.soft(task.keeps.filter((keep) => !keep.test(built)).map(String), 'keeps the flows').toEqual([])
 
-    // Recorded in `judgements`, never asserted: pass and lift stay on the three checks.
+    // Recorded in `judgements`, never asserted: pass and lift stay on the checks.
     await c.judge(IDIOM_QUESTION, { include: ['src/agents.ts'], files: ['src/agents.ts'] })
   },
 )

@@ -62,7 +62,7 @@ Scale: 15 cases x 5 arms x 5 agents (Claude Code on Sonnet 5 and on Haiku 5.5, A
 - Runs real agents, Claude Code, Antigravity, Cursor and Codex, in Docker, one container per attempt, from one config.
 - Reports one pooled lift in pass rate over `control` per family and arm, paired by case, with a 95% interval; tokens, agent time and tool calls as ratios with Mann-Whitney verdicts; adoption of the MCP tools and the CLI, read from the transcript.
 - Keeps every API key on the host: the app and the agent see placeholders, and the gateway swaps the real key into requests to the one host each key is for. Records are redacted before they are written.
-- Proves the checks before any agent runs: `pnpm oracle` applies the known fix and must pass 15/15, `pnpm canary` leaves the bug and must fail 15/15.
+- Proves the checks before any agent runs: `pnpm oracle` applies the known fix and must pass 15/15, `pnpm canary` leaves the bug or writes a plausible wrong build and must fail 15/15.
 - Records runs into `evals/.history/` as files you commit, and serves them in the studio or as a static site.
 
 ## Results

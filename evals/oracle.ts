@@ -1,7 +1,8 @@
 import fs from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
 import { BUGS, causeErrors, locationErrors } from './bugs.ts'
-import { HEALTHY, isBuildStart } from './tasks.ts'
+import { HEALTHY, isBuildStart, TASKS } from './tasks.ts'
 
 const CAUSES: Record<string, string> = {
   'schema-drift':
@@ -45,13 +46,17 @@ const readOrEmpty = (file: string) => {
   }
 }
 
+const taskFile = path.join(os.homedir(), '.task')
+const taskName = fs.existsSync(taskFile) ? fs.readFileSync(taskFile, 'utf8').trim() : null
 const agentsFile = path.resolve(process.cwd(), 'src/agents.ts')
-if (isBuildStart(fs.existsSync(agentsFile) ? fs.readFileSync(agentsFile, 'utf8') : null)) {
-  if (!cheat) {
-    fs.writeFileSync(agentsFile, HEALTHY.agents)
-    fs.writeFileSync(path.resolve(process.cwd(), 'src/index.ts'), HEALTHY.index)
-  }
-  console.log(cheat ? 'left the build task undone' : 'built the agents')
+const buildStart = isBuildStart(fs.existsSync(agentsFile) ? fs.readFileSync(agentsFile, 'utf8') : null)
+if (buildStart !== (taskName !== null)) fail(`~/.task is ${JSON.stringify(taskName)} but the workspace ${buildStart ? 'is' : 'is not'} a build start state`)
+if (taskName !== null) {
+  const task = TASKS.find((t) => t.name === taskName)
+  if (!task) fail(`~/.task names no build task: ${JSON.stringify(taskName)}`)
+  const files = cheat ? task.cheat.files : { 'src/agents.ts': HEALTHY.agents, 'src/index.ts': HEALTHY.index }
+  for (const [file, text] of Object.entries(files)) fs.writeFileSync(path.resolve(process.cwd(), file), text)
+  console.log(cheat ? `wrote a wrong ${task.name}, which must fail ${task.cheat.fails.join(', ')}` : `built ${task.name}`)
   process.exit(0)
 }
 
