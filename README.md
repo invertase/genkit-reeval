@@ -32,7 +32,7 @@ A real coding agent works in a Docker sandbox on a support-desk app that calls r
 | `control` | The app, `genkit-cli` 1.44.1 on `PATH`, and a warmed docs cache. No advice. |
 | `rules` | `control` plus `GENKIT.md` as the project rules (`CLAUDE.md`, `AGENTS.md` or `.cursor/rules`, by harness). |
 | `mcp` | `rules` plus the `genkit mcp` stdio server. This is what `genkit init:ai-tools` installs. |
-| `directed` | `mcp` with [`GENKIT-directed.md`](evals/rules/GENKIT-directed.md) as the rules instead of `GENKIT.md`: it names the MCP tools and the CLI commands the agent may run, and tells it to read the docs before it uses an unfamiliar API. It adds no Genkit API facts, so a difference from `mcp` measures discovery alone. |
+| `directed` | `mcp` with [`GENKIT-directed.md`](evals/rules/GENKIT-directed.md) as the rules instead of `GENKIT.md`: it names the MCP tools and the CLI commands the agent may run, and tells it to read the docs before it uses an unfamiliar API. It adds no Genkit API facts but bundles three instruction changes: it names the tools (discovery), permits running the CLI (`GENKIT.md` forbids it), and tells the agent to run the flow before and after a change (reproduce, then verify). A difference from `mcp` is the combined effect of the three, not of any one. |
 | `skill` | `control` plus the `developing-genkit-js` skill, pinned to one commit. |
 
 The server is never measured without the rules, because `GENKIT.md` is what tells the agent the server exists. `rules` alone is not a configuration Genkit ships; it is there to separate the text from the server.
@@ -51,7 +51,7 @@ The study itself is a few files, for anyone who wants to read what the agent is 
 | [`evals/environments.ts`](evals/environments.ts) | What each arm adds to `control`: the rules file, the MCP server, the skill. |
 | [`evals/verify.mts`](evals/verify.mts), [`evals/verify-build.mts`](evals/verify-build.mts) | The hidden `node:test` files the agent never sees. |
 | [`evals/rules/GENKIT.md`](evals/rules/GENKIT.md) | The rules file the `rules` and `mcp` arms get, pinned. |
-| [`evals/rules/GENKIT-directed.md`](evals/rules/GENKIT-directed.md) | The rules file the `directed` arm gets: `GENKIT.md` told to use the server. |
+| [`evals/rules/GENKIT-directed.md`](evals/rules/GENKIT-directed.md) | The rules file the `directed` arm gets: `GENKIT.md` plus the tool names, permission to run the CLI, and a reproduce-then-verify workflow. |
 | [`evals/app/`](evals/app) | The fixture: the support-desk app. |
 | [`reeval.config.ts`](reeval.config.ts) | The five agents, the Docker sandbox, the profiles. |
 

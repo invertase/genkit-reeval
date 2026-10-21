@@ -61,7 +61,7 @@ One case, five arms, one attempt each; then the `mcp` arm on Codex for all 19 ca
 - `control`: setup copied `node_modules` in and ran the two `genkit` warm-up steps; the agent's diff shows only its fix (the bug is seeded before the first turn).
 - `rules`: `CLAUDE.md` holds `GENKIT.md`; no server, no skill.
 - `mcp`: the `genkit` server starts and the agent reaches `mcp__genkit__*` tools, directly or after `ToolSearch`. If it never sees a genkit tool, the arm measures `rules`: stop and find out why. `pnpm reeval query "SELECT tool, COUNT(*) FROM tool_calls WHERE run_id = '<run id>' AND (tool LIKE 'mcp__genkit__%' OR tool = 'ToolSearch') GROUP BY tool"`.
-- `directed`: as `mcp`, but `CLAUDE.md` holds `GENKIT-directed.md`.
+- `directed`: as `mcp`, but `CLAUDE.md` holds `GENKIT-directed.md`, which bundles three instruction changes: it names the tools, permits running the CLI, and asks the agent to run the flow before and after a change. Its lift over `mcp` is their combined effect. Check that the agent may now run `genkit flow:run`.
 - `skill`: the skill is placed and read (`pnpm reeval query skill_reads`).
 - Every arm: the real Gemini key appears nowhere under `.reeval/debug/<run>` or `.reeval/runs/<run>` (`grep -rl "$(grep GOOGLE_GENERATIVE_AI_API_KEY .env.local | cut -d= -f2)" .reeval/debug/<run> .reeval/runs/<run>` prints nothing), and the `gateway` lines in `debug.log` say `substituted` for `generativelanguage.googleapis.com`.
 - Codex `mcp`: Codex may not pass the sandbox proxy to stdio MCP servers. If `run_flow` results show 401 or `fetch failed`, the server cannot reach Gemini; record it as a harness limitation.
@@ -69,7 +69,7 @@ One case, five arms, one attempt each; then the `mcp` arm on Codex for all 19 ca
 - Antigravity: the harness injects its own `GEMINI_API_KEY`, brokered only to its streaming endpoint; the app reads `SUPPORT_DESK_GEMINI_API_KEY`, so the harness key cannot shadow it. Check an Antigravity attempt starts and a flow run from the agent shell reaches Gemini.
 - Agents bug: does the `mcp` arm call `run_flow` on `tryTriage`/`tryRefundDesk`? Does `get_trace` output fit, or is it truncated? Does the agent read the interrupt's error-looking span as the bug?
 - Build task (`build-triage`): before the first turn `src/agents.ts` holds `orderAgent` and `refundAgent` only, and the agent's diff shows only what it wrote. Does it write `ai.chat()` or other API that is gone? Does the `mcp` or `skill` arm look up the agents API before it writes?
-- `pnpm reeval query check_discrimination` lists `locates the file`, `names the cause`, `flow works`, `keeps the flow`, `leaves package.json alone` for the bugs and `typechecks`, one check per requirement (`evals/tasks.ts` `checks`), `verify ran`, `keeps the flows`, `leaves package.json alone` for the build tasks; `pnpm reeval query judgements` has two rows per bug attempt and one per build attempt.
+- `pnpm reeval query check_discrimination` lists `agent ran without provider errors`, `leaves package.json alone`, `locates the file`, `names the cause`, `flow works`, `keeps the flow` for the bugs and `agent ran without provider errors`, `leaves package.json alone`, `typechecks`, `verify ran`, one check per requirement (`evals/tasks.ts` `checks`), `keeps the flows` for the build tasks; `pnpm reeval query judgements` has two rows per bug attempt and one per build attempt.
 
 Then the whole smoke profile: `pnpm reeval run --profile smoke` (95 attempts).
 
@@ -102,8 +102,10 @@ pnpm reeval studio build --out site    # static site with every transcript and d
 Before reading any rate, find the attempts the provider stopped: the `agent ran without provider errors` check fails when the transcript holds a billing, quota or rate-limit error (the Haiku run of 2026-10-20 had 38 of these, all `Credit balance is too low`, recorded as `fail`). reeval 0.9.0 and 0.11.0 give an eval no way to mark them `infra_error`, so they still count as failures in `lift`:
 
 ```bash
-pnpm reeval query -- "SELECT cell_key, attempt_key FROM assertions WHERE label = 'agent ran without provider errors' AND status = 'fail' ORDER BY 1, 2"
+pnpm reeval query -- "SELECT cell_key, attempt_key FROM assertions WHERE run_id = '<run id>' AND label = 'agent ran without provider errors' AND status = 'fail' ORDER BY 1, 2"
 ```
+
+Runs recorded before this check existed have no such rows, so audit their transcripts instead: `grep -rl 'Credit balance is too low' evals/.history/<run id>/*/*/*/transcript.jsonl`.
 
 If it prints anything, do not cite the run. Fix the cause, rerun the affected cases (`pnpm reeval run --profile full <harness> <case>...`), and cite the clean run; the stopped run stays in `evals/.history` as a record.
 
