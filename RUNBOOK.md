@@ -4,21 +4,21 @@ Run everything from the repo root. `pnpm reeval` is the pinned `reeval@0.9.0`. O
 
 ## Sizes
 
-15 cases x 5 arms (`control`, `rules`, `mcp`, `directed`, `skill`) x 5 harnesses = 375 cells. There are two families. `evals/genkit.eval.ts` is one `evaluate.each` over the 12 bugs. `evals/build.eval.ts` is one `evaluate.each` over the 3 build tasks. Each family gets one lift per arm, paired by case.
+19 cases x 5 arms (`control`, `rules`, `mcp`, `directed`, `skill`) x 5 harnesses = 475 cells. There are two families. `evals/genkit.eval.ts` is one `evaluate.each` over the 12 bugs. `evals/build.eval.ts` is one `evaluate.each` over the 7 build tasks. Each family gets one lift per arm, paired by case.
 
 | Command | Cells | Attempts | reeval's estimate at concurrency 8 |
 |---|---|---|---|
-| `pnpm reeval run --dry-run` | 375 | 375 | 138 min |
-| `... --profile smoke` | 75 | 75 | 24 min |
+| `pnpm reeval run --dry-run` | 475 | 475 | 172 min |
+| `... --profile smoke` | 95 | 95 | 31 min |
 | `... --profile smoke schema-drift` | 5 | 5 | 3 min |
 | `... --profile smoke build-triage` | 5 | 5 | 3 min |
-| `... --profile full` | 375 | 1875 | 11.5 h |
-| `... --profile full claude-code:claude-sonnet-5` | 75 | 375 | 121 min |
-| `... --profile full claude-code:claude-haiku-5-5` | 75 | 375 | 56 min |
-| `... codex:gpt-5.6-luna/mcp` | 15 | 15 | 6 min |
-| `pnpm oracle`, `pnpm canary` | 15 | 15 | minutes (see below) |
+| `... --profile full` | 475 | 2375 | 14.3 h |
+| `... --profile full claude-code:claude-sonnet-5` | 95 | 475 | 153 min |
+| `... --profile full claude-code:claude-haiku-5-5` | 95 | 475 | 64 min |
+| `... codex:gpt-5.6-luna/mcp` | 19 | 19 | 7 min |
+| `pnpm oracle`, `pnpm canary` | 19 | 19 | minutes (see below) |
 
-The estimates are what `--dry-run` printed on 2026-10-21; they are no longer a flat 3 minutes per attempt and they change between runs. The `full` profile's budget allows 2000 attempts and 14 hours. `smoke` keeps one harness (`claude-code:claude-sonnet-5`) and one attempt per cell, `haiku` does the same on `claude-code:claude-haiku-5-5`; `full` runs 5 attempts per cell and records the run. Positional filters match an eval name (a bug) or a cell key (`<harness>/<arm>/<sandbox>`) and combine with OR, so `schema-drift codex` is wider than either alone. To run one case on one harness, pin the harness with a profile: `pnpm reeval run --profile haiku schema-drift`.
+The estimates are what `--dry-run` printed on 2026-10-21; they are no longer a flat 3 minutes per attempt and they change between runs. The `full` profile's budget allows 2500 attempts and 16 hours. `smoke` keeps one harness (`claude-code:claude-sonnet-5`) and one attempt per cell, `haiku` does the same on `claude-code:claude-haiku-5-5`; `full` runs 5 attempts per cell and records the run. Positional filters match an eval name (a bug) or a cell key (`<harness>/<arm>/<sandbox>`) and combine with OR, so `schema-drift codex` is wider than either alone. To run one case on one harness, pin the harness with a profile: `pnpm reeval run --profile haiku schema-drift`.
 
 ## Keys and images
 
@@ -34,11 +34,11 @@ Docker Desktop on this Mac sometimes drops an image tag reference: `docker image
 
 ## Oracle and canary
 
-`reeval.oracle.config.ts` swaps the coding agent for a fake one and runs only the `control` arm on the real Docker sandbox. For a bug, the oracle applies the known fix and writes the right `answer.json`. For a build task, it writes the healthy `src/agents.ts` and `src/index.ts`. Every case must pass. The canary leaves the bug in place and writes a wrong answer for it, or writes the task's plausible wrong build (`cheat` in `evals/tasks.ts`, with the requirements it must fail). Every case must fail. `src/agents.ts` is absent at the start of both `build-order-desk` and `build-refund-desk`, so `evals/build.eval.ts` writes the task name to `~/.task`, outside the workspace, for the oracle to read. `GENKIT_EVAL_GATE=all` gates these cells, so the exit code is the result.
+`reeval.oracle.config.ts` swaps the coding agent for a fake one and runs only the `control` arm on the real Docker sandbox. For a bug, the oracle applies the known fix and writes the right `answer.json`. For a build task, it writes the healthy `src/agents.ts`, `src/index.ts` and `src/tools.ts`. Every case must pass. The canary leaves the bug in place and writes a wrong answer for it, or writes the task's plausible wrong build (`cheat` in `evals/tasks.ts`, with the requirements it must fail). Every case must fail. Some tasks share a start state (`src/agents.ts` is absent at the start of both `build-order-desk` and `build-refund-desk`), so `evals/build.eval.ts` writes the task name to `~/.task`, outside the workspace, for the oracle to read. `GENKIT_EVAL_GATE=all` gates these cells, so the exit code is the result.
 
 ```bash
-pnpm oracle     # expect 15 passed, exit 0
-pnpm canary     # expect 15 failed, non-zero exit
+pnpm oracle     # expect 19 passed, exit 0
+pnpm canary     # expect 19 failed, non-zero exit
 ```
 
 Each cell is a container that copies the baked `node_modules` in and makes a few Gemini calls, so allow a minute or two each at concurrency 8. The judge runs with `fakeJudge()` here: no key, no model call.
@@ -54,7 +54,7 @@ pnpm reeval run --profile smoke build-triage -v
 pnpm reeval run codex:gpt-5.6-luna/mcp -v
 ```
 
-One case, five arms, one attempt each; then the `mcp` arm on Codex for all 15 cases. Check in the `-v` output and `.reeval/debug/<run>/`:
+One case, five arms, one attempt each; then the `mcp` arm on Codex for all 19 cases. Check in the `-v` output and `.reeval/debug/<run>/`:
 
 - `control`: setup copied `node_modules` in and ran the two `genkit` warm-up steps; the agent's diff shows only its fix (the bug is seeded before the first turn).
 - `rules`: `CLAUDE.md` holds `GENKIT.md`; no server, no skill.
@@ -66,14 +66,14 @@ One case, five arms, one attempt each; then the `mcp` arm on Codex for all 15 ca
 - Every arm: no attempt reads the seeded change from reeval's snapshot git dir. reeval 0.9.0 leaves `/reeval/.reeval-git-workspace` readable, with one `place <file>` commit per seeded file, and Antigravity ran `git log -p` there on 6 of 12 bugs; `evals/snapshot.ts` squashes that history to one `base` commit before the turn, and must go once reeval hides the dir. Check: `grep -rl 'place src/' .reeval/runs/<run>/*/*/*/transcript.jsonl` prints nothing and `diff.patch` is still populated.
 - Antigravity: the harness injects its own `GEMINI_API_KEY`, brokered only to its streaming endpoint; the app reads `SUPPORT_DESK_GEMINI_API_KEY`, so the harness key cannot shadow it. Check an Antigravity attempt starts and a flow run from the agent shell reaches Gemini.
 - Agents bug: does the `mcp` arm call `run_flow` on `tryTriage`/`tryRefundDesk`? Does `get_trace` output fit, or is it truncated? Does the agent read the interrupt's error-looking span as the bug?
-- Build task: before the first turn `src/agents.ts` holds `orderAgent` and `refundAgent` only (or is absent for the other two tasks), and the agent's diff shows only what it wrote. Does it write `ai.chat()` or other API that is gone? Does the `mcp` or `skill` arm look up the agents API before it writes?
+- Build task (`build-triage`): before the first turn `src/agents.ts` holds `orderAgent` and `refundAgent` only, and the agent's diff shows only what it wrote. Does it write `ai.chat()` or other API that is gone? Does the `mcp` or `skill` arm look up the agents API before it writes?
 - `pnpm reeval query check_discrimination` lists `locates the file`, `names the cause`, `flow works`, `keeps the flow`, `leaves package.json alone` for the bugs and `typechecks`, one check per requirement (`evals/tasks.ts` `checks`), `keeps the flows`, `leaves package.json alone` for the build tasks; `pnpm reeval query judgements` has two rows per bug attempt and one per build attempt.
 
-Then the whole smoke profile: `pnpm reeval run --profile smoke` (60 attempts).
+Then the whole smoke profile: `pnpm reeval run --profile smoke` (95 attempts).
 
 ## Full
 
-One harness at a time, so a rate limit or a crash costs one harness (375 attempts, one to two hours each). `claude-code` alone matches both Claude Code harnesses, so name the model:
+One harness at a time, so a rate limit or a crash costs one harness (475 attempts, one to three hours each). `claude-code` alone matches both Claude Code harnesses, so name the model:
 
 ```bash
 pnpm reeval run --profile full claude-code:claude-sonnet-5
@@ -120,4 +120,4 @@ pnpm reeval query "$(sed "s/<run id>/$RUN/g" queries/fix-rate.sql)"
 | `queries/effort.sql` | the `x` ratios, per family | mean of per-case ratios; per-case verdicts are in `effort` |
 | `queries/judge.sql` | mean evidence score | swap the `LIKE` for the summary judge |
 
-For a flows-vs-agents breakdown, add `e.name` (the bug) to a `SELECT` with `JOIN evals e ON e.run_id = c.run_id AND e.key = c.eval_key`, or read `lift` per bug. The 12 bugs and 3 build tasks are listed in `STUDY.md`; `evals/bugs.ts` and `evals/tasks.ts` are the sources of truth.
+For a flows-vs-agents breakdown, add `e.name` (the bug) to a `SELECT` with `JOIN evals e ON e.run_id = c.run_id AND e.key = c.eval_key`, or read `lift` per bug. The 12 bugs and 7 build tasks are listed in `STUDY.md`; `evals/bugs.ts` and `evals/tasks.ts` are the sources of truth.

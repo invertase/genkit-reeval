@@ -1,6 +1,6 @@
 # Genkit agent tooling study
 
-Does Genkit's agent tooling help a coding agent? We put real agents on a Genkit app under four conditions: no help, `GENKIT.md` as project rules, the rules plus the `genkit mcp` server, and the `developing-genkit-js` skill. Ten smoke runs are in this repo; the full run of 1500 attempts has not happened yet. The smokes already say three things.
+Does Genkit's agent tooling help a coding agent? We put real agents on a Genkit app under four conditions: no help, `GENKIT.md` as project rules, the rules plus the `genkit mcp` server, and the `developing-genkit-js` skill. Ten smoke runs are in this repo; the full run of 2375 attempts has not happened yet. The smokes already say three things.
 
 ## Three things to act on
 
@@ -37,7 +37,7 @@ A real coding agent works in a Docker sandbox on a support-desk app that calls r
 
 The server is never measured without the rules, because `GENKIT.md` is what tells the agent the server exists. `rules` alone is not a configuration Genkit ships; it is there to separate the text from the server.
 
-Two families of cases, 15 in all. Twelve seeded bugs, six in the flows API and six in the agents API: the agent gets a bug report that never names Genkit tooling, must fix it and write `answer.json`. Three build tasks: the app starts without an agent, and the agent must add an order desk, a refund desk with human approval, or a front desk that delegates and resumes sessions. The agents API is newer than the models' training data, so the build tasks are where the tooling's knowledge should show.
+Two families of cases, 19 in all. Twelve seeded bugs, six in the flows API and six in the agents API: the agent gets a bug report that never names Genkit tooling, must fix it and write `answer.json`. Seven build tasks: the app starts without a feature, and the agent must add an order desk, a refund desk with human approval, a front desk that delegates, order conversations a new process can resume, refund approvals answered in a later request, a refund receipt, or order lookups scoped to the signed-in customer. The agents API is newer than the models' training data, so the build tasks are where the tooling's knowledge should show.
 
 Pass is deterministic. A hidden `node:test` file is placed into the sandbox after the agent's turn and drives the flow or agent against real Gemini; the agent never sees it. More checks guard against cheating: the answer names the right file and quotes the broken text, the flows survive, and `package.json` is untouched. LLM judges and one pairwise question per family are recorded, never counted toward pass. [`STUDY.md`](STUDY.md) has the prompts, the bug table and the build-task table.
 
@@ -47,7 +47,7 @@ The study itself is a few files, for anyone who wants to read what the agent is 
 |---|---|
 | [`evals/genkit.eval.ts`](evals/genkit.eval.ts) | The bug family: the prompt, the five arms, the checks, the evidence judge. |
 | [`evals/build.eval.ts`](evals/build.eval.ts) | The build family: the prompt, the checks, the idiom judge, the pairwise question. |
-| [`evals/bugs.ts`](evals/bugs.ts), [`evals/tasks.ts`](evals/tasks.ts) | The 12 seeded bugs and the 3 build tasks, with each symptom and the fix the oracle applies. |
+| [`evals/bugs.ts`](evals/bugs.ts), [`evals/tasks.ts`](evals/tasks.ts) | The 12 seeded bugs and the 7 build tasks, with each symptom and the fix the oracle applies. |
 | [`evals/environments.ts`](evals/environments.ts) | What each arm adds to `control`: the rules file, the MCP server, the skill. |
 | [`evals/verify.mts`](evals/verify.mts), [`evals/verify-build.mts`](evals/verify-build.mts) | The hidden `node:test` files the agent never sees. |
 | [`evals/rules/GENKIT.md`](evals/rules/GENKIT.md) | The rules file the `rules` and `mcp` arms get, pinned. |
@@ -55,14 +55,14 @@ The study itself is a few files, for anyone who wants to read what the agent is 
 | [`evals/app/`](evals/app) | The fixture: the support-desk app. |
 | [`reeval.config.ts`](reeval.config.ts) | The five agents, the Docker sandbox, the profiles. |
 
-Scale: 15 cases x 5 arms x 5 agents (Claude Code on Sonnet 5 and on Haiku 5.5, Antigravity, Cursor, Codex) x 5 attempts = 1875 attempts, about 11.5 hours at concurrency 8. Haiku is there because tooling should matter most to the agent that cannot hold the whole app in its head.
+Scale: 19 cases x 5 arms x 5 agents (Claude Code on Sonnet 5 and on Haiku 5.5, Antigravity, Cursor, Codex) x 5 attempts = 2375 attempts, about 14.3 hours at concurrency 8. Haiku is there because tooling should matter most to the agent that cannot hold the whole app in its head.
 
 ## What reeval does here
 
 - Runs real agents, Claude Code, Antigravity, Cursor and Codex, in Docker, one container per attempt, from one config.
 - Reports one pooled lift in pass rate over `control` per family and arm, paired by case, with a 95% interval; tokens, agent time and tool calls as ratios with Mann-Whitney verdicts; adoption of the MCP tools and the CLI, read from the transcript.
 - Keeps every API key on the host: the app and the agent see placeholders, and the gateway swaps the real key into requests to the one host each key is for. Records are redacted before they are written.
-- Proves the checks before any agent runs: `pnpm oracle` applies the known fix and must pass 15/15, `pnpm canary` leaves the bug or writes a plausible wrong build and must fail 15/15.
+- Proves the checks before any agent runs: `pnpm oracle` applies the known fix and must pass 19/19, `pnpm canary` leaves the bug or writes a plausible wrong build and must fail 19/19.
 - Records runs into `evals/.history/` as files you commit, and serves them in the studio or as a static site.
 
 ## Results
