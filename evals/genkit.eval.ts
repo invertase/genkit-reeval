@@ -20,8 +20,7 @@ const parseAnswer = (text: string | null): unknown => {
 // Set by reeval.oracle.config.ts: gates the control cell so a failing oracle or a passing canary sets the exit code.
 const gate = process.env.GENKIT_EVAL_GATE === 'all' ? 'all' : 'none'
 
-const clip = (text: string, max = 300) => (text.length > max ? `${text.slice(0, max)}…` : text)
-const show = (value: unknown) => clip(typeof value === 'string' ? value : (JSON.stringify(value) ?? ''))
+const show = (value: unknown) => (typeof value === 'string' ? value : (JSON.stringify(value) ?? ''))
 
 /** The turn's tool calls and edits, one line each in order: reeval 0.9.0's judge state carries no transcript. */
 const toolLog = (turn: Turn): string[] =>
@@ -31,7 +30,7 @@ const toolLog = (turn: Turn): string[] =>
       : e.type === 'file-edit'
         ? [`edit ${e.path} (${e.kind})`]
         : e.type === 'error'
-          ? [`error: ${clip(e.message)}`]
+          ? [`error: ${e.message}`]
           : [],
   )
 
