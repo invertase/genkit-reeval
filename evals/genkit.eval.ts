@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import { evaluate, expect, type Turn } from 'reeval'
 import { BUGS, diagnosisErrors } from './bugs.ts'
-import { control, mcp, rules, skill } from './environments.ts'
+import { control, directed, mcp, rules, skill } from './environments.ts'
 
 const prompt = (symptom: string) =>
   `You are on the support-desk Genkit app in this directory. Bug report: ${symptom}
@@ -48,7 +48,7 @@ evaluate.each(BUGS)(
   {
     compare: {
       baseline: control,
-      variants: [rules, mcp, skill],
+      variants: [rules, mcp, directed, skill],
       gate,
       questions: [
         {

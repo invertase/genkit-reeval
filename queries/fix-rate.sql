@@ -6,4 +6,4 @@ JOIN cells c ON c.run_id = k.run_id AND c.eval_key = k.eval_key AND c.key = k.ce
 JOIN evals e ON e.run_id = k.run_id AND e.key = k.eval_key
 WHERE k.run_id = '<run id>' AND k.label IN ('flow works', 'agent works')
 GROUP BY family, c.harness, arm
-ORDER BY family, c.harness, CASE c.environment WHEN 'control' THEN 0 WHEN 'rules' THEN 1 WHEN 'mcp' THEN 2 WHEN 'skill' THEN 3 END
+ORDER BY family, c.harness, CASE c.environment WHEN 'control' THEN 0 WHEN 'rules' THEN 1 WHEN 'mcp' THEN 2 WHEN 'directed' THEN 3 WHEN 'skill' THEN 4 END

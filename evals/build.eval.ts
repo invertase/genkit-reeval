@@ -1,6 +1,6 @@
 import fs from 'node:fs'
 import { evaluate, expect } from 'reeval'
-import { control, mcp, rules, skill } from './environments.ts'
+import { control, directed, mcp, rules, skill } from './environments.ts'
 import { TASKS } from './tasks.ts'
 
 const verify = fs.readFileSync(new URL('./verify-build.mts', import.meta.url), 'utf8')
@@ -25,7 +25,7 @@ evaluate.each(TASKS)(
   {
     compare: {
       baseline: control,
-      variants: [rules, mcp, skill],
+      variants: [rules, mcp, directed, skill],
       gate,
       questions: [{ question: PAIR_QUESTION, across: 'environment' }],
     },

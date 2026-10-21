@@ -15,4 +15,4 @@ LEFT JOIN (
 ) a ON a.run_id = t.run_id AND a.attempt_key = t.key
 WHERE t.run_id = '<run id>'
 GROUP BY family, c.harness, arm
-ORDER BY family, c.harness, CASE c.environment WHEN 'control' THEN 0 WHEN 'rules' THEN 1 WHEN 'mcp' THEN 2 WHEN 'skill' THEN 3 END
+ORDER BY family, c.harness, CASE c.environment WHEN 'control' THEN 0 WHEN 'rules' THEN 1 WHEN 'mcp' THEN 2 WHEN 'directed' THEN 3 WHEN 'skill' THEN 4 END

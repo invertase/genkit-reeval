@@ -4,21 +4,21 @@ Run everything from the repo root. `pnpm reeval` is the pinned `reeval@0.9.0`. O
 
 ## Sizes
 
-15 cases x 4 arms (`control`, `rules`, `mcp`, `skill`) x 5 harnesses = 300 cells. There are two families. `evals/genkit.eval.ts` is one `evaluate.each` over the 12 bugs. `evals/build.eval.ts` is one `evaluate.each` over the 3 build tasks. Each family gets one lift per arm, paired by case.
+15 cases x 5 arms (`control`, `rules`, `mcp`, `directed`, `skill`) x 5 harnesses = 375 cells. There are two families. `evals/genkit.eval.ts` is one `evaluate.each` over the 12 bugs. `evals/build.eval.ts` is one `evaluate.each` over the 3 build tasks. Each family gets one lift per arm, paired by case.
 
 | Command | Cells | Attempts | reeval's estimate at concurrency 8 |
 |---|---|---|---|
-| `pnpm reeval run --dry-run` | 300 | 300 | 113 min |
-| `... --profile smoke` | 60 | 60 | 23 min |
-| `... --profile smoke schema-drift` | 4 | 4 | 3 min |
-| `... --profile smoke build-triage` | 4 | 4 | 3 min |
-| `... --profile full` | 300 | 1500 | 9.5 h |
-| `... --profile full claude-code:claude-sonnet-5` | 60 | 300 | 113 min |
-| `... --profile full claude-code:claude-haiku-5-5` | 60 | 300 | 113 min |
+| `pnpm reeval run --dry-run` | 375 | 375 | 138 min |
+| `... --profile smoke` | 75 | 75 | 24 min |
+| `... --profile smoke schema-drift` | 5 | 5 | 3 min |
+| `... --profile smoke build-triage` | 5 | 5 | 3 min |
+| `... --profile full` | 375 | 1875 | 11.5 h |
+| `... --profile full claude-code:claude-sonnet-5` | 75 | 375 | 121 min |
+| `... --profile full claude-code:claude-haiku-5-5` | 75 | 375 | 56 min |
 | `... codex:gpt-5.6-luna/mcp` | 15 | 15 | 6 min |
 | `pnpm oracle`, `pnpm canary` | 15 | 15 | minutes (see below) |
 
-The estimate is a flat 3 minutes per attempt. The `full` profile's budget allows 1600 attempts and 12 hours. `smoke` keeps one harness (`claude-code:claude-sonnet-5`) and one attempt per cell, `haiku` does the same on `claude-code:claude-haiku-5-5`; `full` runs 5 attempts per cell and records the run. Positional filters match an eval name (a bug) or a cell key (`<harness>/<arm>/<sandbox>`) and combine with OR, so `schema-drift codex` is wider than either alone. To run one case on one harness, pin the harness with a profile: `pnpm reeval run --profile haiku schema-drift`.
+The estimates are what `--dry-run` printed on 2026-10-21; they are no longer a flat 3 minutes per attempt and they change between runs. The `full` profile's budget allows 2000 attempts and 14 hours. `smoke` keeps one harness (`claude-code:claude-sonnet-5`) and one attempt per cell, `haiku` does the same on `claude-code:claude-haiku-5-5`; `full` runs 5 attempts per cell and records the run. Positional filters match an eval name (a bug) or a cell key (`<harness>/<arm>/<sandbox>`) and combine with OR, so `schema-drift codex` is wider than either alone. To run one case on one harness, pin the harness with a profile: `pnpm reeval run --profile haiku schema-drift`.
 
 ## Keys and images
 
@@ -54,11 +54,12 @@ pnpm reeval run --profile smoke build-triage -v
 pnpm reeval run codex:gpt-5.6-luna/mcp -v
 ```
 
-One case, four arms, one attempt each; then the `mcp` arm on Codex for all 15 cases. Check in the `-v` output and `.reeval/debug/<run>/`:
+One case, five arms, one attempt each; then the `mcp` arm on Codex for all 15 cases. Check in the `-v` output and `.reeval/debug/<run>/`:
 
 - `control`: setup copied `node_modules` in and ran the two `genkit` warm-up steps; the agent's diff shows only its fix (the bug is seeded before the first turn).
 - `rules`: `CLAUDE.md` holds `GENKIT.md`; no server, no skill.
 - `mcp`: the `genkit` server starts and the agent reaches `mcp__genkit__*` tools, directly or after `ToolSearch`. If it never sees a genkit tool, the arm measures `rules`: stop and find out why. `pnpm reeval query "SELECT tool, COUNT(*) FROM tool_calls WHERE run_id = '<run id>' AND (tool LIKE 'mcp__genkit__%' OR tool = 'ToolSearch') GROUP BY tool"`.
+- `directed`: as `mcp`, but `CLAUDE.md` holds `GENKIT-directed.md`.
 - `skill`: the skill is placed and read (`pnpm reeval query skill_reads`).
 - Every arm: the real Gemini key appears nowhere under `.reeval/debug/<run>` or `.reeval/runs/<run>` (`grep -rl "$(grep GOOGLE_GENERATIVE_AI_API_KEY .env.local | cut -d= -f2)" .reeval/debug/<run> .reeval/runs/<run>` prints nothing), and the `gateway` lines in `debug.log` say `substituted` for `generativelanguage.googleapis.com`.
 - Codex `mcp`: Codex may not pass the sandbox proxy to stdio MCP servers. If `run_flow` results show 401 or `fetch failed`, the server cannot reach Gemini; record it as a harness limitation.
@@ -71,7 +72,7 @@ Then the whole smoke profile: `pnpm reeval run --profile smoke` (60 attempts).
 
 ## Full
 
-One harness at a time, so a rate limit or a crash costs one harness (300 attempts, ~113 min each). `claude-code` alone matches both Claude Code harnesses, so name the model:
+One harness at a time, so a rate limit or a crash costs one harness (375 attempts, one to two hours each). `claude-code` alone matches both Claude Code harnesses, so name the model:
 
 ```bash
 pnpm reeval run --profile full claude-code:claude-sonnet-5

@@ -36,6 +36,11 @@ export const mcp = rules.extendEnvironment('mcp', ({ mcp, secret }) => ({
   },
 }))
 
+/** `mcp` with `GENKIT-directed.md` as the project rules instead of `GENKIT.md`. */
+export const directed = mcp.extendEnvironment('directed', ({ file }) => ({
+  rules: file('./rules/GENKIT-directed.md'),
+}))
+
 /** `control` plus the pinned `developing-genkit-js` skill. */
 export const skill = control.extendEnvironment('skill', ({ skill }) => ({
   skills: [

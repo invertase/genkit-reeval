@@ -25,13 +25,14 @@ That opens reeval's studio over `evals/.history/`: every run, each cell's pass r
 
 ## How the study works
 
-A real coding agent works in a Docker sandbox on a support-desk app that calls real Gemini. Four arms differ only in what the agent is told:
+A real coding agent works in a Docker sandbox on a support-desk app that calls real Gemini. Five arms differ only in what the agent is told:
 
 | Arm | The agent gets |
 |---|---|
 | `control` | The app, `genkit-cli` 1.44.1 on `PATH`, and a warmed docs cache. No advice. |
 | `rules` | `control` plus `GENKIT.md` as the project rules (`CLAUDE.md`, `AGENTS.md` or `.cursor/rules`, by harness). |
 | `mcp` | `rules` plus the `genkit mcp` stdio server. This is what `genkit init:ai-tools` installs. |
+| `directed` | `mcp` with [`GENKIT-directed.md`](evals/rules/GENKIT-directed.md) as the rules instead of `GENKIT.md`: it names the MCP tools and the CLI commands the agent may run, and summarises the agents API. |
 | `skill` | `control` plus the `developing-genkit-js` skill, pinned to one commit. |
 
 The server is never measured without the rules, because `GENKIT.md` is what tells the agent the server exists. `rules` alone is not a configuration Genkit ships; it is there to separate the text from the server.
@@ -44,16 +45,17 @@ The study itself is a few files, for anyone who wants to read what the agent is 
 
 | File | What it holds |
 |---|---|
-| [`evals/genkit.eval.ts`](evals/genkit.eval.ts) | The bug family: the prompt, the four arms, the checks, the evidence judge. |
+| [`evals/genkit.eval.ts`](evals/genkit.eval.ts) | The bug family: the prompt, the five arms, the checks, the evidence judge. |
 | [`evals/build.eval.ts`](evals/build.eval.ts) | The build family: the prompt, the checks, the idiom judge, the pairwise question. |
 | [`evals/bugs.ts`](evals/bugs.ts), [`evals/tasks.ts`](evals/tasks.ts) | The 12 seeded bugs and the 3 build tasks, with each symptom and the fix the oracle applies. |
 | [`evals/environments.ts`](evals/environments.ts) | What each arm adds to `control`: the rules file, the MCP server, the skill. |
 | [`evals/verify.mts`](evals/verify.mts), [`evals/verify-build.mts`](evals/verify-build.mts) | The hidden `node:test` files the agent never sees. |
 | [`evals/rules/GENKIT.md`](evals/rules/GENKIT.md) | The rules file the `rules` and `mcp` arms get, pinned. |
+| [`evals/rules/GENKIT-directed.md`](evals/rules/GENKIT-directed.md) | The rules file the `directed` arm gets: `GENKIT.md` told to use the server. |
 | [`evals/app/`](evals/app) | The fixture: the support-desk app. |
 | [`reeval.config.ts`](reeval.config.ts) | The five agents, the Docker sandbox, the profiles. |
 
-Scale: 15 cases x 4 arms x 5 agents (Claude Code on Sonnet 5 and on Haiku 5.5, Antigravity, Cursor, Codex) x 5 attempts = 1500 attempts, about 9.5 hours at concurrency 8. Haiku is there because tooling should matter most to the agent that cannot hold the whole app in its head.
+Scale: 15 cases x 5 arms x 5 agents (Claude Code on Sonnet 5 and on Haiku 5.5, Antigravity, Cursor, Codex) x 5 attempts = 1875 attempts, about 11.5 hours at concurrency 8. Haiku is there because tooling should matter most to the agent that cannot hold the whole app in its head.
 
 ## What reeval does here
 
