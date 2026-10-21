@@ -1,0 +1,23 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..3bec1ad
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/tools.ts",
++  "snippet": "  async ({ orderId }) => ORDERS[orderId] ?? null,",
++  "cause": "The lookupOrder tool indexes the orders table with the customer's id exactly as typed, so a lowercase id such as a-1001 misses the uppercase key A-1001 and returns null, which the agent reports as not found.",
++  "evidence": "orders.json keys are 'A-1001', 'A-1002', 'A-1003'; in a direct check ORDERS['a-1001'] returned null while ORDERS['A-1001'] returned the shipped record (status shipped, eta 2026-10-22, tracking NW-7F3K2Q). After normalizing with trim().toUpperCase(), 'a-1001' and ' A-1001 ' resolve to that record and 'A-9999' still returns null; npx tsc --noEmit passes."
++}
+diff --git a/src/tools.ts b/src/tools.ts
+index 86c44fb..cafb4a7 100644
+--- a/src/tools.ts
++++ b/src/tools.ts
+@@ -20,5 +20,5 @@ export const lookupOrder = ai.defineTool(
+       })
+       .nullable(),
+   },
+-  async ({ orderId }) => ORDERS[orderId] ?? null,
++  async ({ orderId }) => ORDERS[orderId.trim().toUpperCase()] ?? null,
+ );

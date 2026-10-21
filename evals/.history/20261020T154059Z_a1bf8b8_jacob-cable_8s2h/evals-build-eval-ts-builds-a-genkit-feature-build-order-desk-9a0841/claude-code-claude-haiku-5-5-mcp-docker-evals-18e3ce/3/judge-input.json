@@ -1,0 +1,20 @@
+[
+  {
+    "question": "Did the agent build the feature with Genkit's agents API (`ai.defineAgent`, `ai.defineInterrupt` for the approval step, the `agents()` middleware from `@genkit-ai/middleware` for delegation, a session store such as `FileSessionStore` for resumable conversations) rather than hand-rolled `ai.generate` loops, flows posing as agents, or APIs Genkit no longer has such as `ai.chat()`? Judge only the parts the task needed: an order desk needs `defineAgent` with the tool; a refund desk also needs an interrupt; a front desk also needs delegation and a store.",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk app in this directory. Add an order desk agent. Create `src/agents.ts` exporting `orderAgent`, an agent that answers customer questions about their orders (status, delivery date, tracking code) with the existing `lookupOrder` tool from `src/tools.ts`. Export `orderAgent` from `src/index.ts`. Callers hold a conversation with it: `orderAgent.chat()` starts one, `send('Where is order A-1001?')` on it returns a response whose `text` is the reply. Keep the existing flows and their exports. Don't change `package.json` or add dependencies.",
+      "output": "I added `orderAgent` in `src/agents.ts` and exported it from `src/index.ts`. The existing flow exports are unchanged, and `package.json` is untouched.\n\n- **Agent:** built with `ai.defineAgent`, using the shared `ai` instance and the existing `lookupOrder` tool. The system prompt mirrors the `orderStatus` flow's wording.\n- **Conversation:** `orderAgent.chat()` starts a chat, and `chat.send(text)` resolves to a response with `.text`. There is no store, so history lives in the chat object for the life of the process.\n- **Verification:** `tsc --noEmit` passes. A live two-turn run returned the A-1001 status, ETA and tracking code (`NW-7F3K2Q`), which match `orders.json`. The follow-up question about the tracking code was answered from the same conversation.",
+      "files": [
+        "modified src/agents.ts"
+      ],
+      "diff": "",
+      "contents": {
+        "src/agents.ts": "import { ai } from './ai.js';\nimport { lookupOrder } from './tools.js';\n\n/** Multi-turn order desk agent: answers questions about a customer's orders with the orders database. */\nexport const orderAgent = ai.defineAgent({\n  name: 'orderAgent',\n  description: 'Answers customers questions about the status, delivery date and tracking code of their orders.',\n  system:\n    'You are the Northwind Supplies order desk assistant. Answer questions about orders using the lookupOrder tool. ' +\n    'Quote the status, ETA and tracking code exactly as the tool returns them. If an order is not found, say so.',\n  tools: [lookupOrder],\n});\n"
+      }
+    },
+    "dropped": [
+      "src/index.ts: not in include"
+    ]
+  }
+]

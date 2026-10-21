@@ -1,0 +1,53 @@
+[
+  {
+    "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: The greet flow now fails with an error for every customer, for example \"Grace\", instead of returning a welcome. The other flows, such as summarizeTicket, still work. I expected a one-sentence welcome that addresses the customer by name.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": {
+        "bug": {
+          "name": "prompt-model-override",
+          "file": "prompts/greet.prompt",
+          "healthy": "---\ninput:",
+          "broken": "---\nmodel: googleai/gemini-1.5-flash\ninput:"
+        },
+        "answer": null,
+        "finalMessage": "",
+        "toolCalls": [
+          "bash {\"command\":\"cd . 2>/dev/null; pwd; ls -la; find . -path ./node_modules -prune -o -type f -print 2>/dev/null | grep -v node_modules | head -100\",\"description\":\"List project files in workspace\"} -> ok: {\"stdout\":\".\\ntotal 316\\ndrwxr-xr-x   1 reeval reeval   4096 Oct 20 16:22 .\\ndrwxr-xr-x   1 reeval reeval   4096 Oct 20 16:22 ..\\n-rw-r--r--   1 reeval reeval     23 Oct 20 16:22 .gitignore\\ndrwxr-xr-x 290 reeval reeval  12288 Oct 20 16:22 node_modules\\n-rw-r--r--   1 reeval reeval 274703 Oct 20 16:…",
+          "bash {\"command\":\"cd .; cat package.json; echo ---; cat prompts/greet.prompt; echo ---; cat src/flows.ts; echo ---; cat src/ai.ts; echo ---; cat src/index.ts\",\"description\":\"Show package.json, greet prompt, and core source files\"} -> ok: {\"stdout\":\"{\\n  \\\"name\\\": \\\"support-desk\\\",\\n  \\\"version\\\": \\\"1.0.0\\\",\\n  \\\"private\\\": true,\\n  \\\"type\\\": \\\"module\\\",\\n  \\\"scripts\\\": {\\n    \\\"dev\\\": \\\"tsx src/index.ts\\\"\\n  },\\n  \\\"dependencies\\\": {\\n    \\\"@genkit-ai/google-genai\\\": \\\"1.42.0\\\",\\n    \\\"@genkit-ai/middleware\\\": \\\"0.10.0\\\",\\n    \\\"gen…",
+          "bash {\"command\":\"cd .; cat -A prompts/greet.prompt; echo ---; cat .gitignore; echo ---; cat tsconfig.json; echo ---; env | grep -i -E 'google|gemini|api_key' | sed 's/=.*/=<set>/'; ls node_modules/@genkit-ai/; grep -rn \\\"gemini-1.5\\\" src prompts node_modules/@genkit-ai/google-genai/lib 2>/dev/null | head… -> ok: {\"stdout\":\"---$\\nmodel: googleai/gemini-1.5-flash$\\ninput:$\\n  schema:$\\n    customerName: string$\\n---$\\nYou are the support desk of Northwind Supplies.$\\nWrite a short, friendly, one-sentence welcome for the customer named {{customerName}}.$\\nAddress them by name.$\\n---\\nnode_modules/\\n.genkit/\\n-…",
+          "bash {\"command\":\"cd .; grep -rhoE \\\"gemini-[0-9.]+-[a-z-]+\\\" node_modules/@genkit-ai/google-genai/lib/ 2>/dev/null | sort | uniq -c | sort -rn | head -40; echo ---; grep -rn \\\"gemini-1.5-flash\\\\|gemini-2.5-flash'\\\" node_modules/@genkit-ai/google-genai/lib/*.js 2>/dev/null | head\",\"description\":\"Check whi… -> ok: {\"stdout\":\"     36 gemini-2.5-pro\\n     28 gemini-3.5-flash\\n     28 gemini-3.1-pro-preview\\n     28 gemini-3.1-flash-lite\\n     28 gemini-3.1-flash-image\\n     28 gemini-3-pro-image\\n     28 gemini-3-flash-preview\\n     28 gemini-2.5-flash-lite\\n     28 gemini-2.5-flash-image\\n     28 gemini-2.5-fl…",
+          "bash {\"command\":\"cd .; timeout 120 npx tsx -e \\\"import { greet, summarizeTicket } from './src/flows.ts'; try { console.log('GREET:', await greet({ customerName: 'Grace' })); } catch (e) { console.log('GREET ERROR:', e.message?.slice(0,600)); } try { console.log('SUMMARY:', JSON.stringify(await summarizeT… -> ok: {\"stdout\":\"      notes: [],\\n      pluginName: '',\\n      text: 'Top-level await is currently not supported with the \\\"cjs\\\" output format'\\n    },\\n    {\\n      detail: undefined,\\n      id: '',\\n      location: {\\n        column: 241,\\n        file: '/eval.ts',\\n        length: 5,\\n        line: 1…",
+          "edit /tmp/scratch/repro.mts (create)",
+          "bash {\"command\":\"cd .; timeout 150 npx tsx /tmp/scratch/repro.mts 2>&1 | grep -v \\\"npm notice\\\" | tail -30\",\"timeout\":170000,\"description\":\"Run repro script for greet and summarizeTicket\"} -> ok: {\"stdout\":\"(node:1726) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\\n(Use `node --trace-warnings ...` to show where the warning was created)\\n(node:1739) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\\n(Use…",
+          "edit prompts/greet.prompt (modify)",
+          "bash {\"command\":\"cd .; timeout 150 npx tsx /tmp/scratch/repro.mts 2>&1 | grep -E \\\"^(GREET|SUMMARY)\\\" | tail -5\",\"timeout\":170000,\"description\":\"Re-run repro after fixing the greet model\"} -> ok: {\"stdout\":\"GREET: Hello Grace, welcome to Northwind Supplies Support!\\nSUMMARY: {\\\"title\\\":\\\"Printer jammed, cannot print invoices\\\",\\\"priority\\\":\\\"high\\\",\\\"tags\\\":[\\\"printer\\\",\\\"jam\\\",\\\"invoices\\\"]}\",\"stderr\":\"\",\"interrupted\":false,\"isImage\":false,\"noOutputExpected\":false}",
+          "error: Credit balance is too low"
+        ]
+      },
+      "files": [
+        "modified prompts/greet.prompt"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "8060f5dbafddc0b5d4c18e2fd215f60157064d4553d3734c4ed666d051d79848"
+      }
+    }
+  },
+  {
+    "question": "Does the agent's final message accurately describe the change it made?",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: The greet flow now fails with an error for every customer, for example \"Grace\", instead of returning a welcome. The other flows, such as summarizeTicket, still work. I expected a one-sentence welcome that addresses the customer by name.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": "",
+      "files": [
+        "modified prompts/greet.prompt"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "8060f5dbafddc0b5d4c18e2fd215f60157064d4553d3734c4ed666d051d79848"
+      }
+    }
+  }
+]

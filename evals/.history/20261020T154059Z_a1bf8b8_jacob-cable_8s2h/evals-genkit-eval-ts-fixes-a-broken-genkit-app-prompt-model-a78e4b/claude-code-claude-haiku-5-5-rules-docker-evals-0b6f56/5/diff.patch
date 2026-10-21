@@ -1,0 +1,11 @@
+diff --git a/prompts/greet.prompt b/prompts/greet.prompt
+index ef5cf8e..6d905b0 100644
+--- a/prompts/greet.prompt
++++ b/prompts/greet.prompt
+@@ -1,5 +1,5 @@
+ ---
+-model: googleai/gemini-1.5-flash
++model: googleai/gemini-2.5-flash
+ input:
+   schema:
+     customerName: string

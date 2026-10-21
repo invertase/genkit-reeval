@@ -1,0 +1,24 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..4c20c1b
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/flows.ts",
++  "snippet": "returnToolRequests: true,",
++  "cause": "The orderStatus flow passes returnToolRequests: true to ai.generate, so Genkit returns the model's lookupOrder tool request without executing the tool, and the flow's text (the final answer) is empty.",
++  "evidence": "src/flows.ts:37 is the only use of returnToolRequests in the app; node_modules/@genkit-ai/ai/lib/generate.js:375 forwards the option to the generate action, which returns tool requests to the caller instead of running them. The orderAgent in src/agents.ts uses the same lookupOrder tool without that option, and the bug report says there is no error, only an empty string, which matches a tool request with no text."
++}
+diff --git a/src/flows.ts b/src/flows.ts
+index 7dc7b7e..1fb1efb 100644
+--- a/src/flows.ts
++++ b/src/flows.ts
+@@ -34,7 +34,6 @@ export const orderStatus = ai.defineFlow(
+         'Quote the status, ETA and tracking code exactly as the tool returns them. If an order is not found, say so.',
+       prompt: question,
+       tools: [lookupOrder],
+-      returnToolRequests: true,
+     });
+     return text;
+   },

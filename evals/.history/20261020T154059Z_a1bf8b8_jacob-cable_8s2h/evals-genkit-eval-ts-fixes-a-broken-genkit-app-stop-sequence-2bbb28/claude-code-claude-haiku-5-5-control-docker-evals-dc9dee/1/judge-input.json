@@ -1,0 +1,51 @@
+[
+  {
+    "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: The replies that draftReply writes for customer tickets stop after the first line, usually just \"Dear customer,\" or \"Hi there,\". There is no error, and the reason it reports for stopping looks normal. I expected a complete reply that explains the next steps and signs off from the support team.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": {
+        "bug": {
+          "name": "stop-sequence",
+          "file": "src/flows.ts",
+          "healthy": "prompt: ticket,\n    });",
+          "broken": "prompt: ticket,\n      config: { stopSequences: ['\\n'] },\n    });"
+        },
+        "answer": "{\n  \"file\": \"src/flows.ts\",\n  \"snippet\": \"config: { stopSequences: ['\\\\n'] },\",\n  \"cause\": \"The draftReply flow passes stopSequences: ['\\\\n'] to ai.generate, so the model halts as soon as it emits a newline, truncating the reply after the salutation line.\",\n  \"evidence\": \"The only stopSequences setting in the app is this one in draftReply (grep of src and prompts), and the reply is cut at the first line break, which matches the reported 'Dear customer,' / 'Hi there,' output with finishReason 'stop' looking normal; removing the line leaves the project type-checking cleanly with tsc --noEmit.\"\n}\n",
+        "finalMessage": "The root cause was a stop sequence on the `draftReply` flow: `config: { stopSequences: ['\\n'] }` made the model halt at the first newline, so replies ended after the salutation line. I removed that line from `src/flows.ts`, leaving the rest of the `ai.generate` call unchanged. The project type-checks cleanly with `tsc --noEmit`. I did not run the flow against the model, since that needs live API access.\n\n`answer.json` is written to the project root with `file` set to `src/flows.ts`, the broken line as `snippet`, and the cause and evidence filled in. `package.json` is unchanged.",
+        "toolCalls": [
+          "bash {\"command\":\"cd . 2>/dev/null; pwd; ls -la; grep -rn \\\"draftReply\\\" --include=*.ts --include=*.js --include=*.json . 2>/dev/null | grep -v node_modules | head -50\",\"description\":\"List workspace and find draftReply references\"} -> ok: {\"stdout\":\".\\ntotal 316\\ndrwxr-xr-x   1 reeval reeval   4096 Oct 20 15:46 .\\ndrwxr-xr-x   1 reeval reeval   4096 Oct 20 15:46 ..\\n-rw-r--r--   1 reeval reeval     23 Oct 20 15:46 .gitignore\\ndrwxr-xr-x 290 reeval reeval  12288 Oct 20 15:46 node_modules\\n-rw-r--r--   1 reeval reeval 274703 Oct 20 15:…",
+          "bash {\"command\":\"cd .; ls -la src prompts; cat src/flows.ts; cat package.json\",\"description\":\"Show flows source and package.json\"} -> ok: {\"stdout\":\"prompts:\\ntotal 12\\ndrwxr-xr-x 2 reeval reeval 4096 Oct 20 15:46 .\\ndrwxr-xr-x 1 reeval reeval 4096 Oct 20 15:46 ..\\n-rw-r--r-- 1 reeval reeval  207 Oct 20 15:46 greet.prompt\\n\\nsrc:\\ntotal 36\\ndrwxr-xr-x 2 reeval reeval 4096 Oct 20 15:46 .\\ndrwxr-xr-x 1 reeval reeval 4096 Oct 20 15:46 ..…",
+          "bash {\"command\":\"cd .; cat src/ai.ts; echo ---; cat prompts/greet.prompt; echo ---; grep -rn \\\"stopSequences\\\\|maxOutputTokens\\\" src prompts\",\"description\":\"Inspect AI setup and search for other stop sequence settings\"} -> ok: {\"stdout\":\"import { fileURLToPath } from 'node:url';\\nimport { googleAI } from '@genkit-ai/google-genai';\\nimport { genkit } from 'genkit/beta';\\n\\n/** The Genkit instance every flow and agent in this app shares. */\\nexport const ai = genkit({\\n  plugins: [googleAI()],\\n  // Thinking tokens count ag…",
+          "edit src/flows.ts (modify)",
+          "bash {\"command\":\"cd .; ls node_modules/.bin | grep -E \\\"^tsc$\\\"; npx tsc --noEmit -p tsconfig.json 2>&1 | head -20; echo \\\"exit=$?\\\"\",\"description\":\"Type-check the project without emitting files\"} -> ok: {\"stdout\":\"tsc\\n(node:1495) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\\n(Use `node --trace-warnings ...` to show where the warning was created)\\nnpm notice\\nnpm notice New major version of npm available! 11.20.0 -> 12.2.0\\nnpm notice Changelog: https…",
+          "edit answer.json (create)"
+        ]
+      },
+      "files": [
+        "added answer.json",
+        "modified src/flows.ts"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "6f4a5d3c0e0584a2891f7cc5f5d138b97a7a51f6993df42336523b762ba375af"
+      }
+    }
+  },
+  {
+    "question": "Does the agent's final message accurately describe the change it made?",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: The replies that draftReply writes for customer tickets stop after the first line, usually just \"Dear customer,\" or \"Hi there,\". There is no error, and the reason it reports for stopping looks normal. I expected a complete reply that explains the next steps and signs off from the support team.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": "The root cause was a stop sequence on the `draftReply` flow: `config: { stopSequences: ['\\n'] }` made the model halt at the first newline, so replies ended after the salutation line. I removed that line from `src/flows.ts`, leaving the rest of the `ai.generate` call unchanged. The project type-checks cleanly with `tsc --noEmit`. I did not run the flow against the model, since that needs live API access.\n\n`answer.json` is written to the project root with `file` set to `src/flows.ts`, the broken line as `snippet`, and the cause and evidence filled in. `package.json` is unchanged.",
+      "files": [
+        "added answer.json",
+        "modified src/flows.ts"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "6f4a5d3c0e0584a2891f7cc5f5d138b97a7a51f6993df42336523b762ba375af"
+      }
+    }
+  }
+]

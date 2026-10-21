@@ -1,0 +1,24 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..5ae18a1
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/flows.ts",
++  "snippet": "config: { stopSequences: ['\\n'] },",
++  "cause": "The draftReply flow passes a stop sequence of a newline character, so generation halts at the first line break and the reply is cut off after its opening line.",
++  "evidence": "src/flows.ts was the only place in the app setting stopSequences (grep across src/ and prompts/ found one match); a newline stop sequence ends generation at the first '\\n', matching the reported truncation after 'Dear customer,' or 'Hi there,', and it makes the response finish with reason 'stop', which is the normal-looking reason in the bug report."
++}
+diff --git a/src/flows.ts b/src/flows.ts
+index 7c60e95..1fb1efb 100644
+--- a/src/flows.ts
++++ b/src/flows.ts
+@@ -61,7 +61,6 @@ export const draftReply = ai.defineFlow(
+         'You are a support agent at Northwind Supplies. Draft a complete, polite reply to the customer: ' +
+         'greet them, acknowledge the problem, explain the next steps in two or three sentences, and sign off as the Northwind support team.',
+       prompt: ticket,
+-      config: { stopSequences: ['\n'] },
+     });
+     return { text: response.text, finishReason: response.finishReason };
+   },

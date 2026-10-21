@@ -1,0 +1,24 @@
+diff --git a/src/agents.ts b/src/agents.ts
+index e69de29..e96fc99 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -0,0 +1,12 @@
++import { ai } from './ai.js';
++import { lookupOrder } from './tools.js';
++
++/** Multi-turn order desk agent: answers questions about a customer's orders and keeps the conversation. */
++export const orderAgent = ai.defineAgent({
++  name: 'orderAgent',
++  system:
++    'You are the Northwind Supplies order desk. Answer questions about orders using the lookupOrder tool. ' +
++    'Quote the status, delivery date and tracking code exactly as the tool returns them. ' +
++    'If an order is not found, say so. Keep replies short.',
++  tools: [lookupOrder],
++});
+diff --git a/src/index.ts b/src/index.ts
+index cda694e..c24e4c6 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1 +1,2 @@
+ export { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';
++export { orderAgent } from './agents.js';

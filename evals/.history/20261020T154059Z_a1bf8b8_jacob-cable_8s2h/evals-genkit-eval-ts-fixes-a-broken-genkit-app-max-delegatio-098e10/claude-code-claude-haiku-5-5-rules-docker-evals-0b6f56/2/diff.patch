@@ -1,0 +1,25 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..3e436e2
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/agents.ts",
++  "snippet": "use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 0, historyLength: 4 })],",
++  "cause": "The triage agent's agents middleware was configured with maxDelegations: 0, so its guard rail rejected every delegation to orderAgent or refundAgent with a 'Delegation limit reached' message and the model apologized instead of answering.",
++  "evidence": "node_modules/@genkit-ai/middleware/src/agents.ts checks `maxDelegations !== undefined && shared.delegationCount >= maxDelegations` before calling any sub-agent, so 0 blocks the first delegation; the package README documents the default as unlimited, and orderAgent works when called directly, which matches the report."
++}
+diff --git a/src/agents.ts b/src/agents.ts
+index 74a8a10..13cdc2d 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -52,7 +52,7 @@ export const triage = ai.defineAgent({
+   store,
+   maxTurns: 5,
+   toolChoice: 'auto',
+-  use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 0, historyLength: 4 })],
++  use: [agents({ agents: ['orderAgent', 'refundAgent'], historyLength: 4 })],
+ });
+ 
+ /** Lets the CLI exercise triage: `genkit flow:run` runs flows, not agents. */

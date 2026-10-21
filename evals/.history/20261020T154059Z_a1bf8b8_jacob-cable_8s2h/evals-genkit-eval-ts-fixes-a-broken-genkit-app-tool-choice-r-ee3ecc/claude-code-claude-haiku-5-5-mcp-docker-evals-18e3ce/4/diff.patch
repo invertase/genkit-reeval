@@ -1,0 +1,25 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..1867fab
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/agents.ts",
++  "snippet": "toolChoice: 'required',",
++  "cause": "The refundAgent is defined with toolChoice 'required', which forces the model to call a tool on every turn, so after the supervisor declines approveRefund it cannot produce a final text reply and instead re-calls tools until maxTurns (6) is exhausted.",
++  "evidence": "defineAgent passes toolChoice through the prompt render into generateStream on every agent turn (node_modules/@genkit-ai/ai/src/agent.ts ~L1507-1546, prompt.ts ~L330), and the triage agent in the same file already uses toolChoice 'auto'; with 'required' and no tool that ends the conversation, the decline path has no way to stop, matching the reported re-asking for approval, continued order work, and failures."
++}
+diff --git a/src/agents.ts b/src/agents.ts
+index 7283e38..34e0ee7 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -40,7 +40,7 @@ export const refundAgent = ai.defineAgent({
+   description: 'Handles refund requests for an order. Refunds need human approval.',
+   system: 'Look up the order, then call approveRefund, then issueRefund only if approved. Never refund without approval.',
+   tools: [lookupOrder, approveRefund, issueRefund],
+-  toolChoice: 'required',
++  toolChoice: 'auto',
+   maxTurns: 6,
+   store,
+ });

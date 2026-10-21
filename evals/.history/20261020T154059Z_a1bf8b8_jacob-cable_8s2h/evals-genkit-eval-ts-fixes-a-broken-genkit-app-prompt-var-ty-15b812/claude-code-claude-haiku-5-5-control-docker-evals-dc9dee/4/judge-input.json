@@ -1,0 +1,51 @@
+[
+  {
+    "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: The greet flow for customer \"Ada\" returns a generic welcome like \"Welcome to Northwind Supplies!\" that never uses her name. Other customers get the same nameless greeting. I expected a one-sentence welcome that addresses the customer by name.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": {
+        "bug": {
+          "name": "prompt-var-typo",
+          "file": "prompts/greet.prompt",
+          "healthy": "{{customerName}}",
+          "broken": "{{custmerName}}"
+        },
+        "answer": "{\n  \"file\": \"prompts/greet.prompt\",\n  \"snippet\": \"Write a short, friendly, one-sentence welcome for the customer named {{custmerName}}.\",\n  \"cause\": \"The greet prompt template references a misspelled variable `custmerName` that is not in the input schema, so it renders as empty and the model never receives the customer's name, even though the flow correctly passes `customerName`.\",\n  \"evidence\": \"The flow in src/flows.ts calls ai.prompt('greet')({ customerName }) and the prompt's input schema declares only customerName, yet the template body reads {{custmerName}}; grep finds no other use of custmerName, and after changing it to {{customerName}} the template matches the input key everywhere.\"\n}\n",
+        "finalMessage": "The root cause is a typo in the greet prompt template: `prompts/greet.prompt` read `{{custmerName}}` where it should read `{{customerName}}`. The flow passes `customerName` correctly, but the misspelled variable rendered as empty, so the model never saw the name and produced a generic welcome.\n\nI fixed the typo and wrote `answer.json` to the project root. I did not run the model, so the fix is confirmed by reading the template against the input schema and the flow, not by an end-to-end greet call. `package.json` is unchanged.",
+        "toolCalls": [
+          "bash {\"command\":\"grep -rn \\\"Welcome to Northwind\\\" --exclude-dir=node_modules . ; echo \\\"---\\\"; grep -rln \\\"greet\\\" --exclude-dir=node_modules . | head -50\",\"description\":\"Search for welcome text and greet references\"} -> ok: {\"stdout\":\"---\\nsrc/index.ts\\nsrc/flows.ts\",\"stderr\":\"\",\"interrupted\":false,\"isImage\":false,\"noOutputExpected\":false}",
+          "bash {\"command\":\"ls -la .; echo \\\"---\\\"; cat src/flows.ts; echo \\\"---\\\"; cat src/index.ts\",\"description\":\"List project files and read greet flow sources\"} -> ok: {\"stdout\":\"total 316\\ndrwxr-xr-x   1 reeval reeval   4096 Oct 20 16:13 .\\ndrwxr-xr-x   1 reeval reeval   4096 Oct 20 16:13 ..\\n-rw-r--r--   1 reeval reeval     23 Oct 20 16:13 .gitignore\\ndrwxr-xr-x 290 reeval reeval  12288 Oct 20 16:13 node_modules\\n-rw-r--r--   1 reeval reeval 274703 Oct 20 16:13 …",
+          "bash {\"command\":\"ls -la prompts; for f in prompts/*; do echo \\\"=== $f\\\"; cat \\\"$f\\\"; echo; done; echo \\\"---\\\"; cat package.json\",\"description\":\"List and read prompt files and package.json\"} -> ok: {\"stdout\":\"total 12\\ndrwxr-xr-x 2 reeval reeval 4096 Oct 20 16:13 .\\ndrwxr-xr-x 1 reeval reeval 4096 Oct 20 16:13 ..\\n-rw-r--r-- 1 reeval reeval  206 Oct 20 16:13 greet.prompt\\n=== prompts/greet.prompt\\n---\\ninput:\\n  schema:\\n    customerName: string\\n---\\nYou are the support desk of Northwind Supp…",
+          "edit prompts/greet.prompt (modify)",
+          "bash {\"command\":\"grep -rn \\\"custmerName\\\\|customerName\\\" prompts src; echo \\\"---\\\"; grep -n \\\"customer named\\\" prompts/greet.prompt | od -c | head -5\",\"description\":\"Verify the typo is gone and inspect the prompt line\"} -> ok: {\"stdout\":\"prompts/greet.prompt:4:    customerName: string\\nprompts/greet.prompt:7:Write a short, friendly, one-sentence welcome for the customer named {{customerName}}.\\nsrc/flows.ts:44:  { name: 'greet', inputSchema: z.object({ customerName: z.string() }), outputSchema: z.string() },\\nsrc/flows.ts…",
+          "edit answer.json (create)"
+        ]
+      },
+      "files": [
+        "added answer.json",
+        "modified prompts/greet.prompt"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "25ded62cacd454a777fe550f23be591c45a3ac9c7ae89f231bae280ffaa80a59"
+      }
+    }
+  },
+  {
+    "question": "Does the agent's final message accurately describe the change it made?",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: The greet flow for customer \"Ada\" returns a generic welcome like \"Welcome to Northwind Supplies!\" that never uses her name. Other customers get the same nameless greeting. I expected a one-sentence welcome that addresses the customer by name.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": "The root cause is a typo in the greet prompt template: `prompts/greet.prompt` read `{{custmerName}}` where it should read `{{customerName}}`. The flow passes `customerName` correctly, but the misspelled variable rendered as empty, so the model never saw the name and produced a generic welcome.\n\nI fixed the typo and wrote `answer.json` to the project root. I did not run the model, so the fix is confirmed by reading the template against the input schema and the flow, not by an end-to-end greet call. `package.json` is unchanged.",
+      "files": [
+        "added answer.json",
+        "modified prompts/greet.prompt"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "25ded62cacd454a777fe550f23be591c45a3ac9c7ae89f231bae280ffaa80a59"
+      }
+    }
+  }
+]

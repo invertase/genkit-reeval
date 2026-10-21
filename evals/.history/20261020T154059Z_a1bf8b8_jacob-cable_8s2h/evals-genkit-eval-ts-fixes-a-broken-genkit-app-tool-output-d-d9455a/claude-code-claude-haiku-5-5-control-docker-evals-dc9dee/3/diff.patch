@@ -1,0 +1,23 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..f1093af
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/orders.json",
++  "snippet": "\"total\": \"149.99\"",
++  "cause": "The A-1001 record stores its total as the string \"149.99\", but the lookupOrder tool's outputSchema requires total to be a number, so the tool output fails validation and the assistant reports that it cannot retrieve the order.",
++  "evidence": "Validating each orders.json record against the lookupOrder outputSchema gives A-1001 FAIL (total: Expected number, received string) while A-1002 and A-1003 pass; those two have numeric totals, and the tool is called with the same code path for all three orders, so the string total is the only difference. Genkit parses every action's output against its outputSchema (node_modules/@genkit-ai/core/lib/action.js:234), so the tool's failure is raised when it runs."
++}
+diff --git a/src/orders.json b/src/orders.json
+index dd558a1..9ddc537 100644
+--- a/src/orders.json
++++ b/src/orders.json
+@@ -1,5 +1,5 @@
+ {
+-  "A-1001": { "status": "shipped", "eta": "2026-10-22", "tracking": "NW-7F3K2Q", "total": "149.99", "refundable": true },
++  "A-1001": { "status": "shipped", "eta": "2026-10-22", "tracking": "NW-7F3K2Q", "total": 149.99, "refundable": true },
+   "A-1002": { "status": "processing", "eta": "2026-10-25", "tracking": null, "total": 59.5, "refundable": true },
+   "A-1003": { "status": "delivered", "eta": "2026-10-18", "tracking": "NW-5D1MZT", "total": 20, "refundable": false }
+ }

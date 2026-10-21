@@ -1,0 +1,24 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..02d1da4
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/flows.ts",
++  "snippet": "returnToolRequests: true,",
++  "cause": "The orderStatus flow's ai.generate call set returnToolRequests: true, so Genkit handed the lookupOrder tool call back unresolved and the flow returned response.text, which is empty because the model produced only a tool request.",
++  "evidence": "node_modules/@genkit-ai/ai/lib/model-types.d.ts documents returnToolRequests as \"return tool calls for manual processing instead of automatically resolving them\", and the flow has no code to run the tool request, so text is empty. The lookupOrder tool itself is fine: src/orders.json contains A-1001 (status shipped, eta 2026-10-22, tracking NW-7F3K2Q), so removing the option lets the tool run and the model quote those values."
++}
+diff --git a/src/flows.ts b/src/flows.ts
+index 7dc7b7e..1fb1efb 100644
+--- a/src/flows.ts
++++ b/src/flows.ts
+@@ -34,7 +34,6 @@ export const orderStatus = ai.defineFlow(
+         'Quote the status, ETA and tracking code exactly as the tool returns them. If an order is not found, say so.',
+       prompt: question,
+       tools: [lookupOrder],
+-      returnToolRequests: true,
+     });
+     return text;
+   },

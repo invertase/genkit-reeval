@@ -1,0 +1,25 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..260d042
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/agents.ts",
++  "snippet": "toolChoice: 'required',",
++  "cause": "The refundAgent is configured with toolChoice 'required', which forces the model to make a tool call on every turn, so after the supervisor declines approveRefund it cannot write a final text reply and instead keeps calling tools (approveRefund again, lookupOrder) until maxTurns is exhausted.",
++  "evidence": "Reproduced with the real model: on the original code, sending the refund request, then declining the approveRefund interrupt with {approved: false, note: 'duplicate claim'}, produces a second approveRefund interrupt and then fails with AgentError 'ABORTED: Exceeded maximum tool call iterations (6)'. With toolChoice changed to 'auto', the same sequence finishes with finishReason 'stop', no pending interrupts, and the reply 'I'm sorry, your refund for order A-1001 was not approved because it appears to be a duplicate claim.'"
++}
+diff --git a/src/agents.ts b/src/agents.ts
+index 7283e38..34e0ee7 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -40,7 +40,7 @@ export const refundAgent = ai.defineAgent({
+   description: 'Handles refund requests for an order. Refunds need human approval.',
+   system: 'Look up the order, then call approveRefund, then issueRefund only if approved. Never refund without approval.',
+   tools: [lookupOrder, approveRefund, issueRefund],
+-  toolChoice: 'required',
++  toolChoice: 'auto',
+   maxTurns: 6,
+   store,
+ });

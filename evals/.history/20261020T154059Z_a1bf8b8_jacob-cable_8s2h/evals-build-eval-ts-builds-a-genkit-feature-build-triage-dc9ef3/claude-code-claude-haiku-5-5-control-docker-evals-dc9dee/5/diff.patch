@@ -1,0 +1,55 @@
+diff --git a/src/agents.ts b/src/agents.ts
+index 8bde8a3..598910a 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -43,3 +43,42 @@ export const refundAgent = ai.defineAgent({
+   maxTurns: 6,
+   store,
+ });
++
++const askOrderDesk = ai.defineTool(
++  {
++    name: 'askOrderDesk',
++    description: 'Hands an order question to the order desk. Include the order id, for example A-1001.',
++    inputSchema: z.object({ question: z.string() }),
++    outputSchema: z.string(),
++  },
++  async ({ question }) => (await orderAgent.chat().send(question)).text,
++);
++
++const askRefundDesk = ai.defineTool(
++  {
++    name: 'askRefundDesk',
++    description: 'Hands a refund request to the refund desk. Include the order id and the reason for the refund.',
++    inputSchema: z.object({ request: z.string() }),
++    outputSchema: z.string(),
++  },
++  async ({ request }) => {
++    const response = await refundAgent.chat().send(request);
++    if (response.interrupts.length) return `Refund is waiting for human approval. Refund session: ${response.sessionId}`;
++    return response.text;
++  },
++);
++
++/** Front desk agent customers talk to first; hands order and refund requests to the right desk. */
++export const triage = ai.defineAgent({
++  name: 'triage',
++  description: 'Front desk for Northwind Supplies customers. Routes order questions and refund requests to the right desk.',
++  system:
++    'You are the Northwind Supplies front desk. Keep replies to one or two sentences. ' +
++    'Remember the order ids and names the customer gives you. ' +
++    'For questions about an order, call askOrderDesk with the order id and the question. ' +
++    'For refund requests, call askRefundDesk with the order id and the reason. ' +
++    'Never answer order or refund questions yourself.',
++  tools: [askOrderDesk, askRefundDesk],
++  maxTurns: 4,
++  store,
++});
+diff --git a/src/index.ts b/src/index.ts
+index 6eb2d9f..31fb90c 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1,2 +1,2 @@
+ export { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';
+-export { orderAgent, refundAgent } from './agents.js';
++export { orderAgent, refundAgent, triage } from './agents.js';

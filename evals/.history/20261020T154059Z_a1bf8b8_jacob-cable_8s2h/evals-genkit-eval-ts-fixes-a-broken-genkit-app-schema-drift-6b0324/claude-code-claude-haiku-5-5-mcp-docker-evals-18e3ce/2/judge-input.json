@@ -1,0 +1,53 @@
+[
+  {
+    "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: Since this week summarizeTicket returns the tags as one comma-separated string such as \"shipping, damage\" instead of a list of tags. The triage dashboard reads tags as a list and now shows nothing. It happens for every ticket, for example one about a cracked monitor that arrived damaged.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": {
+        "bug": {
+          "name": "schema-drift",
+          "file": "src/flows.ts",
+          "healthy": "tags: z.array(z.string()).describe('Up to three lowercase topic tags'),",
+          "broken": "tags: z.string().describe('Up to three lowercase topic tags, comma separated'),"
+        },
+        "answer": "{\n  \"file\": \"src/flows.ts\",\n  \"snippet\": \"tags: z.string().describe('Up to three lowercase topic tags, comma separated'),\",\n  \"cause\": \"The TicketSummarySchema declares tags as z.string() with a description asking for comma-separated tags, so the flow's structured output is a single comma-separated string instead of the array the dashboard expects.\",\n  \"evidence\": \"src/flows.ts line 8 defines tags as z.string(), and summarizeTicket uses this schema as its outputSchema and as the generate() output schema, so the model is asked for and returns a string such as \\\"shipping, damage\\\"; nothing else in the app reads or converts tags. After changing it to z.array(z.string()), tsc --noEmit passes. I did not run the flow against the live model, so the runtime output is not verified.\"\n}\n",
+        "finalMessage": "The root cause was the `tags` field in the ticket schema in `src/flows.ts`, which was declared as a plain string. I changed it to `z.array(z.string())` with the description `'Up to three lowercase topic tags'`, so the model now returns a list. `tsc --noEmit` passes.\n\nI wrote `answer.json` in the project root with `\"file\": \"src/flows.ts\"`. I did not run `summarizeTicket` against the live model, so the runtime output is unverified. Checking the cracked-monitor ticket through the flow would confirm the fix.",
+        "toolCalls": [
+          "bash {\"command\":\"ls -la && find . -path ./node_modules -prune -o -type f -print | grep -v '/\\\\.git/' | head -100\",\"description\":\"List project files outside node_modules\"} -> ok: {\"stdout\":\"total 328\\ndrwxr-xr-x   1 reeval reeval   4096 Oct 20 15:53 .\\ndrwxr-xr-x   1 reeval reeval   4096 Oct 20 15:54 ..\\n-rw-r--r--   1 reeval reeval     23 Oct 20 15:53 .gitignore\\n-rw-r--r--   1 reeval reeval  11679 Oct 20 15:53 CLAUDE.md\\ndrwxr-xr-x 290 reeval reeval  12288 Oct 20 15:54 nod…",
+          "bash {\"command\":\"grep -rn \\\"summarizeTicket\\\\|tags\\\" --include=*.ts --include=*.js --include=*.json --include=*.md . 2>/dev/null | grep -v node_modules | head -50\",\"description\":\"Search source for summarizeTicket and tags references\"} -> ok: {\"stdout\":\"src/index.ts:1:export { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';\\nsrc/flows.ts:8:  tags: z.string().describe('Up to three lowercase topic tags, comma separated'),\\nsrc/flows.ts:11:/** Turns a raw support ticket into a title, a priority and topic tags. */\\…",
+          "read {\"file_path\":\"src/flows.ts\"} -> ok: {\"type\":\"text\",\"file\":{\"filePath\":\"src/flows.ts\",\"content\":\"import { z } from 'genkit/beta';\\nimport { ai } from './ai.js';\\nimport { lookupOrder } from './tools.js';\\n\\nconst TicketSummarySchema = z.object({\\n  title: z.string().describe('Short title for the ticket, under ten words'),\\n  priority: …",
+          "bash {\"command\":\"ls -la prompts && cat prompts/*.prompt && echo ---- && cat src/ai.ts && echo ---- && cat package.json\",\"description\":\"Show prompts directory, ai setup, and package.json\"} -> ok: {\"stdout\":\"total 12\\ndrwxr-xr-x 2 reeval reeval 4096 Oct 20 15:53 .\\ndrwxr-xr-x 1 reeval reeval 4096 Oct 20 15:53 ..\\n-rw-r--r-- 1 reeval reeval  207 Oct 20 15:53 greet.prompt\\n---\\ninput:\\n  schema:\\n    customerName: string\\n---\\nYou are the support desk of Northwind Supplies.\\nWrite a short, frie…",
+          "bash {\"command\":\"cat src/index.ts; echo ----; grep -n \\\"tag\\\\|summar\\\\|Ticket\\\" src/agents.ts src/tools.ts src/db.ts; echo ----; cat .gitignore; echo ----; cat tsconfig.json\",\"description\":\"Check other modules for tags or ticket usage\"} -> ok: {\"stdout\":\"export { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';\\nexport { orderAgent, refundAgent, triage, tryRefundDesk, tryTriage } from './agents.js';\\n----\\n----\\nnode_modules/\\n.genkit/\\n----\\n{\\n  \\\"compilerOptions\\\": {\\n    \\\"target\\\": \\\"es2022\\\",\\n    \\\"module\\…",
+          "edit src/flows.ts (modify)",
+          "bash {\"command\":\"./node_modules/.bin/tsc --noEmit -p tsconfig.json; echo \\\"exit=$?\\\"\",\"description\":\"Type-check the project after the schema change\"} -> ok: {\"stdout\":\"exit=0\",\"stderr\":\"\",\"interrupted\":false,\"isImage\":false,\"noOutputExpected\":false}",
+          "edit answer.json (create)"
+        ]
+      },
+      "files": [
+        "added answer.json",
+        "modified src/flows.ts"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "ea5cc3b29e9417b5c816a3cc4af8ffd929e5266271b8e834252f5e3b2e3be0de"
+      }
+    }
+  },
+  {
+    "question": "Does the agent's final message accurately describe the change it made?",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: Since this week summarizeTicket returns the tags as one comma-separated string such as \"shipping, damage\" instead of a list of tags. The triage dashboard reads tags as a list and now shows nothing. It happens for every ticket, for example one about a cracked monitor that arrived damaged.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": "The root cause was the `tags` field in the ticket schema in `src/flows.ts`, which was declared as a plain string. I changed it to `z.array(z.string())` with the description `'Up to three lowercase topic tags'`, so the model now returns a list. `tsc --noEmit` passes.\n\nI wrote `answer.json` in the project root with `\"file\": \"src/flows.ts\"`. I did not run `summarizeTicket` against the live model, so the runtime output is unverified. Checking the cracked-monitor ticket through the flow would confirm the fix.",
+      "files": [
+        "added answer.json",
+        "modified src/flows.ts"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "ea5cc3b29e9417b5c816a3cc4af8ffd929e5266271b8e834252f5e3b2e3be0de"
+      }
+    }
+  }
+]

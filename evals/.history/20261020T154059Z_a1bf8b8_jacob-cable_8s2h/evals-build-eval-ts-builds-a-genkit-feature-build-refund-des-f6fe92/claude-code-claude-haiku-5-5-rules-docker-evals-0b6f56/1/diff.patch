@@ -1,0 +1,60 @@
+diff --git a/src/agents.ts b/src/agents.ts
+index e69de29..2f007f8 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -0,0 +1,48 @@
++import { z } from 'genkit/beta';
++import { ai } from './ai.js';
++import { createRefund } from './db.js';
++import { lookupOrder } from './tools.js';
++
++const approveRefund = ai.defineInterrupt({
++  name: 'approveRefund',
++  description:
++    'Asks a human to approve refunding an order. Call it once per refund request, after lookupOrder shows the order is refundable. Returns the human decision.',
++  inputSchema: z.object({
++    orderId: z.string().describe('The order id, for example A-1001'),
++    amount: z.number().describe('The amount to refund'),
++    reason: z.string().describe("The customer's reason for the refund"),
++  }),
++  outputSchema: z.object({
++    approved: z.boolean(),
++    note: z.string().optional(),
++  }),
++});
++
++const issueRefund = ai.defineTool(
++  {
++    name: 'issueRefund',
++    description: 'Issues a refund for an order and returns the refund id. Only call it after approveRefund returned approved: true.',
++    inputSchema: z.object({
++      orderId: z.string().describe('The order id, for example A-1001'),
++      amount: z.number().describe('The amount to refund'),
++    }),
++    outputSchema: z.string(),
++  },
++  async ({ orderId, amount }) => createRefund(orderId, amount),
++);
++
++export const refundAgent = ai.defineAgent({
++  name: 'refundAgent',
++  description: 'Handles refund requests: checks the order, gets human approval, then issues the refund.',
++  system:
++    'You are the refund desk of Northwind Supplies. Handle refund requests in this order:\n' +
++    '1. Look the order up with lookupOrder. If it does not exist, tell the customer and stop. ' +
++    'If it is not refundable, tell the customer it cannot be refunded and stop.\n' +
++    '2. Call approveRefund with the order id, the refund amount (the order total unless the customer asked for less) ' +
++    'and the customer\'s reason. Do not issue the refund yet.\n' +
++    '3. Only if approveRefund returned approved: true, call issueRefund with the same order id and amount, ' +
++    'then tell the customer the refund id.\n' +
++    '4. If approveRefund returned approved: false, do not call issueRefund. Tell the customer briefly that the refund was not approved.\n' +
++    'Keep every reply to the customer to one or two sentences.',
++  tools: [lookupOrder, approveRefund, issueRefund],
++});
+diff --git a/src/index.ts b/src/index.ts
+index cda694e..cb68141 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1 +1,2 @@
++export { refundAgent } from './agents.js';
+ export { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';

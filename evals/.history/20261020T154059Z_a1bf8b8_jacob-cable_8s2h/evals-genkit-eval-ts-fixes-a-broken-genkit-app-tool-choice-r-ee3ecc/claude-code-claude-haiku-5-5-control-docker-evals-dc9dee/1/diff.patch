@@ -1,0 +1,25 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..96d7b4d
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/agents.ts",
++  "snippet": "toolChoice: 'required',",
++  "cause": "refundAgent sets toolChoice to 'required', which Gemini maps to mode ANY, so the model must call a tool on every turn and cannot write the closing reply after approveRefund returns a decline.",
++  "evidence": "Repro against the live model: after resuming approveRefund with {approved: false, note: 'Duplicate claim'}, the agent kept emitting tool calls and threw 'ABORTED: Exceeded maximum tool call iterations (6)'. After changing to toolChoice: 'auto', the same flow finished with stop and a text reply (\"...not approved ... duplicate claim.\") on three consecutive runs, and tsc --noEmit passes."
++}
+diff --git a/src/agents.ts b/src/agents.ts
+index 7283e38..34e0ee7 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -40,7 +40,7 @@ export const refundAgent = ai.defineAgent({
+   description: 'Handles refund requests for an order. Refunds need human approval.',
+   system: 'Look up the order, then call approveRefund, then issueRefund only if approved. Never refund without approval.',
+   tools: [lookupOrder, approveRefund, issueRefund],
+-  toolChoice: 'required',
++  toolChoice: 'auto',
+   maxTurns: 6,
+   store,
+ });

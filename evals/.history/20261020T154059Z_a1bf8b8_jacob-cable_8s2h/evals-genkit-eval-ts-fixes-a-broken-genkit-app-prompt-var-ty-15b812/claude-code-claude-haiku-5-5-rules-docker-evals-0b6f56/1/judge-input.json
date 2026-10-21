@@ -1,0 +1,54 @@
+[
+  {
+    "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: The greet flow for customer \"Ada\" returns a generic welcome like \"Welcome to Northwind Supplies!\" that never uses her name. Other customers get the same nameless greeting. I expected a one-sentence welcome that addresses the customer by name.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": {
+        "bug": {
+          "name": "prompt-var-typo",
+          "file": "prompts/greet.prompt",
+          "healthy": "{{customerName}}",
+          "broken": "{{custmerName}}"
+        },
+        "answer": "{\n  \"file\": \"prompts/greet.prompt\",\n  \"snippet\": \"Write a short, friendly, one-sentence welcome for the customer named {{custmerName}}.\",\n  \"cause\": \"The greet prompt's template variable is misspelled as {{custmerName}}, so Dotprompt renders it as empty and the model never receives the customer's name even though the flow passes customerName.\",\n  \"evidence\": \"Rendering prompts/greet.prompt with input { customerName: 'Ada' } produced 'the customer named .' with the typo and 'the customer named Ada.' after correcting it to {{customerName}}, which matches the input key in the prompt's input schema (line 4) and in flows.ts:46.\"\n}\n",
+        "finalMessage": "The root cause is a typo in the greet prompt template: `prompts/greet.prompt` used `{{custmerName}}` where the input is `customerName`. Dotprompt rendered the missing variable as empty, so the model never received the name. I changed it to `{{customerName}}`.\n\nRendering the template with `customerName: 'Ada'` confirmed it: the old version produced \"for the customer named .\" and the fixed version produces \"named Ada.\" I didn't call the model or run the Genkit CLI. `package.json` is untouched, and `answer.json` is written to the project root.",
+        "toolCalls": [
+          "bash {\"command\":\"ls -la && find . -path ./node_modules -prune -o -type f -print | grep -v node_modules | head -100\",\"description\":\"List workspace files excluding node_modules\"} -> ok: {\"stdout\":\"total 328\\ndrwxr-xr-x   1 reeval reeval   4096 Oct 20 15:45 .\\ndrwxr-xr-x   1 reeval reeval   4096 Oct 20 15:45 ..\\n-rw-r--r--   1 reeval reeval     23 Oct 20 15:45 .gitignore\\n-rw-r--r--   1 reeval reeval  11679 Oct 20 15:45 CLAUDE.md\\ndrwxr-xr-x 290 reeval reeval  12288 Oct 20 15:45 nod…",
+          "bash {\"command\":\"grep -rn -i \\\"greet\\\\|welcome\\\\|Northwind\\\" --exclude-dir=node_modules . | head -50\",\"description\":\"Search for greet and welcome references\"} -> ok: {\"stdout\":\"src/agents.ts:31:    'You are the Northwind Supplies order desk. Answer questions about orders using the lookupOrder tool. ' +\\nsrc/flows.ts:17:        'You triage support tickets for Northwind Supplies, an office supplies retailer. ' +\\nsrc/flows.ts:33:        'You are the Northwind Supp…",
+          "read {\"file_path\":\"prompts/greet.prompt\"} -> ok: {\"type\":\"text\",\"file\":{\"filePath\":\"prompts/greet.prompt\",\"content\":\"---\\ninput:\\n  schema:\\n    customerName: string\\n---\\nYou are the support desk of Northwind Supplies.\\nWrite a short, friendly, one-sentence welcome for the customer named {{custmerName}}.\\nAddress them by name.\\n\",\"numLines\":9,\"st…",
+          "read {\"file_path\":\"src/flows.ts\"} -> ok: {\"type\":\"text\",\"file\":{\"filePath\":\"src/flows.ts\",\"content\":\"import { z } from 'genkit/beta';\\nimport { ai } from './ai.js';\\nimport { lookupOrder } from './tools.js';\\n\\nconst TicketSummarySchema = z.object({\\n  title: z.string().describe('Short title for the ticket, under ten words'),\\n  priority: …",
+          "read {\"file_path\":\"src/ai.ts\"} -> ok: {\"type\":\"text\",\"file\":{\"filePath\":\"src/ai.ts\",\"content\":\"import { fileURLToPath } from 'node:url';\\nimport { googleAI } from '@genkit-ai/google-genai';\\nimport { genkit } from 'genkit/beta';\\n\\n/** The Genkit instance every flow and agent in this app shares. */\\nexport const ai = genkit({\\n  plugins…",
+          "edit prompts/greet.prompt (modify)",
+          "bash {\"command\":\"ls node_modules | grep -i dotprompt; ls node_modules/@genkit-ai 2>/dev/null\",\"description\":\"Check whether dotprompt is installed for rendering\"} -> ok: {\"stdout\":\"dotprompt\\nai\\ncore\\nfirebase\\ngoogle-cloud\\ngoogle-genai\\nmiddleware\",\"stderr\":\"\",\"interrupted\":false,\"isImage\":false,\"noOutputExpected\":false}",
+          "bash {\"command\":\"node --input-type=module -e \\\"\\nimport { Dotprompt } from 'dotprompt';\\nimport { readFileSync } from 'node:fs';\\nconst dp = new Dotprompt();\\nconst src = readFileSync('prompts/greet.prompt', 'utf8');\\nconst rendered = await dp.render(src, { input: { customerName: 'Ada' } });\\nconsole.log… -> ok: {\"stdout\":\"(node:1490) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\\n(Use `node --trace-warnings ...` to show where the warning was created)\\n\\\"You are the support desk of Northwind Supplies.\\\\nWrite a short, friendly, one-sentence welcome for the cust…",
+          "edit answer.json (create)"
+        ]
+      },
+      "files": [
+        "added answer.json",
+        "modified prompts/greet.prompt"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "e734acd256618c79031241bb5afb0412d628afab68eeea354d6591b8bf0ee95d"
+      }
+    }
+  },
+  {
+    "question": "Does the agent's final message accurately describe the change it made?",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: The greet flow for customer \"Ada\" returns a generic welcome like \"Welcome to Northwind Supplies!\" that never uses her name. Other customers get the same nameless greeting. I expected a one-sentence welcome that addresses the customer by name.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": "The root cause is a typo in the greet prompt template: `prompts/greet.prompt` used `{{custmerName}}` where the input is `customerName`. Dotprompt rendered the missing variable as empty, so the model never received the name. I changed it to `{{customerName}}`.\n\nRendering the template with `customerName: 'Ada'` confirmed it: the old version produced \"for the customer named .\" and the fixed version produces \"named Ada.\" I didn't call the model or run the Genkit CLI. `package.json` is untouched, and `answer.json` is written to the project root.",
+      "files": [
+        "added answer.json",
+        "modified prompts/greet.prompt"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "e734acd256618c79031241bb5afb0412d628afab68eeea354d6591b8bf0ee95d"
+      }
+    }
+  }
+]

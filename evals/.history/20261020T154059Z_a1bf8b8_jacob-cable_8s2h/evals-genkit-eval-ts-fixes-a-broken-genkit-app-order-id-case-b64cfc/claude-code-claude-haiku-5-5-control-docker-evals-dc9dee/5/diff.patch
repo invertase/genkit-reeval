@@ -1,0 +1,11 @@
+diff --git a/src/tools.ts b/src/tools.ts
+index 86c44fb..cafb4a7 100644
+--- a/src/tools.ts
++++ b/src/tools.ts
+@@ -20,5 +20,5 @@ export const lookupOrder = ai.defineTool(
+       })
+       .nullable(),
+   },
+-  async ({ orderId }) => ORDERS[orderId] ?? null,
++  async ({ orderId }) => ORDERS[orderId.trim().toUpperCase()] ?? null,
+ );

@@ -1,0 +1,23 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..a6de17e
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "prompts/greet.prompt",
++  "snippet": "Write a short, friendly, one-sentence welcome for the customer named {{custmerName}}.",
++  "cause": "The greet prompt template references the misspelled variable {{custmerName}}, which is never supplied, so Handlebars renders it as empty and the model receives no customer name, while the flow correctly passes customerName.",
++  "evidence": "The flow in src/flows.ts calls ai.prompt('greet')({ customerName }) and the prompt's input schema declares customerName, but prompts/greet.prompt was the only place using custmerName (grep). Rendering the original template with the installed handlebars gives 'named .' for customerName 'Ada', so the model gets no name and returns a generic welcome. After correcting the placeholder to {{customerName}}, the template reads 'named {{customerName}}.' and the input is substituted. I did not run the Genkit runtime or call the model, so the end-to-end greeting is unverified."
++}
+diff --git a/prompts/greet.prompt b/prompts/greet.prompt
+index c8ce110..688841d 100644
+--- a/prompts/greet.prompt
++++ b/prompts/greet.prompt
+@@ -4,5 +4,5 @@ input:
+     customerName: string
+ ---
+ You are the support desk of Northwind Supplies.
+-Write a short, friendly, one-sentence welcome for the customer named {{custmerName}}.
++Write a short, friendly, one-sentence welcome for the customer named {{customerName}}.
+ Address them by name.

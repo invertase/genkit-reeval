@@ -1,0 +1,25 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..0b4bbb6
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/agents.ts",
++  "snippet": "use: [agents({ agents: ['orderAgent'], maxDelegations: 3, historyLength: 4 })],",
++  "cause": "The triage agent's agents() middleware lists only orderAgent, so it creates no delegation tool for refundAgent and the model has nowhere to hand refund requests.",
++  "evidence": "Before the fix, triage.chat().send('I want a refund for order A-1001, it arrived broken') replied 'I cannot process refund requests directly'; the triage system prompt tells it to delegate refunds to refundAgent, and the @genkit-ai/middleware agents() source creates one delegate tool per listed agent. After adding 'refundAgent' to the list, the same message delegates and reaches the refund desk, which looks up the order and asks for approval."
++}
+diff --git a/src/agents.ts b/src/agents.ts
+index 75babdd..34e0ee7 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -52,7 +52,7 @@ export const triage = ai.defineAgent({
+   store,
+   maxTurns: 5,
+   toolChoice: 'auto',
+-  use: [agents({ agents: ['orderAgent'], maxDelegations: 3, historyLength: 4 })],
++  use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 3, historyLength: 4 })],
+ });
+ 
+ /** Lets the CLI exercise triage: `genkit flow:run` runs flows, not agents. */

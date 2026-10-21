@@ -1,0 +1,24 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..8f2ee84
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/agents.ts",
++  "snippet": "maxTurns: 5,",
++  "cause": "The triage agent that receives customer chat messages was defined without a `store`, so it is client-managed and rejects any `sessionId` with FAILED_PRECONDITION, meaning a follow-up turn cannot resume the chat.",
++  "evidence": "Calling triage.chat({ sessionId }).send(...) before the fix threw \"FAILED_PRECONDITION: Cannot use 'sessionId' with agent 'triage': this agent has no store configured\", while refundAgent (which has `store`) accepted the same sessionId; after adding `store,` to triage the sessionId is accepted and a pointer file .genkit/sessions/global/.pointers/repro-session-1.json is written; `tsc --noEmit` passes."
++}
+diff --git a/src/agents.ts b/src/agents.ts
+index 4aefbb2..13bbf70 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -50,6 +50,7 @@ export const triage = ai.defineAgent({
+   name: 'triage',
+   system: 'Delegate order questions to orderAgent and refund requests to refundAgent. Do not answer them yourself.',
+   maxTurns: 5,
++  store,
+   toolChoice: 'auto',
+   use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 3, historyLength: 4 })],
+ });

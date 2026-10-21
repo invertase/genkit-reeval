@@ -1,0 +1,23 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..096fb0d
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "prompts/greet.prompt",
++  "snippet": "Write a short, friendly, one-sentence welcome for the customer named {{custmerName}}.",
++  "cause": "The greet.prompt template references the misspelled variable {{custmerName}}, which doesn't match the customerName input the greet flow passes in, so the name renders as empty and the model writes a generic welcome.",
++  "evidence": "src/flows.ts passes { customerName } to ai.prompt('greet'), and the prompt's input schema declares customerName, yet the template body uses {{custmerName}}; grep finds no other use of the misspelled name after the fix, and the template line is the only place the customer name enters the prompt."
++}
+diff --git a/prompts/greet.prompt b/prompts/greet.prompt
+index c8ce110..688841d 100644
+--- a/prompts/greet.prompt
++++ b/prompts/greet.prompt
+@@ -4,5 +4,5 @@ input:
+     customerName: string
+ ---
+ You are the support desk of Northwind Supplies.
+-Write a short, friendly, one-sentence welcome for the customer named {{custmerName}}.
++Write a short, friendly, one-sentence welcome for the customer named {{customerName}}.
+ Address them by name.

@@ -1,0 +1,25 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..8ff3dd0
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/agents.ts",
++  "snippet": "toolChoice: 'required',",
++  "cause": "The refundAgent sets toolChoice to 'required', which forces Gemini (functionCallingConfig mode ANY) to emit a tool call on every model turn, so after approveRefund returns declined the model cannot write a text reply and instead re-calls approveRefund, keeps calling lookupOrder, or exhausts maxTurns and fails.",
++  "evidence": "src/agents.ts:43 is the only agent with toolChoice 'required' (triage uses 'auto', line 54); node_modules/@genkit-ai/google-genai/src/googleai/gemini.ts:801-806 maps request.toolChoice to functionCallingConfig.mode, and converters.ts:372-374 maps 'required' to FunctionCallingMode.ANY, which forces a function call; the symptoms (fail, re-ask approval, keep working on the order) match a tool-forced loop capped by maxTurns: 6. Changing it to 'auto' lets the model answer in text after a decline; tsc --noEmit passes. The live Gemini run was not executed, so this is confirmed by code reading rather than a reproduced run."
++}
+diff --git a/src/agents.ts b/src/agents.ts
+index 7283e38..34e0ee7 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -40,7 +40,7 @@ export const refundAgent = ai.defineAgent({
+   description: 'Handles refund requests for an order. Refunds need human approval.',
+   system: 'Look up the order, then call approveRefund, then issueRefund only if approved. Never refund without approval.',
+   tools: [lookupOrder, approveRefund, issueRefund],
+-  toolChoice: 'required',
++  toolChoice: 'auto',
+   maxTurns: 6,
+   store,
+ });

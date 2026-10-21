@@ -1,0 +1,24 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..231333f
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/flows.ts",
++  "snippet": "config: { stopSequences: ['\\n'] },",
++  "cause": "The draftReply call passes stopSequences: ['\\n'], so the model ends generation at the first newline, leaving only the greeting line, while the finishReason still reports a normal stop.",
++  "evidence": "A grep of src and prompts shows this is the only stopSequences setting in the app (src/flows.ts:64), and src/ai.ts sets no output limit or other stop sequence to explain truncation. The other flows (chat, orderStatus) do not set stop sequences. I did not make a live model call to reproduce it, so this rests on code inspection."
++}
+diff --git a/src/flows.ts b/src/flows.ts
+index 7c60e95..1fb1efb 100644
+--- a/src/flows.ts
++++ b/src/flows.ts
+@@ -61,7 +61,6 @@ export const draftReply = ai.defineFlow(
+         'You are a support agent at Northwind Supplies. Draft a complete, polite reply to the customer: ' +
+         'greet them, acknowledge the problem, explain the next steps in two or three sentences, and sign off as the Northwind support team.',
+       prompt: ticket,
+-      config: { stopSequences: ['\n'] },
+     });
+     return { text: response.text, finishReason: response.finishReason };
+   },

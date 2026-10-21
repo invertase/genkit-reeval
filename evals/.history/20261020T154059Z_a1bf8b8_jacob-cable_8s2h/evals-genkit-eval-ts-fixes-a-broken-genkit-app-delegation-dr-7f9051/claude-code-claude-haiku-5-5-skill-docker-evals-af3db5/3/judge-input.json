@@ -1,0 +1,58 @@
+[
+  {
+    "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: In the support chat I write \"I want a refund for order A-1001, it arrived broken\" and the assistant never hands it to the refund desk. It says it cannot process refunds or just asks me for more details, and no refund approval request ever shows up. Questions about where an order is still get answered correctly. Refunds worked through this chat before.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": {
+        "bug": {
+          "name": "delegation-dropped",
+          "file": "src/agents.ts",
+          "healthy": "agents: ['orderAgent', 'refundAgent']",
+          "broken": "agents: ['orderAgent']"
+        },
+        "answer": "{\n  \"file\": \"src/agents.ts\",\n  \"snippet\": \"use: [agents({ agents: ['orderAgent'], maxDelegations: 3, historyLength: 4 })],\",\n  \"cause\": \"The triage agent's agents() middleware lists only 'orderAgent', so it gets no delegate tool for refundAgent and cannot hand refund requests off, even though its system prompt tells it to.\",\n  \"evidence\": \"With the original list, tryTriage on 'I want a refund for order A-1001, it arrived broken' returned 'I cannot directly process refunds. Please contact the refund department for assistance.' With ['orderAgent', 'refundAgent'], the same message returned a delegation to the refund agent and the session store recorded an approveRefund interrupt; 'Where is order A-1002?' still answered with the correct status, ETA and tracking. npx tsc --noEmit passes.\"\n}\n",
+        "finalMessage": "The root cause is in `src/agents.ts`: the `triage` agent's `agents()` middleware only lists `orderAgent`, so it has no delegation tool for `refundAgent`. Refund requests get a \"cannot process refunds\" reply, while order questions still work.\n\nI changed the list to `['orderAgent', 'refundAgent']` at `src/agents.ts:55`. Before the fix, the refund message got \"I cannot directly process refunds.\" After it, the same message delegated to the refund agent and recorded an `approveRefund` interrupt. The order question still returned the correct status. `tsc --noEmit` passes, and `package.json` is unchanged.\n\nI wrote `answer.json` to the project root with `file: \"src/agents.ts\"` and the original line as the snippet. I also deleted my scratch files and the `.genkit/` session directory my test runs created.",
+        "toolCalls": [
+          "bash {\"command\":\"pwd && ls -la && find . -path ./node_modules -prune -o -type f -print | grep -v '/\\\\.git/' | head -200\",\"description\":\"List project files\"} -> ok: {\"stdout\":\".\\ntotal 316\\ndrwxr-xr-x   1 reeval reeval   4096 Oct 20 16:05 .\\ndrwxr-xr-x   1 reeval reeval   4096 Oct 20 16:05 ..\\n-rw-r--r--   1 reeval reeval     23 Oct 20 16:05 .gitignore\\ndrwxr-xr-x 290 reeval reeval  12288 Oct 20 16:05 node_modules\\n-rw-r--r--   1 reeval reeval 274703 Oct 20 16:…",
+          "bash {\"command\":\"cat package.json; echo ----; cat src/index.ts; echo ----; cat src/flows.ts; echo ----; cat src/ai.ts; echo ----; cat src/agents.ts; echo ----; cat src/tools.ts; echo ----; cat src/db.ts; echo ----; cat prompts/greet.prompt; echo ----; head -c 1500 src/orders.json\",\"description\":\"Read all… -> ok: {\"stdout\":\"{\\n  \\\"name\\\": \\\"support-desk\\\",\\n  \\\"version\\\": \\\"1.0.0\\\",\\n  \\\"private\\\": true,\\n  \\\"type\\\": \\\"module\\\",\\n  \\\"scripts\\\": {\\n    \\\"dev\\\": \\\"tsx src/index.ts\\\"\\n  },\\n  \\\"dependencies\\\": {\\n    \\\"@genkit-ai/google-genai\\\": \\\"1.42.0\\\",\\n    \\\"@genkit-ai/middleware\\\": \\\"0.10.0\\\",\\n    \\\"gen…",
+          "bash {\"command\":\"ls node_modules/@genkit-ai/middleware/ && cat node_modules/@genkit-ai/middleware/package.json | head -30 && grep -rn \\\"agents\\\" node_modules/@genkit-ai/middleware/lib/*.js 2>/dev/null | head -60; ls -la .gitignore && cat .gitignore\",\"description\":\"Inspect the agents middleware package\"} -> ok: {\"stdout\":\"LICENSE\\nREADME.md\\nexamples\\nlib\\nnode_modules\\npackage.json\\nsrc\\ntests\\ntypedoc.json\\n{\\n  \\\"name\\\": \\\"@genkit-ai/middleware\\\",\\n  \\\"description\\\": \\\"Middleware for Genkit\\\",\\n  \\\"keywords\\\": [\\n    \\\"genkit\\\",\\n    \\\"genkit-plugin\\\",\\n    \\\"google cloud\\\",\\n    \\\"google ai\\\",\\n    \\\"a…",
+          "bash {\"command\":\"sed -n 60,110p node_modules/@genkit-ai/middleware/lib/agents.js; sed -n 245,262p node_modules/@genkit-ai/middleware/lib/agents.js\",\"description\":\"Read agents middleware delegation setup\"} -> ok: {\"stdout\":\"  const random = Math.random().toString(36).slice(2, 6);\\n  return `${agentName}_${random}`;\\n}\\nconst agents = (0, import_genkit.generateMiddleware)(\\n  {\\n    name: \\\"agents\\\",\\n    description: \\\"Injects per-agent delegation tools for calling registered sub-agents.\\\",\\n    configSchema…",
+          "edit src/agents.ts (modify)",
+          "bash {\"command\":\"npx tsc --noEmit -p tsconfig.json; echo \\\"tsc exit $?\\\"; env | grep -iE 'gemini|google_api|genai' | sed 's/=.*/=<set>/'\",\"description\":\"Type-check and check for API key env vars\"} -> ok: {\"stdout\":\"(node:1660) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\\n(Use `node --trace-warnings ...` to show where the warning was created)\\nnpm notice\\nnpm notice New major version of npm available! 11.20.0 -> 12.2.0\\nnpm notice Changelog: https://gi…",
+          "bash {\"command\":\"mkdir -p /tmp/e2e && cat > /tmp/e2e/run.mts <<'EOF'\\nimport { tryTriage } from 'src/agents.ts';\\nconst msgs = [\\n  'I want a refund for order A-1001, it arrived broken',\\n  'Where is order A-1002?',\\n];\\nfor (const m of msgs) {\\n  try {\\n    console.log('USER:', m);\\n    console.log('BOT… -> ok: {\"stdout\":\"USER: I want a refund for order A-1001, it arrived broken\\nBOT: Your refund request for order A-1001 has been submitted. Refunds need human approval.\\nUSER: Where is order A-1002?\\nBOT: Order A-1002 is currently processing. The estimated delivery is 2026-10-25. There is no tracking code a…",
+          "edit src/agents.ts (modify)",
+          "bash {\"command\":\"cat > /tmp/e2e/before.mts <<'EOF'\\nimport { tryTriage } from 'src/agents.ts';\\nconsole.log('BOT:', await tryTriage('I want a refund for order A-1001, it arrived broken'));\\nEOF\\ncd . && timeout 300 npx tsx /tmp/e2e/before.mts 2>&1 | grep -v -E 'UNDICI|trace-warnings|npm notice'; echo ---… -> ok: {\"stdout\":\"BOT: I cannot directly process refunds. Please contact the refund department for assistance.\\n---\\n.genkit:\\nsessions\\n\\n.genkit/sessions:\\nglobal\\n\\n.genkit/sessions/global:\\n761ec5e7-875c-4fde-a64b-2280b8b8cfbc.json\\na2b9968f-50ab-442c-83cf-0649f617e3a5.json\\nde29b90b-251f-41ac-8399-2f1…",
+          "edit src/agents.ts (modify)",
+          "bash {\"command\":\"rm -rf .genkit/sessions && timeout 300 npx tsx /tmp/e2e/before.mts 2>&1 | grep -v -E 'UNDICI|trace-warnings|npm notice'; echo ---; grep -rl approveRefund .genkit | head -3; grep -rho '\\\"approveRefund[^,]*' .genkit | head -3\",\"timeout\":320000,\"description\":\"Rerun refund with fix and look … -> ok: {\"stdout\":\"BOT: I have delegated your refund request for order A-1001 to the refund agent. They will process it for you.\\n---\\n.genkit/sessions/global/4ce9b80e-4fae-40cc-aa88-bbdb4c5f7470.json\\n\\\"approveRefund\\\"\",\"stderr\":\"\",\"interrupted\":false,\"isImage\":false,\"noOutputExpected\":false}",
+          "edit answer.json (create)",
+          "bash {\"command\":\"rm -rf /tmp/e2e .genkit && node -e \\\"JSON.parse(require('fs').readFileSync('answer.json','utf8')); console.log('answer.json valid')\\\" && grep -n \\\"agents({\\\" src/agents.ts && ls -la\",\"description\":\"Validate answer.json and clean up scratch files\"} -> ok: {\"stdout\":\"answer.json valid\\n(node:1879) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\\n(Use `node --trace-warnings ...` to show where the warning was created)\\n55:  use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 3, historyLength…"
+        ]
+      },
+      "files": [
+        "added answer.json",
+        "modified src/agents.ts"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "b6062dca3b8306b4771511a5e8583082395e48c75a219af9f506bfce4e5825a9"
+      }
+    }
+  },
+  {
+    "question": "Does the agent's final message accurately describe the change it made?",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: In the support chat I write \"I want a refund for order A-1001, it arrived broken\" and the assistant never hands it to the refund desk. It says it cannot process refunds or just asks me for more details, and no refund approval request ever shows up. Questions about where an order is still get answered correctly. Refunds worked through this chat before.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": "The root cause is in `src/agents.ts`: the `triage` agent's `agents()` middleware only lists `orderAgent`, so it has no delegation tool for `refundAgent`. Refund requests get a \"cannot process refunds\" reply, while order questions still work.\n\nI changed the list to `['orderAgent', 'refundAgent']` at `src/agents.ts:55`. Before the fix, the refund message got \"I cannot directly process refunds.\" After it, the same message delegated to the refund agent and recorded an `approveRefund` interrupt. The order question still returned the correct status. `tsc --noEmit` passes, and `package.json` is unchanged.\n\nI wrote `answer.json` to the project root with `file: \"src/agents.ts\"` and the original line as the snippet. I also deleted my scratch files and the `.genkit/` session directory my test runs created.",
+      "files": [
+        "added answer.json",
+        "modified src/agents.ts"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "b6062dca3b8306b4771511a5e8583082395e48c75a219af9f506bfce4e5825a9"
+      }
+    }
+  }
+]

@@ -1,0 +1,25 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..f394567
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/agents.ts",
++  "snippet": "toolChoice: 'required',",
++  "cause": "The refundAgent is configured with toolChoice 'required', which maps to Gemini's ANY mode, so after approveRefund returns a decline the model must keep making tool calls and can never send the final text reply, so it re-requests approval or loops until maxTurns is exhausted.",
++  "evidence": "Reproducing the flow against the real model with the original code: the customer message interrupts on approveRefund, and declining it makes the agent throw 'AgentError: ABORTED: Exceeded maximum tool call iterations (6)'. The Google GenAI converter maps 'required' to FunctionCallingMode.ANY (node_modules/@genkit-ai/google-genai/src/common/converters.ts:368-371). After changing it to 'auto' (matching triage), the same decline ends with finishReason 'stop' and the reply \"your refund for order A-1001 was not approved because of a duplicate claim\", repeated on a second run."
++}
+diff --git a/src/agents.ts b/src/agents.ts
+index 7283e38..34e0ee7 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -40,7 +40,7 @@ export const refundAgent = ai.defineAgent({
+   description: 'Handles refund requests for an order. Refunds need human approval.',
+   system: 'Look up the order, then call approveRefund, then issueRefund only if approved. Never refund without approval.',
+   tools: [lookupOrder, approveRefund, issueRefund],
+-  toolChoice: 'required',
++  toolChoice: 'auto',
+   maxTurns: 6,
+   store,
+ });

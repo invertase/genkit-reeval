@@ -1,0 +1,24 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..9b7321e
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/flows.ts",
++  "snippet": "returnToolRequests: true,",
++  "cause": "The orderStatus flow sets returnToolRequests: true on ai.generate, so Genkit hands back the model's lookupOrder tool call without executing it and the flow returns response text that is empty.",
++  "evidence": "node_modules/@genkit-ai/ai/lib/generate/action.js:343 returns the response early when rawRequest.returnToolRequests is set, before any tool is run; the model's reply is a functionCall part with no text, so text is \"\". Removing the option makes Genkit run lookupOrder and continue the loop until the model produces text. Not verified end-to-end because no Gemini API call was run; tsc --noEmit passes."
++}
+diff --git a/src/flows.ts b/src/flows.ts
+index 7dc7b7e..1fb1efb 100644
+--- a/src/flows.ts
++++ b/src/flows.ts
+@@ -34,7 +34,6 @@ export const orderStatus = ai.defineFlow(
+         'Quote the status, ETA and tracking code exactly as the tool returns them. If an order is not found, say so.',
+       prompt: question,
+       tools: [lookupOrder],
+-      returnToolRequests: true,
+     });
+     return text;
+   },

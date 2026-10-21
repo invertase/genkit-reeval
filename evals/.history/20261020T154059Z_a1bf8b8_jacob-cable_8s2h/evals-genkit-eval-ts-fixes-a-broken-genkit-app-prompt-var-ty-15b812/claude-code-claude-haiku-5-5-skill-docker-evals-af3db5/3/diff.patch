@@ -1,0 +1,23 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..2b6d832
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "prompts/greet.prompt",
++  "snippet": "{{custmerName}}",
++  "cause": "The greet.prompt template references the misspelled variable {{custmerName}}, which is not the declared input customerName, so Handlebars renders it as empty and the model never receives the customer's name.",
++  "evidence": "prompts/greet.prompt declares input schema customerName: string and the flow in src/flows.ts passes { customerName } to ai.prompt('greet'), yet line 7 interpolates {{custmerName}} (cat -A confirms the misspelling); with no such variable the model gets no name, which matches the nameless 'Welcome to Northwind Supplies!' output for every customer."
++}
+diff --git a/prompts/greet.prompt b/prompts/greet.prompt
+index c8ce110..688841d 100644
+--- a/prompts/greet.prompt
++++ b/prompts/greet.prompt
+@@ -4,5 +4,5 @@ input:
+     customerName: string
+ ---
+ You are the support desk of Northwind Supplies.
+-Write a short, friendly, one-sentence welcome for the customer named {{custmerName}}.
++Write a short, friendly, one-sentence welcome for the customer named {{customerName}}.
+ Address them by name.

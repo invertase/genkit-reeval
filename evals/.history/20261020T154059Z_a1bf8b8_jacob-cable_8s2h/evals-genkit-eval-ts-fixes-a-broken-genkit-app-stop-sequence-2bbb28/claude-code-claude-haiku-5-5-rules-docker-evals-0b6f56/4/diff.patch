@@ -1,0 +1,24 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..652ecc7
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/flows.ts",
++  "snippet": "config: { stopSequences: ['\\n'] },",
++  "cause": "The draftReply flow passes stopSequences: ['\\n'] to ai.generate, so the model halts generation at the first newline and returns a reply truncated to its first line with finishReason 'stop', which looks like a normal completion.",
++  "evidence": "src/flows.ts is the only place in the app that sets stopSequences (line 64, inside draftReply only; the other flows do not set it), and the only other config in the app is the model default in src/ai.ts, which sets no stop sequence or token cap; the reported symptom (reply cut right after 'Dear customer,' or 'Hi there,' with no error) matches a '\\n' stop sequence firing on the first line break, and the plugin's type definitions show stopSequences is forwarded to the Gemini generation config. I did not make a live model call to reproduce it."
++}
+diff --git a/src/flows.ts b/src/flows.ts
+index 7c60e95..1fb1efb 100644
+--- a/src/flows.ts
++++ b/src/flows.ts
+@@ -61,7 +61,6 @@ export const draftReply = ai.defineFlow(
+         'You are a support agent at Northwind Supplies. Draft a complete, polite reply to the customer: ' +
+         'greet them, acknowledge the problem, explain the next steps in two or three sentences, and sign off as the Northwind support team.',
+       prompt: ticket,
+-      config: { stopSequences: ['\n'] },
+     });
+     return { text: response.text, finishReason: response.finishReason };
+   },

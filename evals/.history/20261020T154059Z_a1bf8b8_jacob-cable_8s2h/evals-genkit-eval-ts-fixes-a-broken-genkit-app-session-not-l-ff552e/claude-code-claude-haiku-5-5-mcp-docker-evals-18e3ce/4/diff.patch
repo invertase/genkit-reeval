@@ -1,0 +1,24 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..d35715b
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/agents.ts",
++  "snippet": "maxTurns: 5,",
++  "cause": "The customer-facing triage agent is defined without a session store, so Genkit cannot persist its snapshots and loadChat({ sessionId }) fails with FAILED_PRECONDITION, forcing the customer to repeat the order number.",
++  "evidence": "Calling triage.loadChat({ sessionId }) on the unpatched agent threw \"getSnapshotData requires a persistent store. Provide a 'store' when defining 'triage'\", while refundAgent, which defines store, returned the normal \"Snapshot session ... not found\" for the same lookup; the Genkit agent source (@genkit-ai/ai/lib/agent.js:332) also rejects sessionId for agents with no store. After adding the shared store to triage, the same lookup no longer raises the precondition error."
++}
+diff --git a/src/agents.ts b/src/agents.ts
+index 4aefbb2..3fec961 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -51,6 +51,7 @@ export const triage = ai.defineAgent({
+   system: 'Delegate order questions to orderAgent and refund requests to refundAgent. Do not answer them yourself.',
+   maxTurns: 5,
+   toolChoice: 'auto',
++  store,
+   use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 3, historyLength: 4 })],
+ });
+ 

@@ -1,0 +1,24 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..83c1349
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/flows.ts",
++  "snippet": "config: { stopSequences: ['\\n'] },",
++  "cause": "The draftReply flow sets stopSequences to a newline, so the model halts generation at the first line break and returns only the greeting.",
++  "evidence": "src/flows.ts is the only place in the codebase that sets stopSequences (grep found a single hit at line 64). A newline stop sequence ends output right after the first line, matching the reported 'Dear customer,' or 'Hi there,' replies, and the stop is reported as a normal finish reason, so there is no error. Removing it and type-checking with tsc --noEmit passes. The model was not run live, so the fix is confirmed by code inspection rather than an end-to-end run."
++}
+diff --git a/src/flows.ts b/src/flows.ts
+index 7c60e95..1fb1efb 100644
+--- a/src/flows.ts
++++ b/src/flows.ts
+@@ -61,7 +61,6 @@ export const draftReply = ai.defineFlow(
+         'You are a support agent at Northwind Supplies. Draft a complete, polite reply to the customer: ' +
+         'greet them, acknowledge the problem, explain the next steps in two or three sentences, and sign off as the Northwind support team.',
+       prompt: ticket,
+-      config: { stopSequences: ['\n'] },
+     });
+     return { text: response.text, finishReason: response.finishReason };
+   },

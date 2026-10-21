@@ -1,0 +1,51 @@
+[
+  {
+    "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: This week the support chat started failing on some orders. A customer asked \"Where is order A-1001?\" and the assistant said it could not retrieve the order details, although A-1001 is in our system and has shipped. Questions about other orders, such as A-1002, still get the real status and delivery date.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": {
+        "bug": {
+          "name": "tool-output-drift",
+          "file": "src/orders.json",
+          "healthy": "\"total\": 149.99",
+          "broken": "\"total\": \"149.99\""
+        },
+        "answer": "{\n  \"file\": \"src/orders.json\",\n  \"snippet\": \"\\\"total\\\": \\\"149.99\\\"\",\n  \"cause\": \"The A-1001 record stores its total as the string \\\"149.99\\\", but the lookupOrder tool's outputSchema requires total to be a number, so Genkit rejects the tool result and the model reports that it cannot retrieve the order.\",\n  \"evidence\": \"Validating each orders.json record against lookupOrder's output schema fails only for A-1001 with \\\"total: Expected number, received string\\\"; A-1002 and A-1003 pass because their totals are numbers (59.5 and 20). After changing A-1001's total to the number 149.99, all three records validate.\"\n}\n",
+        "finalMessage": "The root cause was a data type error in `src/orders.json`: the `A-1001` record had `\"total\": \"149.99\"` as a string, while `lookupOrder`'s output schema requires a number. Genkit rejected the tool result, so the assistant couldn't retrieve that order. A-1002 and A-1003 have numeric totals, which is why they still worked.\n\nI changed it to `\"total\": 149.99`. A check of all three records against the tool's schema now passes. I didn't run the chat flow itself because it needs a Gemini API key. I also didn't touch `package.json`.\n\n`answer.json` is written to the project root with `file` set to `src/orders.json`.",
+        "toolCalls": [
+          "bash {\"command\":\"pwd && ls -la && find . -path ./node_modules -prune -o -type f -print | grep -v '/\\\\.git/' | head -200\",\"description\":\"List project files in current directory\"} -> ok: {\"stdout\":\".\\ntotal 316\\ndrwxr-xr-x   1 reeval reeval   4096 Oct 20 16:00 .\\ndrwxr-xr-x   1 reeval reeval   4096 Oct 20 16:00 ..\\n-rw-r--r--   1 reeval reeval     23 Oct 20 16:00 .gitignore\\ndrwxr-xr-x 290 reeval reeval  12288 Oct 20 16:00 node_modules\\n-rw-r--r--   1 reeval reeval 274703 Oct 20 16:…",
+          "bash {\"command\":\"cat src/tools.ts; echo ----; cat src/db.ts; echo ----; cat src/orders.json; echo ----; cat src/flows.ts; echo ----; cat src/agents.ts; echo ----; cat src/index.ts src/ai.ts; echo ----; cat prompts/greet.prompt package.json\",\"description\":\"Print source files for order lookup\"} -> ok: {\"stdout\":\"import { z } from 'genkit/beta';\\nimport { ai } from './ai.js';\\nimport { ORDERS } from './db.js';\\n\\n/** Looks up an order by id in the orders database; returns null when there is no such order. */\\nexport const lookupOrder = ai.defineTool(\\n  {\\n    name: 'lookupOrder',\\n    description…",
+          "bash {\"command\":\"node --input-type=module -e \\\"\\nimport { z } from 'genkit/beta';\\nimport { readFileSync } from 'node:fs';\\nconst orders = JSON.parse(readFileSync('src/orders.json', 'utf8'));\\nconst schema = z.object({ status: z.string(), eta: z.string(), tracking: z.string().nullable(), total: z.number(… -> ok: {\"stdout\":\"(node:1635) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\\n(Use `node --trace-warnings ...` to show where the warning was created)\\nA-1001 FAIL: total Expected number, received string\\nA-1002 OK\\nA-1003 OK\",\"stderr\":\"\",\"interrupted\":false,\"is…",
+          "edit src/orders.json (modify)",
+          "bash {\"command\":\"node --input-type=module -e \\\"\\nimport { z } from 'genkit/beta';\\nimport { readFileSync } from 'node:fs';\\nconst orders = JSON.parse(readFileSync('src/orders.json', 'utf8'));\\nconst schema = z.object({ status: z.string(), eta: z.string(), tracking: z.string().nullable(), total: z.number(… -> ok: {\"stdout\":\"A-1001 OK\\nA-1002 OK\\nA-1003 OK\",\"stderr\":\"\",\"interrupted\":false,\"isImage\":false,\"noOutputExpected\":false}",
+          "edit answer.json (create)"
+        ]
+      },
+      "files": [
+        "added answer.json",
+        "modified src/orders.json"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "a28ac491215a161ac3ce2b797a667e014dfaa8e29cdfde8876c2c372853d8db5"
+      }
+    }
+  },
+  {
+    "question": "Does the agent's final message accurately describe the change it made?",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: This week the support chat started failing on some orders. A customer asked \"Where is order A-1001?\" and the assistant said it could not retrieve the order details, although A-1001 is in our system and has shipped. Questions about other orders, such as A-1002, still get the real status and delivery date.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": "The root cause was a data type error in `src/orders.json`: the `A-1001` record had `\"total\": \"149.99\"` as a string, while `lookupOrder`'s output schema requires a number. Genkit rejected the tool result, so the assistant couldn't retrieve that order. A-1002 and A-1003 have numeric totals, which is why they still worked.\n\nI changed it to `\"total\": 149.99`. A check of all three records against the tool's schema now passes. I didn't run the chat flow itself because it needs a Gemini API key. I also didn't touch `package.json`.\n\n`answer.json` is written to the project root with `file` set to `src/orders.json`.",
+      "files": [
+        "added answer.json",
+        "modified src/orders.json"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "a28ac491215a161ac3ce2b797a667e014dfaa8e29cdfde8876c2c372853d8db5"
+      }
+    }
+  }
+]

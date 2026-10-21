@@ -1,0 +1,25 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..081b0e1
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/agents.ts",
++  "snippet": "maxTurns: 0,",
++  "cause": "The triage agent is configured with maxTurns: 0, so the moment it tries to delegate an order question to orderAgent via a tool call, Genkit's tool loop throws 'Exceeded maximum tool call iterations (0)'.",
++  "evidence": "Running triage on 'hello' returns a normal greeting (no tool call, so no iteration check), while triage on 'Where is order A-1001?' fails with 'ABORTED: Exceeded maximum tool call iterations (0)'; orderAgent, which has maxTurns: 4, answers the same question correctly. The check is in node_modules/@genkit-ai/ai/src/generate/action.ts (currentTurn + 1 > maxIterations), and defineAgent forwards maxTurns to the prompt's generate call."
++}
+diff --git a/src/agents.ts b/src/agents.ts
+index 56da674..8279045 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -50,7 +50,7 @@ export const triage = ai.defineAgent({
+   name: 'triage',
+   system: 'Delegate order questions to orderAgent and refund requests to refundAgent. Do not answer them yourself.',
+   store,
+-  maxTurns: 0,
++  maxTurns: 4,
+   toolChoice: 'auto',
+   use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 3, historyLength: 4 })],
+ });

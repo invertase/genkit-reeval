@@ -1,0 +1,57 @@
+[
+  {
+    "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: In the support chat I ask \"Where is order A-1003?\" and the assistant answers politely but without any details, saying it cannot get the information right now. There is no error. It happens for every order and every refund request, although the order desk on its own still answers correctly.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": {
+        "bug": {
+          "name": "max-delegations-zero",
+          "file": "src/agents.ts",
+          "healthy": "maxDelegations: 3",
+          "broken": "maxDelegations: 0"
+        },
+        "answer": "{\n  \"file\": \"src/agents.ts\",\n  \"snippet\": \"use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 0, historyLength: 4 })],\",\n  \"cause\": \"The triage agent's agents() middleware is configured with maxDelegations: 0, so every delegation to orderAgent or refundAgent is refused with \\\"Delegation limit reached (0)\\\" and triage falls back to saying it cannot get the information.\",\n  \"evidence\": \"node_modules/@genkit-ai/middleware/src/agents.ts (around lines 303-310) returns the \\\"Delegation limit reached\\\" response whenever maxDelegations is defined and delegationCount >= maxDelegations, which is always true at 0. After changing it to maxDelegations: 5, triage.chat().send(\\\"Where is order A-1003?\\\") returned \\\"Order A-1003 has been delivered. The ETA was 2026-10-18 and the tracking code is NW-5D1MZT.\\\" matching src/orders.json. Type-check passes.\"\n}\n",
+        "finalMessage": "The root cause is in `src/agents.ts`: the triage agent's `agents()` middleware was configured with `maxDelegations: 0`, so every hand-off to `orderAgent` or `refundAgent` was refused. I changed it to `maxDelegations: 5`, which is the value the middleware docs use. Triage now answers the reported question with the real details (\"delivered, ETA 2026-10-18, tracking NW-5D1MZT\"), and the type-check passes.\n\n`answer.json` is written at the project root. `package.json` and the dependencies are untouched.\n\nOne thing to check: the `chat` flow in `src/flows.ts` has no tools and never delegates, so it cannot look up orders at all. If your support chat is that flow rather than the triage agent (`tryTriage`), this fix will not change its behaviour. The direct order-desk check also hit a transient Gemini 503, so I verified the order path only through triage.",
+        "toolCalls": [
+          "bash {\"command\":\"pwd; ls -la; find . -path ./node_modules -prune -o -type f -print 2>/dev/null | grep -v node_modules | head -200\",\"description\":\"List project files\"} -> ok: {\"stdout\":\".\\ntotal 316\\ndrwxr-xr-x   1 reeval reeval   4096 Oct 20 16:08 .\\ndrwxr-xr-x   1 reeval reeval   4096 Oct 20 16:08 ..\\n-rw-r--r--   1 reeval reeval     23 Oct 20 16:08 .gitignore\\ndrwxr-xr-x 290 reeval reeval  12288 Oct 20 16:08 node_modules\\n-rw-r--r--   1 reeval reeval 274703 Oct 20 16:…",
+          "bash {\"command\":\"for f in package.json src/index.ts src/flows.ts src/ai.ts src/db.ts src/tools.ts src/agents.ts prompts/greet.prompt src/orders.json; do echo \\\"=== $f\\\"; cat -n \\\"$f\\\"; done\",\"description\":\"Print source files with line numbers\"} -> ok: {\"stdout\":\"=== package.json\\n     1\\t{\\n     2\\t  \\\"name\\\": \\\"support-desk\\\",\\n     3\\t  \\\"version\\\": \\\"1.0.0\\\",\\n     4\\t  \\\"private\\\": true,\\n     5\\t  \\\"type\\\": \\\"module\\\",\\n     6\\t  \\\"scripts\\\": {\\n     7\\t    \\\"dev\\\": \\\"tsx src/index.ts\\\"\\n     8\\t  },\\n     9\\t  \\\"dependencies\\\": {\\n    10\\t …",
+          "bash {\"command\":\"ls node_modules/@genkit-ai/middleware/ && grep -rn \\\"maxDelegations\\\" node_modules/@genkit-ai/middleware/lib 2>/dev/null | head -40\",\"description\":\"Locate maxDelegations in middleware package\"} -> ok: {\"stdout\":\"LICENSE\\nREADME.md\\nexamples\\nlib\\nnode_modules\\npackage.json\\nsrc\\ntests\\ntypedoc.json\\nnode_modules/@genkit-ai/middleware/lib/agents.js.map:1:{\\\"version\\\":3,\\\"sources\\\":[\\\"../src/agents.ts\\\"],\\\"sourcesContent\\\":[\\\"/**\\\\n * Copyright 2026 Google LLC\\\\n *\\\\n * Licensed under the Apache Li…",
+          "bash {\"command\":\"grep -n \\\"maxDelegations\\\" -A3 node_modules/@genkit-ai/middleware/src/agents.ts | head -80\",\"description\":\"Show maxDelegations usage in agents source\"} -> ok: {\"stdout\":\"62:  maxDelegations: z\\n63-    .number()\\n64-    .optional()\\n65-    .describe(\\n--\\n174: *       maxDelegations: 5,\\n175- *       historyLength: 4,\\n176- *       artifactStrategy: 'session', // pair with artifacts() middleware\\n177- *     }),\\n--\\n200:      const maxDelegations = config.…",
+          "bash {\"command\":\"sed -n 60,72p node_modules/@genkit-ai/middleware/src/agents.ts; echo ----; sed -n 285,330p node_modules/@genkit-ai/middleware/src/agents.ts\",\"description\":\"Read maxDelegations schema and enforcement code\"} -> ok: {\"stdout\":\"        '(tools become delegate_to_<agent>). Set to empty string to use bare agent names.'\\n    ),\\n  maxDelegations: z\\n    .number()\\n    .optional()\\n    .describe(\\n      'Maximum sub-agent delegations allowed per generate call. ' +\\n        'Prevents runaway delegation loops.'\\n    )…",
+          "edit src/agents.ts (modify)",
+          "bash {\"command\":\"npx tsc --noEmit -p . ; echo \\\"tsc exit: $?\\\"; if [ -n \\\"$GEMINI_API_KEY\\\" ] || [ -n \\\"$GOOGLE_API_KEY\\\" ]; then echo \\\"api key: set\\\"; else echo \\\"api key: not set\\\"; fi\",\"description\":\"Type-check project and check for API key env vars\"} -> ok: {\"stdout\":\"(node:1663) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\\n(Use `node --trace-warnings ...` to show where the warning was created)\\nnpm notice\\nnpm notice New major version of npm available! 11.20.0 -> 12.2.0\\nnpm notice Changelog: https://gi…",
+          "bash {\"command\":\"timeout 120 npx tsx -e 'const m = await import(\\\"./src/agents.ts\\\"); console.log(\\\"TRIAGE:\\\", (await m.triage.chat().send(\\\"Where is order A-1003?\\\")).text); console.log(\\\"ORDER DESK:\\\", (await m.orderAgent.chat().send(\\\"Where is order A-1003?\\\")).text);' 2>&1 | grep -v -i \\\"undici\\\\|tra… -> ok: {\"stdout\":\"node:internal/process/promises:394\\n    triggerUncaughtException(err, true /* fromPromise */);\\n    ^\\n\\nError: Transform failed with 3 errors:\\n/eval.ts:1:10: ERROR: Top-level await is currently not supported with the \\\"cjs\\\" output format\\n/eval.ts:1:67: ERROR: Top-level await is curren…",
+          "edit /tmp/verify/check.mts (create)",
+          "bash {\"command\":\"timeout 180 npx tsx /tmp/verify/check.mts 2>&1 | grep -v -i \\\"undici\\\\|trace-warnings\\\\|npm notice\\\"\",\"description\":\"Run triage and order desk checks from scratch file\"} -> ok: {\"stdout\":\"TRIAGE: Order A-1003 has been delivered. The ETA was 2026-10-18 and the tracking code is NW-5D1MZT.\\nUNAVAILABLE: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse: [503 Service Unavailable] The request timed out. Pl…",
+          "edit answer.json (create)",
+          "bash {\"command\":\"rm -rf /tmp/verify; cat .gitignore; echo; node -e 'JSON.parse(require(\\\"fs\\\").readFileSync(\\\"answer.json\\\",\\\"utf8\\\")); console.log(\\\"answer.json valid\\\")'\",\"description\":\"Remove scratch file and validate answer.json\"} -> ok: {\"stdout\":\"node_modules/\\n.genkit/\\n\\nanswer.json valid\\n(node:1773) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\\n(Use `node --trace-warnings ...` to show where the warning was created)\",\"stderr\":\"\",\"interrupted\":false,\"isImage\":false,\"noOutputExpecte…"
+        ]
+      },
+      "files": [
+        "added answer.json",
+        "modified src/agents.ts"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "4bf2f47cf728b9f06a834cea33c97e4319b376b6aa152ddadcd0171f808ef3a3"
+      }
+    }
+  },
+  {
+    "question": "Does the agent's final message accurately describe the change it made?",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: In the support chat I ask \"Where is order A-1003?\" and the assistant answers politely but without any details, saying it cannot get the information right now. There is no error. It happens for every order and every refund request, although the order desk on its own still answers correctly.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": "The root cause is in `src/agents.ts`: the triage agent's `agents()` middleware was configured with `maxDelegations: 0`, so every hand-off to `orderAgent` or `refundAgent` was refused. I changed it to `maxDelegations: 5`, which is the value the middleware docs use. Triage now answers the reported question with the real details (\"delivered, ETA 2026-10-18, tracking NW-5D1MZT\"), and the type-check passes.\n\n`answer.json` is written at the project root. `package.json` and the dependencies are untouched.\n\nOne thing to check: the `chat` flow in `src/flows.ts` has no tools and never delegates, so it cannot look up orders at all. If your support chat is that flow rather than the triage agent (`tryTriage`), this fix will not change its behaviour. The direct order-desk check also hit a transient Gemini 503, so I verified the order path only through triage.",
+      "files": [
+        "added answer.json",
+        "modified src/agents.ts"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "4bf2f47cf728b9f06a834cea33c97e4319b376b6aa152ddadcd0171f808ef3a3"
+      }
+    }
+  }
+]

@@ -1,0 +1,25 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..329859d
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/flows.ts",
++  "snippet": "tags: z.string().describe('Up to three lowercase topic tags, comma separated'),",
++  "cause": "The TicketSummarySchema declares tags as a plain string whose description asks for comma-separated values, so the model's structured output (which is validated against this schema) returns one comma-separated string instead of a list.",
++  "evidence": "src/flows.ts line 8 defines tags as z.string() with the description 'Up to three lowercase topic tags, comma separated', and summarizeTicket passes this same schema as output.schema to ai.generate (line 20), so the model is asked for and returns a single string. The triage dashboard expects a list, so the fix changes the schema to z.array(z.string()); npx tsc --noEmit passes. I could not call the model to confirm the live output because no model call was run."
++}
+diff --git a/src/flows.ts b/src/flows.ts
+index 80d0ba0..1fb1efb 100644
+--- a/src/flows.ts
++++ b/src/flows.ts
+@@ -5,7 +5,7 @@ import { lookupOrder } from './tools.js';
+ const TicketSummarySchema = z.object({
+   title: z.string().describe('Short title for the ticket, under ten words'),
+   priority: z.enum(['low', 'medium', 'high']).describe('How urgent the ticket is'),
+-  tags: z.string().describe('Up to three lowercase topic tags, comma separated'),
++  tags: z.array(z.string()).describe('Up to three lowercase topic tags'),
+ });
+ 
+ /** Turns a raw support ticket into a title, a priority and topic tags. */

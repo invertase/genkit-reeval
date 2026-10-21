@@ -1,0 +1,23 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..c6e65d2
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "prompts/greet.prompt",
++  "snippet": "Write a short, friendly, one-sentence welcome for the customer named {{custmerName}}.",
++  "cause": "The greet prompt's template placeholder is misspelled as {{custmerName}}, which matches no input field, so Dotprompt renders it as empty and the model receives no customer name (the flow correctly passes customerName).",
++  "evidence": "prompts/greet.prompt declares the input as customerName and src/flows.ts passes { customerName }, but the template references {{custmerName}}; after correcting the placeholder to {{customerName}}, rendering the prompt via ai.prompt('greet').render({ customerName: 'Ada' }) produces 'customer named Ada.' with no model call."
++}
+diff --git a/prompts/greet.prompt b/prompts/greet.prompt
+index c8ce110..688841d 100644
+--- a/prompts/greet.prompt
++++ b/prompts/greet.prompt
+@@ -4,5 +4,5 @@ input:
+     customerName: string
+ ---
+ You are the support desk of Northwind Supplies.
+-Write a short, friendly, one-sentence welcome for the customer named {{custmerName}}.
++Write a short, friendly, one-sentence welcome for the customer named {{customerName}}.
+ Address them by name.

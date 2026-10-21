@@ -1,0 +1,54 @@
+[
+  {
+    "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: Since this week summarizeTicket returns the tags as one comma-separated string such as \"shipping, damage\" instead of a list of tags. The triage dashboard reads tags as a list and now shows nothing. It happens for every ticket, for example one about a cracked monitor that arrived damaged.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": {
+        "bug": {
+          "name": "schema-drift",
+          "file": "src/flows.ts",
+          "healthy": "tags: z.array(z.string()).describe('Up to three lowercase topic tags'),",
+          "broken": "tags: z.string().describe('Up to three lowercase topic tags, comma separated'),"
+        },
+        "answer": "{\n  \"file\": \"src/flows.ts\",\n  \"snippet\": \"tags: z.string().describe('Up to three lowercase topic tags, comma separated'),\",\n  \"cause\": \"The TicketSummarySchema declares tags as z.string() with a description asking for comma-separated text, so the structured output the model is constrained to return is a single string rather than a list.\",\n  \"evidence\": \"src/flows.ts line 8 is the only definition of tags in the project; TicketSummarySchema is passed as the output schema to ai.generate in summarizeTicket (line 20), so the model is asked for a string; the dashboard expects an array, which matches the reported symptom of a comma-separated string and an empty tag list for every ticket. After changing it to z.array(z.string()), node_modules/.bin/tsc --noEmit passes. I did not run the flow against the live model.\"\n}\n",
+        "finalMessage": "The bug was in the output schema for `summarizeTicket`: `tags` was declared as `z.string()`, so the model was constrained to return one comma-separated string. I changed it to `z.array(z.string())` in `src/flows.ts` line 8, and the project still type-checks. I did not run the flow against the live model, since that needs an API key. `answer.json` is written to the project root with the details.",
+        "toolCalls": [
+          "bash {\"command\":\"ls -la && find . -path ./node_modules -prune -o -type f -print | grep -v '/\\\\.git/' | head -100\",\"description\":\"List project files excluding node_modules\"} -> ok: {\"stdout\":\"total 328\\ndrwxr-xr-x   1 reeval reeval   4096 Oct 20 16:03 .\\ndrwxr-xr-x   1 reeval reeval   4096 Oct 20 16:03 ..\\n-rw-r--r--   1 reeval reeval     23 Oct 20 16:03 .gitignore\\n-rw-r--r--   1 reeval reeval  11679 Oct 20 16:03 CLAUDE.md\\ndrwxr-xr-x 290 reeval reeval  12288 Oct 20 16:03 nod…",
+          "bash {\"command\":\"grep -rn \\\"summarizeTicket\\\\|tags\\\" --include=*.ts --include=*.js --include=*.json --include=*.mjs . 2>/dev/null | grep -v node_modules | head -80\",\"description\":\"Search for summarizeTicket and tags references\"} -> ok: {\"stdout\":\"src/index.ts:1:export { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';\\nsrc/flows.ts:8:  tags: z.string().describe('Up to three lowercase topic tags, comma separated'),\\nsrc/flows.ts:11:/** Turns a raw support ticket into a title, a priority and topic tags. */\\…",
+          "read {\"file_path\":\"src/flows.ts\"} -> ok: {\"type\":\"text\",\"file\":{\"filePath\":\"src/flows.ts\",\"content\":\"import { z } from 'genkit/beta';\\nimport { ai } from './ai.js';\\nimport { lookupOrder } from './tools.js';\\n\\nconst TicketSummarySchema = z.object({\\n  title: z.string().describe('Short title for the ticket, under ten words'),\\n  priority: …",
+          "bash {\"command\":\"ls -la prompts && cat prompts/greet.prompt && echo ---- && cat src/ai.ts && echo ---- && cat package.json\",\"description\":\"Show prompts, ai setup, and package.json\"} -> ok: {\"stdout\":\"total 12\\ndrwxr-xr-x 2 reeval reeval 4096 Oct 20 16:03 .\\ndrwxr-xr-x 1 reeval reeval 4096 Oct 20 16:03 ..\\n-rw-r--r-- 1 reeval reeval  207 Oct 20 16:03 greet.prompt\\n---\\ninput:\\n  schema:\\n    customerName: string\\n---\\nYou are the support desk of Northwind Supplies.\\nWrite a short, frie…",
+          "edit src/flows.ts (modify)",
+          "bash {\"command\":\"grep -rn \\\"tags\\\" src/ prompts/ ; cd . && node -e \\\"console.log('ok')\\\" && npx tsc --noEmit -p tsconfig.json 2>&1 | head -20\",\"description\":\"Confirm no other tags usages and type-check the project\"} -> ok: {\"stdout\":\"src/flows.ts:8:  tags: z.array(z.string()).describe('Up to three lowercase topic tags'),\\nsrc/flows.ts:11:/** Turns a raw support ticket into a title, a priority and topic tags. */\\nok\\n(node:1516) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time…",
+          "bash {\"command\":\"ls node_modules/.bin/tsc && node_modules/.bin/tsc --noEmit -p tsconfig.json; echo \\\"exit=$?\\\"\",\"description\":\"Run local TypeScript type-check\"} -> ok: {\"stdout\":\"node_modules/.bin/tsc\\nexit=0\",\"stderr\":\"\",\"interrupted\":false,\"isImage\":false,\"noOutputExpected\":false}",
+          "bash {\"command\":\"ls -la answer.json 2>/dev/null; echo \\\"exists-check=$?\\\"\",\"description\":\"Check whether answer.json already exists\"} -> ok: {\"stdout\":\"exists-check=2\",\"stderr\":\"\",\"interrupted\":false,\"isImage\":false,\"noOutputExpected\":false}",
+          "edit answer.json (create)"
+        ]
+      },
+      "files": [
+        "added answer.json",
+        "modified src/flows.ts"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "40ecffff74145819924f49c4cf92fe04ae9986e093bfa1c5f4b54665d0edf9ae"
+      }
+    }
+  },
+  {
+    "question": "Does the agent's final message accurately describe the change it made?",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: Since this week summarizeTicket returns the tags as one comma-separated string such as \"shipping, damage\" instead of a list of tags. The triage dashboard reads tags as a list and now shows nothing. It happens for every ticket, for example one about a cracked monitor that arrived damaged.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": "The bug was in the output schema for `summarizeTicket`: `tags` was declared as `z.string()`, so the model was constrained to return one comma-separated string. I changed it to `z.array(z.string())` in `src/flows.ts` line 8, and the project still type-checks. I did not run the flow against the live model, since that needs an API key. `answer.json` is written to the project root with the details.",
+      "files": [
+        "added answer.json",
+        "modified src/flows.ts"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "40ecffff74145819924f49c4cf92fe04ae9986e093bfa1c5f4b54665d0edf9ae"
+      }
+    }
+  }
+]

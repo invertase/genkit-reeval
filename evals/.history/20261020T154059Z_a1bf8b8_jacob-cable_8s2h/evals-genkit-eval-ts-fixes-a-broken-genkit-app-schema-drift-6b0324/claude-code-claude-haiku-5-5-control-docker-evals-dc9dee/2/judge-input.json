@@ -1,0 +1,53 @@
+[
+  {
+    "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: Since this week summarizeTicket returns the tags as one comma-separated string such as \"shipping, damage\" instead of a list of tags. The triage dashboard reads tags as a list and now shows nothing. It happens for every ticket, for example one about a cracked monitor that arrived damaged.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": {
+        "bug": {
+          "name": "schema-drift",
+          "file": "src/flows.ts",
+          "healthy": "tags: z.array(z.string()).describe('Up to three lowercase topic tags'),",
+          "broken": "tags: z.string().describe('Up to three lowercase topic tags, comma separated'),"
+        },
+        "answer": "{\n  \"file\": \"src/flows.ts\",\n  \"snippet\": \"tags: z.string().describe('Up to three lowercase topic tags, comma separated'),\",\n  \"cause\": \"The TicketSummarySchema declares tags as a single string and asks for comma-separated text, so the model returns one string like \\\"shipping, damage\\\" instead of a list of tags.\",\n  \"evidence\": \"src/flows.ts line 8 defines tags as z.string() with the description 'Up to three lowercase topic tags, comma separated', and summarizeTicket uses this schema as its structured output schema (output: { schema: TicketSummarySchema }) and returns it unchanged, so the flow's output contains the comma-joined string the dashboard receives. No other code in the repo splits or converts tags. The fix changes the field to z.array(z.string()), and tsc --noEmit passes. I did not call the live model, so the end-to-end result was not reproduced.\"\n}\n",
+        "finalMessage": "The root cause is in `src/flows.ts`: the `tags` field in `TicketSummarySchema` was declared as a single string, and its description asked the model for comma-separated text. I changed it to an array of strings:\n\n```ts\ntags: z.array(z.string()).describe('Up to three lowercase topic tags'),\n```\n\n`tsc --noEmit` passes, and `package.json` is unchanged. I didn't call the live model, so the dashboard fix is confirmed from the source only.\n\nI also wrote `answer.json` in the project root with the file, the replaced line, the cause, and the evidence. The \"up to three\" limit is now only in the description, so the schema doesn't enforce it. Add `.max(3)` if you want the schema to reject longer lists.",
+        "toolCalls": [
+          "bash {\"command\":\"grep -rn \\\"summarizeTicket\\\\|tags\\\" --include=*.ts --include=*.js --include=*.json --include=*.tsx . | grep -v node_modules | head -50; ls -la\",\"description\":\"Search for summarizeTicket and tags references\"} -> ok: {\"stdout\":\"src/index.ts:1:export { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';\\nsrc/flows.ts:8:  tags: z.string().describe('Up to three lowercase topic tags, comma separated'),\\nsrc/flows.ts:11:/** Turns a raw support ticket into a title, a priority and topic tags. */\\…",
+          "read {\"file_path\":\"src/flows.ts\"} -> ok: {\"type\":\"text\",\"file\":{\"filePath\":\"src/flows.ts\",\"content\":\"import { z } from 'genkit/beta';\\nimport { ai } from './ai.js';\\nimport { lookupOrder } from './tools.js';\\n\\nconst TicketSummarySchema = z.object({\\n  title: z.string().describe('Short title for the ticket, under ten words'),\\n  priority: …",
+          "bash {\"command\":\"ls -la prompts src; cat prompts/*; cat package.json .gitignore\",\"description\":\"List prompts and src files, show package and prompt contents\"} -> ok: {\"stdout\":\"prompts:\\ntotal 12\\ndrwxr-xr-x 2 reeval reeval 4096 Oct 20 15:53 .\\ndrwxr-xr-x 1 reeval reeval 4096 Oct 20 15:53 ..\\n-rw-r--r-- 1 reeval reeval  207 Oct 20 15:53 greet.prompt\\n\\nsrc:\\ntotal 36\\ndrwxr-xr-x 2 reeval reeval 4096 Oct 20 15:53 .\\ndrwxr-xr-x 1 reeval reeval 4096 Oct 20 15:53 ..…",
+          "bash {\"command\":\"grep -rn \\\"z\\\\.array\\\\|z\\\\.string()\\\\.describe\\\\|\\\\.max(\\\" src/ ; grep -n \\\"tags\\\\|comma\\\" -r src prompts\",\"description\":\"Check list schema conventions and tag references\"} -> ok: {\"stdout\":\"src/flows.ts:6:  title: z.string().describe('Short title for the ticket, under ten words'),\\nsrc/flows.ts:8:  tags: z.string().describe('Up to three lowercase topic tags, comma separated'),\\nsrc/flows.ts:75:    inputSchema: z.object({ history: z.array(ChatMessageSchema), message: z.string…",
+          "edit src/flows.ts (modify)",
+          "bash {\"command\":\"npx tsc --noEmit -p . 2>&1 | head -20; echo \\\"exit=$?\\\"\",\"description\":\"Type-check the project after the schema fix\"} -> ok: {\"stdout\":\"(node:1499) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\\n(Use `node --trace-warnings ...` to show where the warning was created)\\nnpm notice\\nnpm notice New major version of npm available! 11.20.0 -> 12.2.0\\nnpm notice Changelog: https://gi…",
+          "bash {\"command\":\"./node_modules/.bin/tsc --noEmit -p . ; echo \\\"exit=$?\\\"\",\"description\":\"Run TypeScript compiler directly to confirm no errors\"} -> ok: {\"stdout\":\"exit=0\",\"stderr\":\"\",\"interrupted\":false,\"isImage\":false,\"noOutputExpected\":false}",
+          "edit answer.json (create)"
+        ]
+      },
+      "files": [
+        "added answer.json",
+        "modified src/flows.ts"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "26f0f3e87cef28d858309d1ed9b4add56f5aaea112be92d83be22778f8d8c0bf"
+      }
+    }
+  },
+  {
+    "question": "Does the agent's final message accurately describe the change it made?",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: Since this week summarizeTicket returns the tags as one comma-separated string such as \"shipping, damage\" instead of a list of tags. The triage dashboard reads tags as a list and now shows nothing. It happens for every ticket, for example one about a cracked monitor that arrived damaged.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": "The root cause is in `src/flows.ts`: the `tags` field in `TicketSummarySchema` was declared as a single string, and its description asked the model for comma-separated text. I changed it to an array of strings:\n\n```ts\ntags: z.array(z.string()).describe('Up to three lowercase topic tags'),\n```\n\n`tsc --noEmit` passes, and `package.json` is unchanged. I didn't call the live model, so the dashboard fix is confirmed from the source only.\n\nI also wrote `answer.json` in the project root with the file, the replaced line, the cause, and the evidence. The \"up to three\" limit is now only in the description, so the schema doesn't enforce it. Add `.max(3)` if you want the schema to reject longer lists.",
+      "files": [
+        "added answer.json",
+        "modified src/flows.ts"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "26f0f3e87cef28d858309d1ed9b4add56f5aaea112be92d83be22778f8d8c0bf"
+      }
+    }
+  }
+]

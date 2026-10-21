@@ -1,0 +1,23 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..46279cc
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "prompts/greet.prompt",
++  "snippet": "Write a short, friendly, one-sentence welcome for the customer named {{custmerName}}.",
++  "cause": "The greet prompt's template variable is misspelled as {{custmerName}}, so Dotprompt renders it as empty and the model never receives the customer's name even though the flow passes customerName.",
++  "evidence": "Rendering prompts/greet.prompt with input { customerName: 'Ada' } produced 'the customer named .' with the typo and 'the customer named Ada.' after correcting it to {{customerName}}, which matches the input key in the prompt's input schema (line 4) and in flows.ts:46."
++}
+diff --git a/prompts/greet.prompt b/prompts/greet.prompt
+index c8ce110..688841d 100644
+--- a/prompts/greet.prompt
++++ b/prompts/greet.prompt
+@@ -4,5 +4,5 @@ input:
+     customerName: string
+ ---
+ You are the support desk of Northwind Supplies.
+-Write a short, friendly, one-sentence welcome for the customer named {{custmerName}}.
++Write a short, friendly, one-sentence welcome for the customer named {{customerName}}.
+ Address them by name.

@@ -1,0 +1,23 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..76f0a95
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "prompts/greet.prompt",
++  "snippet": "model: googleai/gemini-1.5-flash",
++  "cause": "The greet prompt pins the model to googleai/gemini-1.5-flash, which the Gemini API no longer serves for generateContent, so every greet call fails before any text is generated.",
++  "evidence": "Calling the greet flow directly failed with '[404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent', while summarizeTicket, which uses the app default gemini-2.5-flash from src/ai.ts, succeeded; after changing the prompt to googleai/gemini-2.5-flash, greet returned 'Hi Grace, welcome to Northwind Supplies, how can I help you today?'."
++}
+diff --git a/prompts/greet.prompt b/prompts/greet.prompt
+index ef5cf8e..6d905b0 100644
+--- a/prompts/greet.prompt
++++ b/prompts/greet.prompt
+@@ -1,5 +1,5 @@
+ ---
+-model: googleai/gemini-1.5-flash
++model: googleai/gemini-2.5-flash
+ input:
+   schema:
+     customerName: string

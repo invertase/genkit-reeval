@@ -1,0 +1,25 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..d2b6d37
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/agents.ts",
++  "snippet": "use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 0, historyLength: 4 })],",
++  "cause": "The triage agent's agents() middleware was configured with maxDelegations: 0, so every delegation to orderAgent or refundAgent is rejected by the middleware's guard and the triage model can only apologise that it cannot get the information.",
++  "evidence": "node_modules/@genkit-ai/middleware/src/agents.ts:302-311 returns 'Delegation limit reached (0)' whenever delegationCount >= maxDelegations, which is always true at 0. Before the fix, tryTriage('Where is order A-1003?') answered 'I have reached my delegation limit and cannot delegate to the order agent'; after removing the option it answers with A-1003's status, ETA and tracking code (src/orders.json:4), and a refund request is forwarded for approval. orderAgent alone was never affected because it has no delegation middleware."
++}
+diff --git a/src/agents.ts b/src/agents.ts
+index 74a8a10..13cdc2d 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -52,7 +52,7 @@ export const triage = ai.defineAgent({
+   store,
+   maxTurns: 5,
+   toolChoice: 'auto',
+-  use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 0, historyLength: 4 })],
++  use: [agents({ agents: ['orderAgent', 'refundAgent'], historyLength: 4 })],
+ });
+ 
+ /** Lets the CLI exercise triage: `genkit flow:run` runs flows, not agents. */

@@ -1,0 +1,56 @@
+[
+  {
+    "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: The greet flow for customer \"Ada\" returns a generic welcome like \"Welcome to Northwind Supplies!\" that never uses her name. Other customers get the same nameless greeting. I expected a one-sentence welcome that addresses the customer by name.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": {
+        "bug": {
+          "name": "prompt-var-typo",
+          "file": "prompts/greet.prompt",
+          "healthy": "{{customerName}}",
+          "broken": "{{custmerName}}"
+        },
+        "answer": "{\n  \"file\": \"prompts/greet.prompt\",\n  \"snippet\": \"Write a short, friendly, one-sentence welcome for the customer named {{custmerName}}.\",\n  \"cause\": \"The greet prompt template references the variable {{custmerName}} (misspelled), but the greet flow passes the input as customerName, so Dotprompt renders the name as empty and the model never sees the customer's name.\",\n  \"evidence\": \"Rendering prompts/greet.prompt with input {customerName: 'Ada'} via the dotprompt package in node_modules gives 'welcome for the customer named .' with the original template and 'welcome for the customer named Ada.' after changing the placeholder to {{customerName}}; src/flows.ts:46 passes { customerName } and src/ai.ts:10 loads prompts/ as promptDir.\"\n}\n",
+        "finalMessage": "The root cause was a typo in the greet prompt template: it used `{{custmerName}}`, but the flow passes `customerName`, so the name rendered as empty for every customer. I fixed it in `prompts/greet.prompt` and wrote `answer.json` in the project root.\n\nTo confirm, I rendered the template with the `dotprompt` package already in `node_modules`. The original renders \"named .\" and the fixed version renders \"named Ada.\" I did not run the live flow because it needs the Gemini API and the Genkit CLI. `package.json` and dependencies are unchanged.",
+        "toolCalls": [
+          "bash {\"command\":\"ls -la && find . -path ./node_modules -prune -o -type f -print | grep -v node_modules | head -100\",\"description\":\"List workspace files excluding node_modules\"} -> ok: {\"stdout\":\"total 328\\ndrwxr-xr-x   1 reeval reeval   4096 Oct 20 16:03 .\\ndrwxr-xr-x   1 reeval reeval   4096 Oct 20 16:03 ..\\n-rw-r--r--   1 reeval reeval     23 Oct 20 16:03 .gitignore\\n-rw-r--r--   1 reeval reeval  11679 Oct 20 16:03 CLAUDE.md\\ndrwxr-xr-x 290 reeval reeval  12288 Oct 20 16:03 nod…",
+          "bash {\"command\":\"grep -rn -i \\\"welcome\\\\|greet\\\\|Northwind\\\" --exclude-dir=node_modules . | head -50\",\"description\":\"Search for greet flow and welcome text\"} -> ok: {\"stdout\":\"src/agents.ts:31:    'You are the Northwind Supplies order desk. Answer questions about orders using the lookupOrder tool. ' +\\nsrc/index.ts:1:export { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';\\nprompts/greet.prompt:6:You are the support desk of Northwind …",
+          "read {\"file_path\":\"prompts/greet.prompt\"} -> ok: {\"type\":\"text\",\"file\":{\"filePath\":\"prompts/greet.prompt\",\"content\":\"---\\ninput:\\n  schema:\\n    customerName: string\\n---\\nYou are the support desk of Northwind Supplies.\\nWrite a short, friendly, one-sentence welcome for the customer named {{custmerName}}.\\nAddress them by name.\\n\",\"numLines\":9,\"st…",
+          "read {\"file_path\":\"src/flows.ts\"} -> ok: {\"type\":\"text\",\"file\":{\"filePath\":\"src/flows.ts\",\"content\":\"import { z } from 'genkit/beta';\\nimport { ai } from './ai.js';\\nimport { lookupOrder } from './tools.js';\\n\\nconst TicketSummarySchema = z.object({\\n  title: z.string().describe('Short title for the ticket, under ten words'),\\n  priority: …",
+          "read {\"file_path\":\"src/ai.ts\"} -> ok: {\"type\":\"text\",\"file\":{\"filePath\":\"src/ai.ts\",\"content\":\"import { fileURLToPath } from 'node:url';\\nimport { googleAI } from '@genkit-ai/google-genai';\\nimport { genkit } from 'genkit/beta';\\n\\n/** The Genkit instance every flow and agent in this app shares. */\\nexport const ai = genkit({\\n  plugins…",
+          "edit prompts/greet.prompt (modify)",
+          "bash {\"command\":\"ls node_modules | grep -i dotprompt; cat > /tmp/render_check.mjs <<'EOF'\\nimport { readFileSync } from 'node:fs';\\nimport { Dotprompt } from 'node_modules/dotprompt/lib/index.js';\\nconst src = readFileSync(process.argv[2], 'utf8');\\nconst dp = new Dotprompt();\\nconst parsed = dp.parse(sr… -> ok: {\"stdout\":\"dotprompt\\n  code: 'ERR_MODULE_NOT_FOUND',\\n  url: 'file:///reeval/workspace/node_modules/dotprompt/lib/index.js'\\n}\\n\\nNode.js v22.23.3\",\"stderr\":\"\",\"interrupted\":false,\"isImage\":false,\"noOutputExpected\":false}",
+          "bash {\"command\":\"cat node_modules/dotprompt/package.json | grep -E '\\\"(main|exports|module|type)\\\"' -A3 | head -30; ls node_modules/dotprompt/dist 2>/dev/null | head\",\"description\":\"Inspect dotprompt package entry point\"} -> ok: {\"stdout\":\"  \\\"main\\\": \\\"dist/index.js\\\",\\n  \\\"types\\\": \\\"dist/index.d.ts\\\",\\n  \\\"repository\\\": {\\n    \\\"type\\\": \\\"git\\\",\\n    \\\"url\\\": \\\"https://github.com/google/dotprompt.git\\\",\\n    \\\"directory\\\": \\\"js\\\"\\n  },\\nindex.d.mts\\nindex.d.ts\\nindex.js\\nindex.mjs\",\"stderr\":\"\",\"interrupted\":false,\"isImag…",
+          "bash {\"command\":\"sed -i \\\"s#/reeval/workspace/node_modules/dotprompt/lib/index.js#dotprompt#\\\" /tmp/render_check.mjs && cd /tmp && NODE_PATH=node_modules node -e \\\"\\nconst {Dotprompt}=require('node_modules/dotprompt/dist/index.js');\\nconst fs=require('fs');\\n(async()=>{\\nconst src=fs.readFileSync('prompt… -> ok: {\"stdout\":\"(node:1505) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\\n(Use `node --trace-warnings ...` to show where the warning was created)\\nFIXED: \\\"You are the support desk of Northwind Supplies.\\\\nWrite a short, friendly, one-sentence welcome for t…",
+          "edit answer.json (create)",
+          "bash {\"command\":\"rm -f /tmp/render_check.mjs; node -e \\\"JSON.parse(require('fs').readFileSync('answer.json','utf8')); console.log('answer.json valid JSON')\\\"\",\"description\":\"Remove scratch script and validate answer.json\"} -> ok: {\"stdout\":\"answer.json valid JSON\\n(node:1516) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\\n(Use `node --trace-warnings ...` to show where the warning was created)\",\"stderr\":\"\",\"interrupted\":false,\"isImage\":false,\"noOutputExpected\":false}"
+        ]
+      },
+      "files": [
+        "added answer.json",
+        "modified prompts/greet.prompt"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "ad249d46b08303b8c0bbefa703865628c1764ee48583875a1ec398799971185f"
+      }
+    }
+  },
+  {
+    "question": "Does the agent's final message accurately describe the change it made?",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: The greet flow for customer \"Ada\" returns a generic welcome like \"Welcome to Northwind Supplies!\" that never uses her name. Other customers get the same nameless greeting. I expected a one-sentence welcome that addresses the customer by name.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": "The root cause was a typo in the greet prompt template: it used `{{custmerName}}`, but the flow passes `customerName`, so the name rendered as empty for every customer. I fixed it in `prompts/greet.prompt` and wrote `answer.json` in the project root.\n\nTo confirm, I rendered the template with the `dotprompt` package already in `node_modules`. The original renders \"named .\" and the fixed version renders \"named Ada.\" I did not run the live flow because it needs the Gemini API and the Genkit CLI. `package.json` and dependencies are unchanged.",
+      "files": [
+        "added answer.json",
+        "modified prompts/greet.prompt"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "ad249d46b08303b8c0bbefa703865628c1764ee48583875a1ec398799971185f"
+      }
+    }
+  }
+]

@@ -1,0 +1,54 @@
+[
+  {
+    "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: This week the support chat started failing on some orders. A customer asked \"Where is order A-1001?\" and the assistant said it could not retrieve the order details, although A-1001 is in our system and has shipped. Questions about other orders, such as A-1002, still get the real status and delivery date.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": {
+        "bug": {
+          "name": "tool-output-drift",
+          "file": "src/orders.json",
+          "healthy": "\"total\": 149.99",
+          "broken": "\"total\": \"149.99\""
+        },
+        "answer": "{\n  \"file\": \"src/orders.json\",\n  \"snippet\": \"\\\"total\\\": \\\"149.99\\\"\",\n  \"cause\": \"The A-1001 record stores its total as the string \\\"149.99\\\" while the lookupOrder output schema and the Order type require a number, so output validation rejects the record and the model reports that it could not retrieve the order.\",\n  \"evidence\": \"Validating each record against the tool's output schema: A-1001 fails with \\\"total: Expected number, received string\\\" while A-1002 and A-1003 pass; after changing the value to the number 149.99, all three records pass and `tsc --noEmit` succeeds.\"\n}\n",
+        "finalMessage": "The root cause is a data error in `src/orders.json`: A-1001's `total` was stored as the string `\"149.99\"`, not a number. The `lookupOrder` tool's output schema requires a number, so validation rejected the record and the assistant reported that it couldn't retrieve the order. A-1002 and A-1003 use numbers and were unaffected.\n\nI changed the value to `149.99` and left `package.json` alone. The record now passes the tool's schema, and `tsc --noEmit` succeeds. I did not run the chat flow end to end, since that needs the Gemini API.\n\n`answer.json` is written to the project root with `file` set to `src/orders.json`.",
+        "toolCalls": [
+          "bash {\"command\":\"cd . 2>/dev/null; pwd; ls -la; find . -path ./node_modules -prune -o -type f -print | grep -v node_modules | head -100\",\"description\":\"List project files in workspace\"} -> ok: {\"stdout\":\".\\ntotal 316\\ndrwxr-xr-x   1 reeval reeval   4096 Oct 20 15:50 .\\ndrwxr-xr-x   1 reeval reeval   4096 Oct 20 15:50 ..\\n-rw-r--r--   1 reeval reeval     23 Oct 20 15:50 .gitignore\\ndrwxr-xr-x 290 reeval reeval  12288 Oct 20 15:50 node_modules\\n-rw-r--r--   1 reeval reeval 274703 Oct 20 15:…",
+          "bash {\"command\":\"cd .; cat src/tools.ts; echo ----; cat src/db.ts; echo ----; cat src/orders.json; echo ----; cat package.json\",\"description\":\"Show tools, db, orders data, and package.json\"} -> ok: {\"stdout\":\"import { z } from 'genkit/beta';\\nimport { ai } from './ai.js';\\nimport { ORDERS } from './db.js';\\n\\n/** Looks up an order by id in the orders database; returns null when there is no such order. */\\nexport const lookupOrder = ai.defineTool(\\n  {\\n    name: 'lookupOrder',\\n    description…",
+          "bash {\"command\":\"cd .; for f in src/index.ts src/flows.ts src/agents.ts src/ai.ts prompts/greet.prompt tsconfig.json .gitignore; do echo \\\"==== $f\\\"; cat -A \\\"$f\\\" | sed 's/\\\\$$//' | head -150; done\",\"description\":\"Show remaining source files and config\"} -> ok: {\"stdout\":\"==== src/index.ts\\nexport { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';\\nexport { orderAgent, refundAgent, triage, tryRefundDesk, tryTriage } from './agents.js';\\n==== src/flows.ts\\nimport { z } from 'genkit/beta';\\nimport { ai } from './ai.js';\\nimport { lo…",
+          "bash {\"command\":\"mkdir -p /tmp/repro && cat > /tmp/repro/check.ts <<'EOF'\\nimport { z } from 'node_modules/genkit/beta/index.js';\\nimport { ORDERS } from 'src/db.ts';\\nconst schema = z.object({ status: z.string(), eta: z.string(), tracking: z.string().nullable(), total: z.number(), refundable: z.boolean(… -> failed: Error: Exit code 1\n(node:1498) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:1511) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.…",
+          "bash {\"command\":\"ls node_modules | grep -i zod; sed -i \\\"s#from 'node_modules/genkit/beta/index.js'#from 'genkit/beta'#\\\" /tmp/repro/check.ts && cp /tmp/repro/check.ts .check-tmp.ts && npx tsx .check-tmp.ts 2>&1 | grep -v -i undici | grep -v trace-warnings; rm -f .check-tmp.ts\",\"description\":\"Run schema … -> ok: {\"stdout\":\"zod\\nzod-to-json-schema\\nA-1001 string FAIL: total Expected number, received string\\nA-1002 number OK\\nA-1003 number OK\",\"stderr\":\"\",\"interrupted\":false,\"isImage\":false,\"noOutputExpected\":false}",
+          "edit src/orders.json (modify)",
+          "bash {\"command\":\"cp /tmp/repro/check.ts .check-tmp.ts && npx tsx .check-tmp.ts 2>&1 | grep -v -i undici | grep -v trace-warnings; rm -f .check-tmp.ts; npx tsc --noEmit -p . && echo TSC_OK; grep -n '\\\"total\\\"' src/orders.json\",\"description\":\"Re-run order schema check and typecheck\"} -> ok: {\"stdout\":\"A-1001 number OK\\nA-1002 number OK\\nA-1003 number OK\\n(node:1652) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\\n(Use `node --trace-warnings ...` to show where the warning was created)\\nTSC_OK\\n2:  \\\"A-1001\\\": { \\\"status\\\": \\\"shipped\\\", \\\"eta…",
+          "edit answer.json (create)",
+          "bash {\"command\":\"rm -rf /tmp/repro; ls .\",\"description\":\"Remove scratch directory and list workspace\"} -> ok: {\"stdout\":\"answer.json\\nnode_modules\\npackage-lock.json\\npackage.json\\nprompts\\nsrc\\ntsconfig.json\",\"stderr\":\"\",\"interrupted\":false,\"isImage\":false,\"noOutputExpected\":false}"
+        ]
+      },
+      "files": [
+        "added answer.json",
+        "modified src/orders.json"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "34434800bad9900c5ed689554cc46b383c09986e05726d11a20251a7aa5af2cb"
+      }
+    }
+  },
+  {
+    "question": "Does the agent's final message accurately describe the change it made?",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: This week the support chat started failing on some orders. A customer asked \"Where is order A-1001?\" and the assistant said it could not retrieve the order details, although A-1001 is in our system and has shipped. Questions about other orders, such as A-1002, still get the real status and delivery date.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": "The root cause is a data error in `src/orders.json`: A-1001's `total` was stored as the string `\"149.99\"`, not a number. The `lookupOrder` tool's output schema requires a number, so validation rejected the record and the assistant reported that it couldn't retrieve the order. A-1002 and A-1003 use numbers and were unaffected.\n\nI changed the value to `149.99` and left `package.json` alone. The record now passes the tool's schema, and `tsc --noEmit` succeeds. I did not run the chat flow end to end, since that needs the Gemini API.\n\n`answer.json` is written to the project root with `file` set to `src/orders.json`.",
+      "files": [
+        "added answer.json",
+        "modified src/orders.json"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "34434800bad9900c5ed689554cc46b383c09986e05726d11a20251a7aa5af2cb"
+      }
+    }
+  }
+]

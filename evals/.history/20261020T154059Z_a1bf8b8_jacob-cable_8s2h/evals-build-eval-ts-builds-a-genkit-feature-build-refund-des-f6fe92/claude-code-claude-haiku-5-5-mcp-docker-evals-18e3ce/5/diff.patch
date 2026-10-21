@@ -1,0 +1,59 @@
+diff --git a/src/agents.ts b/src/agents.ts
+index e69de29..3c12fcd 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -0,0 +1,47 @@
++import { z } from 'genkit/beta';
++import { ai } from './ai.js';
++import { createRefund } from './db.js';
++import { lookupOrder } from './tools.js';
++
++const RefundRequestSchema = z.object({
++  orderId: z.string().describe('The order id, for example A-1001'),
++  amount: z.number().describe('The refund amount, in the order currency'),
++  reason: z.string().describe('Why the customer wants a refund'),
++});
++
++const ApprovalSchema = z.object({
++  approved: z.boolean(),
++  note: z.string().optional(),
++});
++
++const approveRefund = ai.defineInterrupt({
++  name: 'approveRefund',
++  description: 'Asks a human to approve or decline a refund. Nothing is refunded until the human approves.',
++  inputSchema: RefundRequestSchema,
++  outputSchema: ApprovalSchema,
++});
++
++const issueRefund = ai.defineTool(
++  {
++    name: 'issueRefund',
++    description: 'Issues a refund for an order and returns its refund id. Only call after the approval was granted.',
++    inputSchema: z.object({
++      orderId: z.string().describe('The order id, for example A-1001'),
++      amount: z.number().describe('The refund amount, in the order currency'),
++    }),
++    outputSchema: z.object({ refundId: z.string() }),
++  },
++  async ({ orderId, amount }) => ({ refundId: createRefund(orderId, amount) }),
++);
++
++/** Handles refund requests: looks the order up, waits for human approval, then issues the refund. */
++export const refundAgent = ai.defineAgent({
++  name: 'refundAgent',
++  system:
++    'You handle refund requests for Northwind Supplies. Follow these steps in order.\n' +
++    '1. Look up the order the customer names with lookupOrder. If the order does not exist or is not refundable, tell the customer and do not request a refund.\n' +
++    '2. Otherwise call approveRefund with the orderId, the order total as the amount, and the customer\'s reason. Wait for the answer; never guess it.\n' +
++    '3. If the answer has approved set to true, call issueRefund with the orderId and amount, then tell the customer the refund id in one or two sentences.\n' +
++    '4. If approved is false, do not call issueRefund. Tell the customer in one or two sentences that the refund was declined, and include the note if there is one.',
++  tools: [lookupOrder, approveRefund, issueRefund],
++});
+diff --git a/src/index.ts b/src/index.ts
+index cda694e..4eaab8e 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1 +1,2 @@
+ export { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';
++export { refundAgent } from './agents.js';

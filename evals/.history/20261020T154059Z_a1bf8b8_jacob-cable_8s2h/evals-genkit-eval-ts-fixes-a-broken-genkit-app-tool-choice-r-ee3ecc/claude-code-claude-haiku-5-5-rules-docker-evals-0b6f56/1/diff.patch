@@ -1,0 +1,24 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..7bb7a3f
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/agents.ts",
++  "snippet": "toolChoice: 'required',",
++  "cause": "refundAgent sets toolChoice to 'required', so every model turn must call a tool, and after the supervisor declines the approveRefund interrupt the model can never write the closing text reply, so it loops on tool calls until maxTurns (6) throws 'Exceeded maximum tool call iterations'.",
++  "evidence": "node_modules/@genkit-ai/ai/lib/generate/action.js passes options.toolChoice to every generate request and throws GenerationResponseError 'Exceeded maximum tool call iterations' once currentTurn exceeds maxTurns; src/agents.ts refundAgent is the only agent with toolChoice 'required' (triage uses 'auto'), and the reported symptoms (failure, re-asking for approval, continuing work on the order) are the forced-tool-call loop's outcomes."
++}
+diff --git a/src/agents.ts b/src/agents.ts
+index 7283e38..b08f2d7 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -40,7 +40,6 @@ export const refundAgent = ai.defineAgent({
+   description: 'Handles refund requests for an order. Refunds need human approval.',
+   system: 'Look up the order, then call approveRefund, then issueRefund only if approved. Never refund without approval.',
+   tools: [lookupOrder, approveRefund, issueRefund],
+-  toolChoice: 'required',
+   maxTurns: 6,
+   store,
+ });

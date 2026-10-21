@@ -1,0 +1,25 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..7289586
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/agents.ts",
++  "snippet": "  toolChoice: 'required',",
++  "cause": "The refundAgent sets toolChoice to 'required', which forces the model to make a tool call on every turn, so after approveRefund returns a decline it cannot send a plain-text reply and instead re-requests approval, keeps calling lookupOrder, or runs out of turns.",
++  "evidence": "Running refundAgent.chat() on 'I want a refund for order A-1001, it arrived broken.' with approveRefund answered {approved: false} gave finishReason 'interrupted' and a new approveRefund tool request with the original toolChoice; with toolChoice 'auto' the same run ends with finishReason 'stop' and the text 'I'm sorry, your refund for order A-1001 was not approved. A refund was already filed for this order.'"
++}
+diff --git a/src/agents.ts b/src/agents.ts
+index 7283e38..34e0ee7 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -40,7 +40,7 @@ export const refundAgent = ai.defineAgent({
+   description: 'Handles refund requests for an order. Refunds need human approval.',
+   system: 'Look up the order, then call approveRefund, then issueRefund only if approved. Never refund without approval.',
+   tools: [lookupOrder, approveRefund, issueRefund],
+-  toolChoice: 'required',
++  toolChoice: 'auto',
+   maxTurns: 6,
+   store,
+ });

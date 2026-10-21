@@ -1,0 +1,55 @@
+[
+  {
+    "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: This week the support chat started failing on some orders. A customer asked \"Where is order A-1001?\" and the assistant said it could not retrieve the order details, although A-1001 is in our system and has shipped. Questions about other orders, such as A-1002, still get the real status and delivery date.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": {
+        "bug": {
+          "name": "tool-output-drift",
+          "file": "src/orders.json",
+          "healthy": "\"total\": 149.99",
+          "broken": "\"total\": \"149.99\""
+        },
+        "answer": "{\n  \"file\": \"src/orders.json\",\n  \"snippet\": \"\\\"total\\\": \\\"149.99\\\"\",\n  \"cause\": \"The A-1001 record in the orders export stores its total as the string \\\"149.99\\\" instead of a number, so the lookupOrder tool's output validation (total: z.number()) rejects the record and the lookup fails for that order only.\",\n  \"evidence\": \"Validating each record against the lookupOrder outputSchema gives A-1001: FAIL 'total Expected number, received string', while A-1002 and A-1003 pass; tsc --noEmit also reports src/db.ts(13,14) TS2322 with \\\"A-1001\\\" total typed as string. After changing it to 149.99, all three records validate and tsc exits 0.\"\n}\n",
+        "finalMessage": "The root cause is a data bug in `src/orders.json`: the `A-1001` record stores `total` as the string `\"149.99\"`, while the lookup tool's output schema requires a number. The tool's output validation rejects that one record, so only `A-1001` lookups fail.\n\nI changed it to `\"total\": 149.99`. Validating each record against the tool's output schema now passes for all three orders, and `tsc --noEmit` exits cleanly. I did not run the chat flow end to end, so the agent's reply to \"Where is A-1001?\" is unverified. `answer.json` is written to the project root.",
+        "toolCalls": [
+          "bash {\"command\":\"ls -la && find . -path ./node_modules -prune -o -type f -print | grep -v '/\\\\.git/' | head -200\",\"description\":\"List project files in workspace\"} -> ok: {\"stdout\":\"total 316\\ndrwxr-xr-x   1 reeval reeval   4096 Oct 20 15:50 .\\ndrwxr-xr-x   1 reeval reeval   4096 Oct 20 15:50 ..\\n-rw-r--r--   1 reeval reeval     23 Oct 20 15:50 .gitignore\\ndrwxr-xr-x 290 reeval reeval  12288 Oct 20 15:50 node_modules\\n-rw-r--r--   1 reeval reeval 274703 Oct 20 15:50 …",
+          "read {\"file_path\":\"src/tools.ts\"} -> ok: {\"type\":\"text\",\"file\":{\"filePath\":\"src/tools.ts\",\"content\":\"import { z } from 'genkit/beta';\\nimport { ai } from './ai.js';\\nimport { ORDERS } from './db.js';\\n\\n/** Looks up an order by id in the orders database; returns null when there is no such order. */\\nexport const lookupOrder = ai.defineTool…",
+          "read {\"file_path\":\"src/db.ts\"} -> ok: {\"type\":\"text\",\"file\":{\"filePath\":\"src/db.ts\",\"content\":\"import orders from './orders.json' with { type: 'json' };\\n\\n/** Order record as the warehouse system reports it. */\\nexport interface Order {\\n  status: string;\\n  eta: string;\\n  tracking: string | null;\\n  total: number;\\n  refundable: bool…",
+          "read {\"file_path\":\"src/orders.json\"} -> ok: {\"type\":\"text\",\"file\":{\"filePath\":\"src/orders.json\",\"content\":\"{\\n  \\\"A-1001\\\": { \\\"status\\\": \\\"shipped\\\", \\\"eta\\\": \\\"2026-10-22\\\", \\\"tracking\\\": \\\"NW-7F3K2Q\\\", \\\"total\\\": \\\"149.99\\\", \\\"refundable\\\": true },\\n  \\\"A-1002\\\": { \\\"status\\\": \\\"processing\\\", \\\"eta\\\": \\\"2026-10-25\\\", \\\"tracking\\\": null, \\\"…",
+          "read {\"file_path\":\"src/agents.ts\"} -> ok: {\"type\":\"text\",\"file\":{\"filePath\":\"src/agents.ts\",\"content\":\"import { agents } from '@genkit-ai/middleware';\\nimport { FileSessionStore, z } from 'genkit/beta';\\nimport { ai } from './ai.js';\\nimport { createRefund } from './db.js';\\nimport { lookupOrder } from './tools.js';\\n\\nconst store = new Fil…",
+          "bash {\"command\":\"cat package.json tsconfig.json; echo ---; cat src/ai.ts src/flows.ts src/index.ts | head -80; echo ---; cat .gitignore\",\"description\":\"Show package, tsconfig and app entry files\"} -> ok: {\"stdout\":\"{\\n  \\\"name\\\": \\\"support-desk\\\",\\n  \\\"version\\\": \\\"1.0.0\\\",\\n  \\\"private\\\": true,\\n  \\\"type\\\": \\\"module\\\",\\n  \\\"scripts\\\": {\\n    \\\"dev\\\": \\\"tsx src/index.ts\\\"\\n  },\\n  \\\"dependencies\\\": {\\n    \\\"@genkit-ai/google-genai\\\": \\\"1.42.0\\\",\\n    \\\"@genkit-ai/middleware\\\": \\\"0.10.0\\\",\\n    \\\"gen…",
+          "bash {\"command\":\"./node_modules/.bin/tsc --noEmit -p . 2>&1 | head -20; echo \\\"tsc exit: ${PIPESTATUS[0]}\\\"; cat > /tmp/check-order.mts <<'EOF'\\nimport { z } from 'node_modules/genkit/node_modules/zod/index.js';\\nEOF\\nls node_modules/genkit/package.json >/dev/null && node -e \\\"\\nconst {z}=require('genkit… -> ok: {\"stdout\":\"src/db.ts(13,14): error TS2322: Type '{ \\\"A-1001\\\": { status: string; eta: string; tracking: string; total: string; refundable: boolean; }; \\\"A-1002\\\": { status: string; eta: string; tracking: null; total: number; refundable: boolean; }; \\\"A-1003\\\": { status: string; eta: string; tracking…",
+          "edit src/orders.json (modify)",
+          "bash {\"command\":\"./node_modules/.bin/tsc --noEmit -p . ; echo \\\"tsc exit: $?\\\"; node -e \\\"\\nconst {z}=require('genkit/beta');\\nconst s=z.object({status:z.string(),eta:z.string(),tracking:z.string().nullable(),total:z.number(),refundable:z.boolean()}).nullable();\\nconst o=require('./src/orders.json');\\nfo… -> ok: {\"stdout\":\"tsc exit: 0\\nA-1001 OK\\nA-1002 OK\\nA-1003 OK\",\"stderr\":\"\",\"interrupted\":false,\"isImage\":false,\"noOutputExpected\":false}",
+          "edit answer.json (create)"
+        ]
+      },
+      "files": [
+        "added answer.json",
+        "modified src/orders.json"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "7668cf0c2c2830d6841b979282519940c20a5302af5fae8013d95a672ec75296"
+      }
+    }
+  },
+  {
+    "question": "Does the agent's final message accurately describe the change it made?",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: This week the support chat started failing on some orders. A customer asked \"Where is order A-1001?\" and the assistant said it could not retrieve the order details, although A-1001 is in our system and has shipped. Questions about other orders, such as A-1002, still get the real status and delivery date.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": "The root cause is a data bug in `src/orders.json`: the `A-1001` record stores `total` as the string `\"149.99\"`, while the lookup tool's output schema requires a number. The tool's output validation rejects that one record, so only `A-1001` lookups fail.\n\nI changed it to `\"total\": 149.99`. Validating each record against the tool's output schema now passes for all three orders, and `tsc --noEmit` exits cleanly. I did not run the chat flow end to end, so the agent's reply to \"Where is A-1001?\" is unverified. `answer.json` is written to the project root.",
+      "files": [
+        "added answer.json",
+        "modified src/orders.json"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "7668cf0c2c2830d6841b979282519940c20a5302af5fae8013d95a672ec75296"
+      }
+    }
+  }
+]

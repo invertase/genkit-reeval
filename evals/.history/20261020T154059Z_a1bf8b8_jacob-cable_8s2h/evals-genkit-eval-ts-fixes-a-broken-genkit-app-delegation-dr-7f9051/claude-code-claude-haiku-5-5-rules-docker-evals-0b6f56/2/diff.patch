@@ -1,0 +1,25 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..853f792
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/agents.ts",
++  "snippet": "use: [agents({ agents: ['orderAgent'], maxDelegations: 3, historyLength: 4 })],",
++  "cause": "The triage agent's agents() middleware lists only 'orderAgent', so the middleware creates no delegation tool for 'refundAgent' and triage cannot hand refund requests to the refund desk.",
++  "evidence": "Triage's delegation tools come only from the agents list (node_modules/@genkit-ai/middleware/lib/agents.js creates one tool per listed agent), and before the fix triage replied 'I cannot directly process refunds' for 'I want a refund for order A-1001, it arrived broken'; after adding 'refundAgent' to the list, triage invokes the refund agent, which reaches its approveRefund interrupt (refundAgent run directly returns finishReason 'interrupted')."
++}
+diff --git a/src/agents.ts b/src/agents.ts
+index 75babdd..34e0ee7 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -52,7 +52,7 @@ export const triage = ai.defineAgent({
+   store,
+   maxTurns: 5,
+   toolChoice: 'auto',
+-  use: [agents({ agents: ['orderAgent'], maxDelegations: 3, historyLength: 4 })],
++  use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 3, historyLength: 4 })],
+ });
+ 
+ /** Lets the CLI exercise triage: `genkit flow:run` runs flows, not agents. */

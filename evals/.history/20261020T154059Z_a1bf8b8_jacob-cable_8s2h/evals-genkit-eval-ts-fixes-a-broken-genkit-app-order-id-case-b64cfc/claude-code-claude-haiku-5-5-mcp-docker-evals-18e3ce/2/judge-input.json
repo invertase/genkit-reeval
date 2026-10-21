@@ -1,0 +1,50 @@
+[
+  {
+    "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: Some customers with valid orders are told their order does not exist. One customer asked the orderStatus flow \"where is order a-1001?\" and got that answer, but A-1001 is in our system and has shipped. I expected the reply to give the status and delivery date.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": {
+        "bug": {
+          "name": "order-id-case",
+          "file": "src/tools.ts",
+          "healthy": "async ({ orderId }) => ORDERS[orderId.trim().toUpperCase()] ?? null,",
+          "broken": "async ({ orderId }) => ORDERS[orderId] ?? null,"
+        },
+        "answer": "{\n  \"file\": \"src/tools.ts\",\n  \"snippet\": \"async ({ orderId }) => ORDERS[orderId] ?? null,\",\n  \"cause\": \"The lookupOrder tool looks up the order id in the case-sensitive ORDERS map without normalizing case, so a customer id typed in lowercase (a-1001) misses the stored key A-1001 and returns null, which the flow reports as not found.\",\n  \"evidence\": \"src/orders.json has the key \\\"A-1001\\\" and no \\\"a-1001\\\"; in Node, orders[\\\"A-1001\\\"] is defined while orders[\\\"a-1001\\\"] is undefined, so the tool returns null for the customer's lowercase query even though the order exists and has shipped.\"\n}\n",
+        "finalMessage": "The bug was in `lookupOrder` in `src/tools.ts`: it looked up the customer's order id as typed, with no case normalization. `orders.json` keys are uppercase (`A-1001`), so `a-1001` returned `null` and the flow reported the order as not found.\n\nI changed the lookup to `ORDERS[orderId.toUpperCase()] ?? null`. I also wrote `answer.json` in the project root with the file, the replaced snippet, the cause, and the evidence. I didn't run the flow end to end, since that needs the Gemini API; the check was a direct Node lookup showing `A-1001` resolves and `a-1001` doesn't. `package.json` is unchanged.",
+        "toolCalls": [
+          "bash {\"command\":\"ls -la && find . -path ./node_modules -prune -o -type f -print | grep -v node_modules | head -100\",\"description\":\"List project files outside node_modules\"} -> ok: {\"stdout\":\"total 328\\ndrwxr-xr-x   1 reeval reeval   4096 Oct 20 15:55 .\\ndrwxr-xr-x   1 reeval reeval   4096 Oct 20 15:55 ..\\n-rw-r--r--   1 reeval reeval     23 Oct 20 15:55 .gitignore\\n-rw-r--r--   1 reeval reeval  11679 Oct 20 15:55 CLAUDE.md\\ndrwxr-xr-x 290 reeval reeval  12288 Oct 20 15:55 nod…",
+          "bash {\"command\":\"cat src/tools.ts src/db.ts src/flows.ts src/index.ts src/ai.ts; echo ----; cat package.json; echo ----; head -c 1500 src/orders.json; echo; grep -n -i \\\"1001\\\" src/orders.json | head\",\"description\":\"Read source files and check order data\"} -> ok: {\"stdout\":\"import { z } from 'genkit/beta';\\nimport { ai } from './ai.js';\\nimport { ORDERS } from './db.js';\\n\\n/** Looks up an order by id in the orders database; returns null when there is no such order. */\\nexport const lookupOrder = ai.defineTool(\\n  {\\n    name: 'lookupOrder',\\n    description…",
+          "bash {\"command\":\"cat src/agents.ts; echo ----; cat prompts/greet.prompt; echo ----; node -e 'const o=require(\\\"./src/orders.json\\\"); console.log(Object.keys(o)); console.log(\\\"exact A-1001:\\\", o[\\\"A-1001\\\"]!==undefined, \\\"| lowercase a-1001:\\\", o[\\\"a-1001\\\"]===undefined ? \\\"undefined\\\" : \\\"found\\\")'\",\"de… -> ok: {\"stdout\":\"import { agents } from '@genkit-ai/middleware';\\nimport { FileSessionStore, z } from 'genkit/beta';\\nimport { ai } from './ai.js';\\nimport { createRefund } from './db.js';\\nimport { lookupOrder } from './tools.js';\\n\\nconst store = new FileSessionStore('.genkit/sessions');\\n\\nconst issueR…",
+          "edit src/tools.ts (modify)",
+          "edit answer.json (create)"
+        ]
+      },
+      "files": [
+        "added answer.json",
+        "modified src/tools.ts"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "972a155dec94ccf9d4a5c33862a057b21015e848d3237854a8432641248cb5a5"
+      }
+    }
+  },
+  {
+    "question": "Does the agent's final message accurately describe the change it made?",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: Some customers with valid orders are told their order does not exist. One customer asked the orderStatus flow \"where is order a-1001?\" and got that answer, but A-1001 is in our system and has shipped. I expected the reply to give the status and delivery date.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": "The bug was in `lookupOrder` in `src/tools.ts`: it looked up the customer's order id as typed, with no case normalization. `orders.json` keys are uppercase (`A-1001`), so `a-1001` returned `null` and the flow reported the order as not found.\n\nI changed the lookup to `ORDERS[orderId.toUpperCase()] ?? null`. I also wrote `answer.json` in the project root with the file, the replaced snippet, the cause, and the evidence. I didn't run the flow end to end, since that needs the Gemini API; the check was a direct Node lookup showing `A-1001` resolves and `a-1001` doesn't. `package.json` is unchanged.",
+      "files": [
+        "added answer.json",
+        "modified src/tools.ts"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "972a155dec94ccf9d4a5c33862a057b21015e848d3237854a8432641248cb5a5"
+      }
+    }
+  }
+]

@@ -1,0 +1,23 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..3f4088f
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "prompts/greet.prompt",
++  "snippet": "model: googleai/gemini-1.5-flash",
++  "cause": "The greet prompt pins the retired model googleai/gemini-1.5-flash, which the Gemini API rejects with a 404 for every request, while the other flows use gemini-2.5-flash from ai.ts.",
++  "evidence": "A direct ai.generate call with googleai/gemini-1.5-flash fails with '[404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent', while googleai/gemini-2.5-flash succeeds and greet({customerName: 'Grace'}) returns 'Hi Grace, welcome to Northwind Supplies support!' after the change; the plugin's usage guide also says never to use gemini-1.5-* models."
++}
+diff --git a/prompts/greet.prompt b/prompts/greet.prompt
+index ef5cf8e..6d905b0 100644
+--- a/prompts/greet.prompt
++++ b/prompts/greet.prompt
+@@ -1,5 +1,5 @@
+ ---
+-model: googleai/gemini-1.5-flash
++model: googleai/gemini-2.5-flash
+ input:
+   schema:
+     customerName: string

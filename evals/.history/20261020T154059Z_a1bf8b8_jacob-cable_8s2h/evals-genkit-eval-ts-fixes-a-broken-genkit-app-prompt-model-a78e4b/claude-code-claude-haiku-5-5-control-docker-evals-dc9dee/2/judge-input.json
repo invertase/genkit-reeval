@@ -1,0 +1,55 @@
+[
+  {
+    "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: The greet flow now fails with an error for every customer, for example \"Grace\", instead of returning a welcome. The other flows, such as summarizeTicket, still work. I expected a one-sentence welcome that addresses the customer by name.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": {
+        "bug": {
+          "name": "prompt-model-override",
+          "file": "prompts/greet.prompt",
+          "healthy": "---\ninput:",
+          "broken": "---\nmodel: googleai/gemini-1.5-flash\ninput:"
+        },
+        "answer": "{\n  \"file\": \"prompts/greet.prompt\",\n  \"snippet\": \"model: googleai/gemini-1.5-flash\",\n  \"cause\": \"The greet prompt pins googleai/gemini-1.5-flash, a model the Gemini API no longer serves for generateContent, so every call fails with a 404, while the other flows use gemini-2.5-flash.\",\n  \"evidence\": \"Calling greet({ customerName: 'Grace' }) failed with a 404 'models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent'; after changing the model to googleai/gemini-2.5-flash the same call returned 'Hi Grace, welcome to Northwind Supplies Support!', and the installed @genkit-ai/google-genai usage guide says never to use gemini-1.5-* models.\"\n}\n",
+        "finalMessage": "The greet flow failed for every customer because `prompts/greet.prompt` pins `googleai/gemini-1.5-flash`, which the Gemini API now rejects with a 404. I changed it to `googleai/gemini-2.5-flash`, the model the other flows use. After the change, `greet({ customerName: 'Grace' })` returns \"Hi Grace, welcome to Northwind Supplies Support!\". I did not re-run `summarizeTicket` since I didn't touch it.\n\n`answer.json` is written in the project root with the file path, the replaced line, the cause, and the evidence. `package.json` is unchanged.",
+        "toolCalls": [
+          "bash {\"command\":\"pwd; ls -la; find . -path ./node_modules -prune -o -type f -print | grep -v '/\\\\.git/' | head -200\",\"description\":\"List project files in working directory\"} -> ok: {\"stdout\":\".\\ntotal 316\\ndrwxr-xr-x   1 reeval reeval   4096 Oct 20 15:54 .\\ndrwxr-xr-x   1 reeval reeval   4096 Oct 20 15:54 ..\\n-rw-r--r--   1 reeval reeval     23 Oct 20 15:54 .gitignore\\ndrwxr-xr-x 290 reeval reeval  12288 Oct 20 15:54 node_modules\\n-rw-r--r--   1 reeval reeval 274703 Oct 20 15:…",
+          "bash {\"command\":\"cat package.json; echo ---; cat prompts/greet.prompt; echo ---; cat src/flows.ts; echo ---; cat src/ai.ts; echo ---; cat src/index.ts\",\"description\":\"Show package.json, greet prompt, and core source files\"} -> ok: {\"stdout\":\"{\\n  \\\"name\\\": \\\"support-desk\\\",\\n  \\\"version\\\": \\\"1.0.0\\\",\\n  \\\"private\\\": true,\\n  \\\"type\\\": \\\"module\\\",\\n  \\\"scripts\\\": {\\n    \\\"dev\\\": \\\"tsx src/index.ts\\\"\\n  },\\n  \\\"dependencies\\\": {\\n    \\\"@genkit-ai/google-genai\\\": \\\"1.42.0\\\",\\n    \\\"@genkit-ai/middleware\\\": \\\"0.10.0\\\",\\n    \\\"gen…",
+          "bash {\"command\":\"cat -A prompts/greet.prompt; echo ---; grep -rn \\\"1.5\\\\|gemini\\\" src prompts package.json tsconfig.json; echo ---; ls node_modules/@genkit-ai/google-genai/dist 2>/dev/null | head; grep -rn \\\"gemini-1.5\\\" node_modules/@genkit-ai/google-genai/dist 2>/dev/null | head -5; echo ---; env | gre… -> ok: {\"stdout\":\"---$\\nmodel: googleai/gemini-1.5-flash$\\ninput:$\\n  schema:$\\n    customerName: string$\\n---$\\nYou are the support desk of Northwind Supplies.$\\nWrite a short, friendly, one-sentence welcome for the customer named {{customerName}}.$\\nAddress them by name.$\\n---\\nsrc/ai.ts:9:  model: googl…",
+          "bash {\"command\":\"ls node_modules/@genkit-ai/google-genai/; grep -rln \\\"gemini-2.5-flash\\\" node_modules/@genkit-ai/google-genai/ 2>/dev/null | head; grep -rn \\\"gemini-1\\\\.5\\\\|gemini-2.0-flash'\\\" node_modules/@genkit-ai/google-genai/ 2>/dev/null | grep -v \\\"\\\\.map\\\" | head -10\",\"description\":\"Check install… -> ok: {\"stdout\":\"README.md\\nlib\\npackage.json\\nsrc\\ntests\\ntsconfig.json\\ntsup.config.ts\\nnode_modules/@genkit-ai/google-genai/tests/model-tests-tts.yaml\\nnode_modules/@genkit-ai/google-genai/tests/common/utils_test.ts\\nnode_modules/@genkit-ai/google-genai/tests/googleai/client_test.ts\\nnode_modules/@genk…",
+          "bash {\"command\":\"sed -n 8,25p node_modules/@genkit-ai/google-genai/.guides/usage.md; echo ---; mkdir -p /tmp/repro && cat > /tmp/repro/greet-check.ts <<'EOF'\\nimport { greet, summarizeTicket } from 'src/flows.ts';\\ntry {\\n  console.log('greet:', await greet({ customerName: 'Grace' }));\\n} catch (e) {\\n  … -> ok: {\"stdout\":\"  model: googleAI.model('gemini-2.5-flash'),\\n  prompt: '...',\\n});\\n```\\n\\nALWAYS use `gemini-2.5-*` series models, they are the best and current generation of Gemini models. NEVER use `gemini-2.0-*` or `gemini-1.5-*` models. For general purpose inference, use one of these models:\\n\\n- `…",
+          "bash {\"command\":\"mv /tmp/repro/greet-check.ts /tmp/repro/greet-check.mts && cd . && timeout 120 ./node_modules/.bin/tsx /tmp/repro/greet-check.mts 2>&1 | grep -v UNDICI | grep -v trace-warnings | head -30\",\"description\":\"Rerun greet repro as ES module script\"} -> ok: {\"stdout\":\"UNKNOWN: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ModelService.ListModels to see the list of avai…",
+          "edit prompts/greet.prompt (modify)",
+          "bash {\"command\":\"timeout 120 ./node_modules/.bin/tsx /tmp/repro/greet-check.mts 2>&1 | grep -v UNDICI | grep -v trace-warnings | head -20\",\"description\":\"Rerun greet flow after model fix\"} -> ok: {\"stdout\":\"greet: Hi Grace, welcome to Northwind Supplies Support!\",\"stderr\":\"\",\"interrupted\":false,\"isImage\":false,\"noOutputExpected\":false}",
+          "edit answer.json (create)",
+          "bash {\"command\":\"rm -rf /tmp/repro && node -e \\\"JSON.parse(require('fs').readFileSync('answer.json','utf8')); console.log('answer.json valid')\\\"\",\"description\":\"Remove scratch repro dir and validate answer.json\"} -> ok: {\"stdout\":\"answer.json valid\\n(node:1634) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\\n(Use `node --trace-warnings ...` to show where the warning was created)\",\"stderr\":\"\",\"interrupted\":false,\"isImage\":false,\"noOutputExpected\":false}"
+        ]
+      },
+      "files": [
+        "added answer.json",
+        "modified prompts/greet.prompt"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "76afde79955572645882cf447859adf9185cdf1577bcbda1d70be42c01d503c2"
+      }
+    }
+  },
+  {
+    "question": "Does the agent's final message accurately describe the change it made?",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: The greet flow now fails with an error for every customer, for example \"Grace\", instead of returning a welcome. The other flows, such as summarizeTicket, still work. I expected a one-sentence welcome that addresses the customer by name.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": "The greet flow failed for every customer because `prompts/greet.prompt` pins `googleai/gemini-1.5-flash`, which the Gemini API now rejects with a 404. I changed it to `googleai/gemini-2.5-flash`, the model the other flows use. After the change, `greet({ customerName: 'Grace' })` returns \"Hi Grace, welcome to Northwind Supplies Support!\". I did not re-run `summarizeTicket` since I didn't touch it.\n\n`answer.json` is written in the project root with the file path, the replaced line, the cause, and the evidence. `package.json` is unchanged.",
+      "files": [
+        "added answer.json",
+        "modified prompts/greet.prompt"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "76afde79955572645882cf447859adf9185cdf1577bcbda1d70be42c01d503c2"
+      }
+    }
+  }
+]

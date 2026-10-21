@@ -1,0 +1,51 @@
+[
+  {
+    "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: Since this week summarizeTicket returns the tags as one comma-separated string such as \"shipping, damage\" instead of a list of tags. The triage dashboard reads tags as a list and now shows nothing. It happens for every ticket, for example one about a cracked monitor that arrived damaged.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": {
+        "bug": {
+          "name": "schema-drift",
+          "file": "src/flows.ts",
+          "healthy": "tags: z.array(z.string()).describe('Up to three lowercase topic tags'),",
+          "broken": "tags: z.string().describe('Up to three lowercase topic tags, comma separated'),"
+        },
+        "answer": "{\n  \"file\": \"src/flows.ts\",\n  \"snippet\": \"tags: z.string().describe('Up to three lowercase topic tags, comma separated'),\",\n  \"cause\": \"The TicketSummarySchema declares tags as a single string with a description asking for comma-separated output, so the model returns \\\"shipping, damage\\\" instead of a list, and the dashboard's list read finds nothing.\",\n  \"evidence\": \"src/flows.ts:8 is the only definition of tags, and TicketSummarySchema is passed as the output schema to ai.generate at line 20, so the model is constrained to a string. The schema's own description says 'comma separated', which tells the model to produce that format. Changing it to z.array(z.string()) and running tsc --noEmit on the project passes.\"\n}\n",
+        "finalMessage": "The root cause is in `src/flows.ts:8`, where the `TicketSummarySchema` declares `tags` as `z.string()` with a description asking for comma-separated output. That schema is the output schema for `summarizeTicket`, so the model returns one string like \"shipping, damage\" instead of a list.\n\nI changed the line to `tags: z.array(z.string()).describe('Up to three lowercase topic tags'),` and `tsc --noEmit` passes. I did not run the flow against the model, so the fix is verified by the type check and schema reading, not a live call. I also wrote `answer.json` in the project root with the file, the replaced snippet, the cause, and the evidence.",
+        "toolCalls": [
+          "bash {\"command\":\"grep -rn \\\"summarizeTicket\\\\|tags\\\" --include=*.ts --include=*.js --include=*.tsx --include=*.json --include=*.md . 2>/dev/null | grep -v node_modules | head -100\",\"description\":\"Search project for summarizeTicket and tags references\"} -> ok: {\"stdout\":\"src/index.ts:1:export { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';\\nsrc/flows.ts:8:  tags: z.string().describe('Up to three lowercase topic tags, comma separated'),\\nsrc/flows.ts:11:/** Turns a raw support ticket into a title, a priority and topic tags. */\\…",
+          "read {\"file_path\":\"src/flows.ts\"} -> ok: {\"type\":\"text\",\"file\":{\"filePath\":\"src/flows.ts\",\"content\":\"import { z } from 'genkit/beta';\\nimport { ai } from './ai.js';\\nimport { lookupOrder } from './tools.js';\\n\\nconst TicketSummarySchema = z.object({\\n  title: z.string().describe('Short title for the ticket, under ten words'),\\n  priority: …",
+          "edit src/flows.ts (modify)",
+          "bash {\"command\":\"ls .; ls node_modules/.bin 2>/dev/null | grep -E \\\"^tsc$\\\" ; cat tsconfig.json 2>/dev/null | head -30\",\"description\":\"List project root, check for TypeScript compiler\"} -> ok: {\"stdout\":\"node_modules\\npackage-lock.json\\npackage.json\\nprompts\\nsrc\\ntsconfig.json\\ntsc\\n{\\n  \\\"compilerOptions\\\": {\\n    \\\"target\\\": \\\"es2022\\\",\\n    \\\"module\\\": \\\"nodenext\\\",\\n    \\\"moduleResolution\\\": \\\"nodenext\\\",\\n    \\\"strict\\\": true,\\n    \\\"noUncheckedIndexedAccess\\\": true,\\n    \\\"verbatim…",
+          "bash {\"command\":\"./node_modules/.bin/tsc -p tsconfig.json; echo \\\"exit=$?\\\"\",\"description\":\"Type-check the project without emitting\"} -> ok: {\"stdout\":\"exit=0\",\"stderr\":\"\",\"interrupted\":false,\"isImage\":false,\"noOutputExpected\":false}",
+          "edit answer.json (create)"
+        ]
+      },
+      "files": [
+        "added answer.json",
+        "modified src/flows.ts"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "9ca2317b056f923916e8eb0ba8e73c662c6a95a0f52fe7cedd2d42e4ce171dcb"
+      }
+    }
+  },
+  {
+    "question": "Does the agent's final message accurately describe the change it made?",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: Since this week summarizeTicket returns the tags as one comma-separated string such as \"shipping, damage\" instead of a list of tags. The triage dashboard reads tags as a list and now shows nothing. It happens for every ticket, for example one about a cracked monitor that arrived damaged.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": "The root cause is in `src/flows.ts:8`, where the `TicketSummarySchema` declares `tags` as `z.string()` with a description asking for comma-separated output. That schema is the output schema for `summarizeTicket`, so the model returns one string like \"shipping, damage\" instead of a list.\n\nI changed the line to `tags: z.array(z.string()).describe('Up to three lowercase topic tags'),` and `tsc --noEmit` passes. I did not run the flow against the model, so the fix is verified by the type check and schema reading, not a live call. I also wrote `answer.json` in the project root with the file, the replaced snippet, the cause, and the evidence.",
+      "files": [
+        "added answer.json",
+        "modified src/flows.ts"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "9ca2317b056f923916e8eb0ba8e73c662c6a95a0f52fe7cedd2d42e4ce171dcb"
+      }
+    }
+  }
+]

@@ -1,0 +1,53 @@
+diff --git a/src/agents.ts b/src/agents.ts
+index 8bde8a3..d8139f4 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -43,3 +43,40 @@ export const refundAgent = ai.defineAgent({
+   maxTurns: 6,
+   store,
+ });
++
++const handOffToOrderAgent = ai.defineTool(
++  {
++    name: 'handOffToOrderAgent',
++    description: 'Passes an order question (status, delivery, tracking, total) to the order desk and returns its reply.',
++    inputSchema: z.object({
++      message: z.string().describe('A self-contained question that includes the order id'),
++    }),
++    outputSchema: z.string(),
++  },
++  async ({ message }) => (await orderAgent.chat().send(message)).text,
++);
++
++const handOffToRefundAgent = ai.defineTool(
++  {
++    name: 'handOffToRefundAgent',
++    description: 'Passes a refund request to the refund desk and returns its reply. Refunds need human approval.',
++    inputSchema: z.object({
++      message: z.string().describe('A self-contained refund request that includes the order id'),
++    }),
++    outputSchema: z.string(),
++  },
++  async ({ message }) => (await refundAgent.chat().send(message)).text,
++);
++
++/** The front desk: the first agent a customer talks to. Hands order and refund requests to specialists. */
++export const triage = ai.defineAgent({
++  name: 'triage',
++  description: 'Front desk for Northwind Supplies. Hands order questions to orderAgent and refund requests to refundAgent.',
++  system:
++    'You are the front desk of the Northwind Supplies support team. Greet the customer and find out what they need. ' +
++    'Do not answer questions about orders or refunds yourself. Hand order questions to handOffToOrderAgent and refund requests to handOffToRefundAgent. ' +
++    'Write each hand-off as a complete message that includes the order id from earlier in the conversation, and relay the reply to the customer.',
++  tools: [handOffToOrderAgent, handOffToRefundAgent],
++  maxTurns: 4,
++  store,
++});
+diff --git a/src/index.ts b/src/index.ts
+index 6eb2d9f..31fb90c 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1,2 +1,2 @@
+ export { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';
+-export { orderAgent, refundAgent } from './agents.js';
++export { orderAgent, refundAgent, triage } from './agents.js';

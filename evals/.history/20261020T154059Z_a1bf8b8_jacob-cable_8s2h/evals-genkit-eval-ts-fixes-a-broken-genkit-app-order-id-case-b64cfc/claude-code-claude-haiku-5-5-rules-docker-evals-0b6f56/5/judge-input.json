@@ -1,0 +1,48 @@
+[
+  {
+    "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: Some customers with valid orders are told their order does not exist. One customer asked the orderStatus flow \"where is order a-1001?\" and got that answer, but A-1001 is in our system and has shipped. I expected the reply to give the status and delivery date.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": {
+        "bug": {
+          "name": "order-id-case",
+          "file": "src/tools.ts",
+          "healthy": "async ({ orderId }) => ORDERS[orderId.trim().toUpperCase()] ?? null,",
+          "broken": "async ({ orderId }) => ORDERS[orderId] ?? null,"
+        },
+        "answer": null,
+        "finalMessage": "",
+        "toolCalls": [
+          "bash {\"command\":\"find . -path ./node_modules -prune -o -type f -print | grep -v '/\\\\.git/' | head -100\",\"description\":\"List project files excluding node_modules\"} -> ok: {\"stdout\":\"./tsconfig.json\\n./.gitignore\\n./CLAUDE.md\\n./package.json\\n./package-lock.json\\n./prompts/greet.prompt\\n./src/index.ts\\n./src/flows.ts\\n./src/ai.ts\\n./src/db.ts\\n./src/tools.ts\\n./src/agents.ts\\n./src/orders.json\",\"stderr\":\"\",\"interrupted\":false,\"isImage\":false,\"noOutputExpected\":false}",
+          "bash {\"command\":\"grep -rn -i \\\"orderStatus\\\\|A-1001\\\\|1001\\\" --include=*.ts --include=*.js --include=*.json --include=*.md . 2>/dev/null | grep -v node_modules | head -50\",\"description\":\"Search for orderStatus and order ID references\"} -> ok: {\"stdout\":\"src/tools.ts:10:      'Looks up the status, delivery ETA, tracking code, total and refund eligibility of an order by its id, for example A-1001. ' +\\nsrc/tools.ts:12:    inputSchema: z.object({ orderId: z.string().describe('The order id, for example A-1001') }),\\nsrc/flows.ts:28:export co…",
+          "read {\"file_path\":\"src/flows.ts\"} -> ok: {\"type\":\"text\",\"file\":{\"filePath\":\"src/flows.ts\",\"content\":\"import { z } from 'genkit/beta';\\nimport { ai } from './ai.js';\\nimport { lookupOrder } from './tools.js';\\n\\nconst TicketSummarySchema = z.object({\\n  title: z.string().describe('Short title for the ticket, under ten words'),\\n  priority: …",
+          "read {\"file_path\":\"src/tools.ts\"} -> ok: {\"type\":\"text\",\"file\":{\"filePath\":\"src/tools.ts\",\"content\":\"import { z } from 'genkit/beta';\\nimport { ai } from './ai.js';\\nimport { ORDERS } from './db.js';\\n\\n/** Looks up an order by id in the orders database; returns null when there is no such order. */\\nexport const lookupOrder = ai.defineTool…",
+          "read {\"file_path\":\"src/db.ts\"} -> ok: {\"type\":\"text\",\"file\":{\"filePath\":\"src/db.ts\",\"content\":\"import orders from './orders.json' with { type: 'json' };\\n\\n/** Order record as the warehouse system reports it. */\\nexport interface Order {\\n  status: string;\\n  eta: string;\\n  tracking: string | null;\\n  total: number;\\n  refundable: bool…",
+          "read {\"file_path\":\"src/orders.json\"} -> ok: {\"type\":\"text\",\"file\":{\"filePath\":\"src/orders.json\",\"content\":\"{\\n  \\\"A-1001\\\": { \\\"status\\\": \\\"shipped\\\", \\\"eta\\\": \\\"2026-10-22\\\", \\\"tracking\\\": \\\"NW-7F3K2Q\\\", \\\"total\\\": 149.99, \\\"refundable\\\": true },\\n  \\\"A-1002\\\": { \\\"status\\\": \\\"processing\\\", \\\"eta\\\": \\\"2026-10-25\\\", \\\"tracking\\\": null, \\\"tota…",
+          "bash {\"command\":\"cat src/ai.ts; echo ---; cat src/agents.ts; echo ---; cat src/index.ts; echo ---; cat package.json; echo ---; ls node_modules 2>/dev/null | head -3; echo ---; cat CLAUDE.md | head -5\",\"description\":\"Show remaining source files and package config\"} -> ok: {\"stdout\":\"import { fileURLToPath } from 'node:url';\\nimport { googleAI } from '@genkit-ai/google-genai';\\nimport { genkit } from 'genkit/beta';\\n\\n/** The Genkit instance every flow and agent in this app shares. */\\nexport const ai = genkit({\\n  plugins: [googleAI()],\\n  // Thinking tokens count ag…",
+          "bash {\"command\":\"node -e 'const o=JSON.parse(require(\\\"fs\\\").readFileSync(\\\"src/orders.json\\\",\\\"utf8\\\")); console.log(\\\"exact a-1001:\\\", JSON.stringify(o[\\\"a-1001\\\"]??null)); console.log(\\\"exact A-1001:\\\", JSON.stringify(o[\\\"A-1001\\\"]??null)); console.log(\\\"normalized a-1001:\\\", JSON.stringify(o[\\\"a-1001… -> ok: {\"stdout\":\"exact a-1001: null\\nexact A-1001: {\\\"status\\\":\\\"shipped\\\",\\\"eta\\\":\\\"2026-10-22\\\",\\\"tracking\\\":\\\"NW-7F3K2Q\\\",\\\"total\\\":149.99,\\\"refundable\\\":true}\\nnormalized a-1001: {\\\"status\\\":\\\"shipped\\\",\\\"eta\\\":\\\"2026-10-22\\\",\\\"tracking\\\":\\\"NW-7F3K2Q\\\",\\\"total\\\":149.99,\\\"refundable\\\":true}\\n(node:1500…",
+          "error: Credit balance is too low"
+        ]
+      },
+      "files": [],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    }
+  },
+  {
+    "question": "Does the agent's final message accurately describe the change it made?",
+    "model": "google/gemini-3.8-flash",
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: Some customers with valid orders are told their order does not exist. One customer asked the orderStatus flow \"where is order a-1001?\" and got that answer, but A-1001 is in our system and has shipped. I expected the reply to give the status and delivery date.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": "",
+      "files": [],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    }
+  }
+]

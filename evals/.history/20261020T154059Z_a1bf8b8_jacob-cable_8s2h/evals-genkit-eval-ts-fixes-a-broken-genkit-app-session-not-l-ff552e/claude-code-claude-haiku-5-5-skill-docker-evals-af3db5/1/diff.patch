@@ -1,0 +1,24 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..8cf5a83
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/agents.ts",
++  "snippet": "  maxTurns: 5,",
++  "cause": "The customer-facing `triage` agent is defined without a `store`, so Genkit treats it as client-managed and rejects any `sessionId` resume with FAILED_PRECONDITION, forcing the customer to repeat the order number.",
++  "evidence": "Before the fix, `triage.chat({ sessionId })` threw \"FAILED_PRECONDITION: Cannot use 'sessionId' with agent 'triage': this agent has no store configured\" while `refundAgent`, which has `store`, resumed fine. After adding `store,` to `triage`, the two-turn conversation under one sessionId answered \"Your order A-1001 has been shipped. The ETA is 2026-10-22 and the tracking code is NW-7F3K2Q.\" and then \"Your order A-1001 has been shipped.\" for the follow-up."
++}
+diff --git a/src/agents.ts b/src/agents.ts
+index 4aefbb2..3fec961 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -51,6 +51,7 @@ export const triage = ai.defineAgent({
+   system: 'Delegate order questions to orderAgent and refund requests to refundAgent. Do not answer them yourself.',
+   maxTurns: 5,
+   toolChoice: 'auto',
++  store,
+   use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 3, historyLength: 4 })],
+ });
+ 

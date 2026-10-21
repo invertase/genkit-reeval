@@ -1,0 +1,23 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..7fc2d5f
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/tools.ts",
++  "snippet": "async ({ orderId }) => ORDERS[orderId] ?? null,",
++  "cause": "The lookupOrder tool does an exact, case-sensitive key lookup, so a customer id typed in lowercase or with stray whitespace (such as a-1001) misses the database and returns null, which the orderStatus flow reports as 'not found'.",
++  "evidence": "Running the lookup logic on src/orders.json returns null for \"a-1001\" but the shipped record (status shipped, eta 2026-10-22, tracking NW-7F3K2Q) for \"A-1001\"; after the fix the id is trimmed and uppercased before lookup, and tsc --noEmit passes."
++}
+diff --git a/src/tools.ts b/src/tools.ts
+index 86c44fb..cafb4a7 100644
+--- a/src/tools.ts
++++ b/src/tools.ts
+@@ -20,5 +20,5 @@ export const lookupOrder = ai.defineTool(
+       })
+       .nullable(),
+   },
+-  async ({ orderId }) => ORDERS[orderId] ?? null,
++  async ({ orderId }) => ORDERS[orderId.trim().toUpperCase()] ?? null,
+ );

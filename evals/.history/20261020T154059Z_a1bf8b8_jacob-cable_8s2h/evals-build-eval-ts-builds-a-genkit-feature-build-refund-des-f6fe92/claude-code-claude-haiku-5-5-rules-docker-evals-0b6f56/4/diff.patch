@@ -1,0 +1,87 @@
+diff --git a/src/agents.ts b/src/agents.ts
+index e69de29..23b7c4a 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -0,0 +1,75 @@
++import { generateMiddleware, z, type MessageData } from 'genkit/beta';
++import { ai } from './ai.js';
++import { createRefund } from './db.js';
++import { lookupOrder } from './tools.js';
++
++const RefundDecisionSchema = z.object({ approved: z.boolean(), note: z.string().optional() });
++
++const approveRefund = ai.defineInterrupt({
++  name: 'approveRefund',
++  description: 'Asks a human to approve refunding an order. Call it once per refund and wait for the answer.',
++  inputSchema: z.object({
++    orderId: z.string().describe('The order id, for example A-1001'),
++    amount: z.number().describe('The amount to refund'),
++    reason: z.string().describe("Why the customer wants the refund, in the customer's words"),
++  }),
++  outputSchema: RefundDecisionSchema,
++});
++
++const issueRefund = ai.defineTool(
++  {
++    name: 'issueRefund',
++    description:
++      'Issues the refund for an order and returns its refund id. ' +
++      'Only call it after approveRefund answered approved for this order.',
++    inputSchema: z.object({
++      orderId: z.string().describe('The order id, for example A-1001'),
++      amount: z.number().describe('The amount to refund'),
++    }),
++    outputSchema: z.string(),
++  },
++  async ({ orderId, amount }) => createRefund(orderId, amount),
++);
++
++/** True when the latest approval answer approved a refund that no issueRefund call has used yet. */
++const hasPendingApproval = (messages: MessageData[]): boolean => {
++  let pending = false;
++  for (const { content } of messages) {
++    for (const { toolResponse } of content) {
++      if (toolResponse?.name === 'issueRefund') pending = false;
++      if (toolResponse?.name === 'approveRefund') {
++        pending = RefundDecisionSchema.safeParse(toolResponse.output).data?.approved === true;
++      }
++    }
++  }
++  return pending;
++};
++
++const refundApprovalGate = generateMiddleware({ name: 'refundApprovalGate' }, () => ({
++  generate: ({ request, currentTurn, messageIndex }, ctx, next) =>
++    next(
++      {
++        request: hasPendingApproval(request.messages)
++          ? request
++          : { ...request, tools: request.tools?.filter((tool) => tool !== 'issueRefund') },
++        currentTurn,
++        messageIndex,
++      },
++      ctx,
++    ),
++}));
++
++export const refundAgent = ai.defineAgent({
++  name: 'refundAgent',
++  description: 'Handles refund requests: checks the order, gets human approval, then issues the refund.',
++  system:
++    'You are the refund desk of Northwind Supplies. For a refund request: ' +
++    'look up the order with lookupOrder. If the order does not exist or is not refundable, tell the customer and stop. ' +
++    'Otherwise call approveRefund once with the order id, the order total as the amount unless the customer asked for less, ' +
++    'and the reason in the customer words. Wait for the answer. ' +
++    'If it is approved, call issueRefund with the same order id and amount, then confirm the refund id to the customer. ' +
++    'If it is declined, do not request approval again and do not refund; tell the customer briefly that the refund was not approved. ' +
++    'Keep every reply to the customer to one or two sentences.',
++  tools: [lookupOrder, approveRefund, issueRefund],
++  use: [refundApprovalGate()],
++});
+diff --git a/src/index.ts b/src/index.ts
+index cda694e..cb68141 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1 +1,2 @@
++export { refundAgent } from './agents.js';
+ export { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';

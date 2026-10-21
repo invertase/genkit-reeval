@@ -1,0 +1,25 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..9317c31
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/flows.ts",
++  "snippet": "tags: z.string().describe('Up to three lowercase topic tags, comma separated'),",
++  "cause": "The summarizeTicket output schema declares tags as a single z.string() (with a description asking for a comma-separated string), so the model returns one joined string instead of an array of tags that the dashboard expects.",
++  "evidence": "src/flows.ts line 8 is the only definition of tags in the app, and TicketSummarySchema is the output schema of summarizeTicket, so the model is constrained to return a string there. Running the new z.array(z.string()) schema directly accepts ['shipping', 'damage'] and rejects 'shipping, damage'. npx tsc --noEmit passes. I did not call the model, so the live output was not observed."
++}
+diff --git a/src/flows.ts b/src/flows.ts
+index 80d0ba0..1fb1efb 100644
+--- a/src/flows.ts
++++ b/src/flows.ts
+@@ -5,7 +5,7 @@ import { lookupOrder } from './tools.js';
+ const TicketSummarySchema = z.object({
+   title: z.string().describe('Short title for the ticket, under ten words'),
+   priority: z.enum(['low', 'medium', 'high']).describe('How urgent the ticket is'),
+-  tags: z.string().describe('Up to three lowercase topic tags, comma separated'),
++  tags: z.array(z.string()).describe('Up to three lowercase topic tags'),
+ });
+ 
+ /** Turns a raw support ticket into a title, a priority and topic tags. */
