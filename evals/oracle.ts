@@ -1,6 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { BUGS, diagnosisErrors } from './bugs.ts'
+import { BUGS, causeErrors, locationErrors } from './bugs.ts'
 import { HEALTHY, isBuildStart } from './tasks.ts'
 
 const CAUSES: Record<string, string> = {
@@ -68,15 +68,17 @@ const cause = CAUSES[named.name]
 if (!cause) fail(`no cause sentence for ${named.name}; add it to CAUSES in oracle.ts`)
 const evidence = `${named.file} contains ${JSON.stringify(named.to)}; the working text is ${JSON.stringify(named.from)}.`
 const answer = { file: named.file, snippet: named.to, cause, evidence }
-const errors = diagnosisErrors(answer, bug)
-if (cheat ? errors.length === 0 : errors.length > 0) {
-  fail(`${cheat ? 'cheat' : 'oracle'} answer for ${bug.name} is ${cheat ? 'accepted' : `rejected: ${errors.join('; ')}`}`)
+const file = path.resolve(process.cwd(), bug.file)
+const broken = fs.readFileSync(file, 'utf8')
+const healthy = broken.replace(bug.to, () => bug.from)
+const checks = { 'locates the file': locationErrors(answer, bug), 'names the cause': causeErrors(answer, bug, healthy) }
+for (const [check, errors] of Object.entries(checks)) {
+  if (cheat ? errors.length === 0 : errors.length > 0) {
+    fail(`${cheat ? 'cheat' : 'oracle'} answer for ${bug.name} ${cheat ? 'passes' : 'fails'} ${check}${cheat ? '' : `: ${errors.join('; ')}`}`)
+  }
 }
 
-if (!cheat) {
-  const file = path.resolve(process.cwd(), bug.file)
-  fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace(bug.to, () => bug.from))
-}
+if (!cheat) fs.writeFileSync(file, healthy)
 
 fs.writeFileSync(path.resolve(process.cwd(), 'answer.json'), JSON.stringify(answer, null, 2) + '\n')
 console.log(`${cheat ? 'cheated' : 'fixed'} ${bug.name}`)

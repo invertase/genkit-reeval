@@ -163,14 +163,38 @@ export const BUGS: Bug[] = [
 
 const workspacePath = (file: string) => file.replace(/^\/reeval\/workspace\//, '').replace(/^(\.\/)+/, '')
 
+const field = (answer: unknown, key: string): string => {
+  const value = typeof answer === 'object' && answer !== null ? Reflect.get(answer, key) : undefined
+  return typeof value === 'string' ? value : ''
+}
+
+const collapse = (text: string) => text.replace(/\s+/g, ' ').trim()
+
+/** The healthy text of `bug.file` with `bug` seeded into it. */
+export const seed = (healthy: string, bug: Bug): string => healthy.replace(bug.from, () => bug.to)
+
 /**
  * Why `answer` (the parsed `answer.json`) does not locate `bug`; empty when it does. The answer
  * locates the bug when its `file` is `bug.file`, ignoring a leading `./` or `/reeval/workspace/`.
  */
-export function diagnosisErrors(answer: unknown, bug: Bug): string[] {
-  const value = typeof answer === 'object' && answer !== null ? Reflect.get(answer, 'file') : undefined
-  const file = workspacePath(typeof value === 'string' ? value : '')
+export function locationErrors(answer: unknown, bug: Bug): string[] {
+  const file = workspacePath(field(answer, 'file'))
   return file === bug.file ? [] : [`file ${JSON.stringify(file)} is not ${JSON.stringify(bug.file)}`]
+}
+
+/**
+ * Why `answer` does not name `bug`'s broken text; empty when it does. `healthy` is the healthy
+ * `bug.file`. Ignoring whitespace runs, the `snippet` must occur in the seeded file and not in the
+ * healthy one, so it overlaps the seeded change: a whole broken line passes, a fragment the two
+ * versions share (such as `maxTurns:`) or the healthy text does not.
+ */
+export function causeErrors(answer: unknown, bug: Bug, healthy: string): string[] {
+  const snippet = collapse(field(answer, 'snippet'))
+  if (snippet === '') return ['snippet is empty']
+  const shown = JSON.stringify(snippet)
+  if (!collapse(seed(healthy, bug)).includes(snippet)) return [`snippet ${shown} is not in the broken ${bug.file}`]
+  if (collapse(healthy).includes(snippet)) return [`snippet ${shown} is also in the healthy ${bug.file}`]
+  return []
 }
 
 const count = (haystack: string, needle: string) => haystack.split(needle).length - 1
@@ -191,16 +215,26 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       if (!keep.test(source)) errors.push(`${bug.name}: keeps ${keep} does not match the healthy ${bug.file}`)
     }
     for (const file of [bug.file, `./${bug.file}`, `/reeval/workspace/${bug.file}`]) {
-      for (const e of diagnosisErrors({ file }, bug)) errors.push(`${bug.name}: own answer rejected: ${e}`)
+      for (const e of locationErrors({ file }, bug)) errors.push(`${bug.name}: own file rejected: ${e}`)
+    }
+    const seededLine = seed(source, bug).split('\n').find((line) => line.trim() !== '' && !source.split('\n').includes(line))
+    for (const snippet of [bug.to, ` ${bug.to.replace(/\n\s*/g, '\n')} `, ...(seededLine ? [seededLine] : [])]) {
+      for (const e of causeErrors({ snippet }, bug, source)) errors.push(`${bug.name}: own snippet ${JSON.stringify(snippet)} rejected: ${e}`)
+    }
+    for (const snippet of ['', bug.from]) {
+      if (causeErrors({ snippet }, bug, source).length === 0) errors.push(`${bug.name}: snippet ${JSON.stringify(snippet)} is accepted`)
     }
     for (const other of BUGS) {
-      if (other.file !== bug.file && diagnosisErrors({ file: other.file }, bug).length === 0) {
-        errors.push(`${bug.name}: ${other.name}'s answer (${other.file}) is accepted`)
+      if (other.file !== bug.file && locationErrors({ file: other.file }, bug).length === 0) {
+        errors.push(`${bug.name}: ${other.name}'s file (${other.file}) is accepted`)
+      }
+      if (other !== bug && causeErrors({ snippet: other.to }, bug, source).length === 0) {
+        errors.push(`${bug.name}: ${other.name}'s snippet is accepted`)
       }
     }
     if (/genkit|trace|mcp|\bcli\b/i.test(bug.symptom)) errors.push(`${bug.name}: symptom mentions tooling`)
     if (!verify.includes(`test('${bug.name}'`)) errors.push(`${bug.name}: no test('${bug.name}') in verify.mts`)
-    const seeded = source.replace(bug.from, () => bug.to)
+    const seeded = seed(source, bug)
     for (const other of BUGS) {
       if (other !== bug && other.file === bug.file && count(seeded, other.to) > 0) {
         errors.push(`${bug.name}: seeding it also seeds ${other.name}, so the oracle cannot tell them apart`)

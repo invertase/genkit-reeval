@@ -1,6 +1,6 @@
 import fs from 'node:fs'
 import { evaluate, expect, type Turn } from 'reeval'
-import { BUGS, diagnosisErrors } from './bugs.ts'
+import { BUGS, causeErrors, locationErrors, seed } from './bugs.ts'
 import { control, directed, mcp, rules, skill } from './environments.ts'
 import { hideSeedHistory } from './snapshot.ts'
 
@@ -64,13 +64,15 @@ evaluate.each(BUGS)(
     await c.sandbox() // 0.9.0 does not start it on readFile: invertase/reeval#384
     const healthy = (await c.readFile(bug.file)) ?? ''
     if (healthy.split(bug.from).length !== 2) throw new Error(`${bug.name}: healthy snippet not found once in ${bug.file}`)
-    await c.writeFile(bug.file, healthy.replace(bug.from, () => bug.to))
+    await c.writeFile(bug.file, seed(healthy, bug))
     await hideSeedHistory(c, bug.name)
 
     const turn = await c.send(prompt(bug.symptom))
 
     const answerText = await c.readFile('answer.json')
-    expect.soft(diagnosisErrors(parseAnswer(answerText), bug), 'names the cause').toEqual([])
+    const answer = parseAnswer(answerText)
+    expect.soft(locationErrors(answer, bug), 'locates the file').toEqual([])
+    expect.soft(causeErrors(answer, bug, healthy), 'names the cause').toEqual([])
 
     await c.writeFile('~/.verify.mts', verify)
     await expect
@@ -80,7 +82,7 @@ evaluate.each(BUGS)(
     const fixed = (await c.readFile(bug.file)) ?? ''
     expect.soft(bug.keeps.filter((keep) => !keep.test(fixed)).map(String), 'keeps the flow').toEqual([])
 
-    // Recorded in `judgements`, never asserted: pass and lift stay on the three checks.
+    // Recorded in `judgements`, never asserted: pass and lift stay on the checks.
     await c.judge(EVIDENCE_QUESTION, {
       on: {
         bug: { name: bug.name, file: bug.file, healthy: bug.from, broken: bug.to },

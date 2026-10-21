@@ -9,9 +9,10 @@ A real coding agent works in a Docker sandbox on a support-desk app that calls r
 > You are on the support-desk Genkit app in this directory. Bug report: ${symptom}
 > Find the root cause and fix it in the app's source. Then write `answer.json` in the project root: { "file": "<path of the file that had the bug>", "snippet": "<the exact broken text you replaced, copied verbatim, one line is enough>", "cause": "<one sentence>", "evidence": "<what shows this is the cause>" }. Don't change `package.json` or add dependencies.
 
-The symptom never names Genkit tooling. The seeded diff is not in the agent's view, and the agent never sees the checks. Pass is all three:
+The symptom never names Genkit tooling. The seeded diff is not in the agent's view, and the agent never sees the checks. Pass is all four:
 
-- `names the cause`: `answer.json` points at the right file.
+- `locates the file`: `answer.json` points at the right file.
+- `names the cause`: the `snippet` in `answer.json`, with whitespace runs collapsed, occurs in the broken file and not in the healthy one, so it quotes the seeded change rather than a fragment both versions share.
 - `flow works`: a `node:test` file (`evals/verify.mts`) is placed into the sandbox after the agent's turn and calls the broken flow against real Gemini.
 - `keeps the flow`: the fix did not delete or stub the flow.
 

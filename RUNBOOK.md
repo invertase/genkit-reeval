@@ -67,7 +67,7 @@ One case, five arms, one attempt each; then the `mcp` arm on Codex for all 15 ca
 - Antigravity: the harness injects its own `GEMINI_API_KEY`, brokered only to its streaming endpoint; the app reads `SUPPORT_DESK_GEMINI_API_KEY`, so the harness key cannot shadow it. Check an Antigravity attempt starts and a flow run from the agent shell reaches Gemini.
 - Agents bug: does the `mcp` arm call `run_flow` on `tryTriage`/`tryRefundDesk`? Does `get_trace` output fit, or is it truncated? Does the agent read the interrupt's error-looking span as the bug?
 - Build task: before the first turn `src/agents.ts` holds `orderAgent` and `refundAgent` only (or is absent for the other two tasks), and the agent's diff shows only what it wrote. Does it write `ai.chat()` or other API that is gone? Does the `mcp` or `skill` arm look up the agents API before it writes?
-- `pnpm reeval query check_discrimination` lists `names the cause`, `flow works`, `keeps the flow` for the bugs and `typechecks`, `agent works`, `keeps the flows` for the build tasks; `pnpm reeval query judgements` has two rows per bug attempt and one per build attempt.
+- `pnpm reeval query check_discrimination` lists `locates the file`, `names the cause`, `flow works`, `keeps the flow` for the bugs and `typechecks`, `agent works`, `keeps the flows` for the build tasks; `pnpm reeval query judgements` has two rows per bug attempt and one per build attempt.
 
 Then the whole smoke profile: `pnpm reeval run --profile smoke` (60 attempts).
 
@@ -97,7 +97,7 @@ pnpm reeval analyze --save             # one LLM call over the digest, citations
 pnpm reeval studio build --out site    # static site with every transcript and diff (read before publishing)
 ```
 
-Pass is all three checks, which is what `lift` and `family_lift` pool. Fix rate is the `flow works` check alone; build rate is the `agent works` check alone. The judges are recorded, never asserted; a failed attempt with a low verdict shows `error_kind = 'judge'` in `failing_attempts`, so read `first_failed_check` for the real cause.
+Pass is every check, which is what `lift` and `family_lift` pool. Fix rate is the `flow works` check alone; build rate is the `agent works` check alone. The judges are recorded, never asserted; a failed attempt with a low verdict shows `error_kind = 'judge'` in `failing_attempts`, so read `first_failed_check` for the real cause.
 
 The README tables come from the four queries in `queries/`. Each reads one run: find it with `SELECT run_id, profile, started_at, attempts FROM runs ORDER BY started_at DESC LIMIT 5`, then run a query with the id in place of `<run id>`:
 
