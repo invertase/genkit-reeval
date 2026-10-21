@@ -107,10 +107,6 @@ export const ai = genkit({
     });
     ```
 
-## Agents API
-
-Agents come from `genkit/beta`: `ai.defineAgent({ name, description, system, tools, store, use, maxTurns })` defines one, and `ai.defineInterrupt` defines a tool that pauses for a human (resume with `chat.resume(...)`). Delegation between agents is the `agents()` middleware from the separate `@genkit-ai/middleware` package: `use: [agents({ agents: ['researcher', 'coder'], maxDelegations, historyLength })]` gives the agent one `delegate_to_<name>` tool per listed agent. Talk to an agent with `agent.chat().send(message)`. To continue a conversation later, give the agent a server-side session store (for example `store: new FileSessionStore('./.snapshots')` from `genkit/beta`) and call `agent.loadChat({ sessionId })` or `agent.loadChat({ snapshotId })`; without a store, `loadChat` fails. `ai.chat()` is not part of this API.
-
 ---
 
 ## Usage Scenarios
