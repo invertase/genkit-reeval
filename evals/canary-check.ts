@@ -1,7 +1,8 @@
 // Run by `pnpm canary` after the canary run: reeval exits 1 when every cell fails, which is what a good canary does, so this sets the exit code.
-// Usage: tsx evals/canary-check.ts [<run id>] [--since <ISO time>]; with no run id it reads the latest canary run, which must have started after --since.
+// Usage: tsx evals/canary-check.ts [<run id>] [--since <ISO time>]; with no run id it reads the newest run under .reeval/runs, which must be a canary run that started after --since.
+import { execFileSync } from 'node:child_process'
+import { readdirSync } from 'node:fs'
 import path from 'node:path'
-import { DatabaseSync } from 'node:sqlite'
 import { fileURLToPath } from 'node:url'
 import { BUGS } from './bugs.ts'
 import { FIXED_CHECKS, TASKS } from './tasks.ts'
@@ -33,41 +34,81 @@ export function cellErrors(cell: Cell): string[] {
   return [...errors, `unknown family ${cell.file}`]
 }
 
+/** Shape of the parts of `reeval show <run> --json` this script reads. */
+type RunRecord = {
+  runId: string
+  startedAt: string
+  profile: { name: string } | null
+  evals: {
+    name: string
+    file: string
+    cells: { key: string; outcome: string }[]
+    attempts: { cell: string; assertions: { label: string; status: string }[] }[]
+  }[]
+}
+
+/** The start time encoded in a run id such as `20261021T165233Z_efb4b05_jacob-cable_j98t`; undefined when it is not one. */
+function runStart(runId: string): Date | undefined {
+  const m = /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z_/.exec(runId)
+  return m ? new Date(`${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}Z`) : undefined
+}
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2)
   const sinceAt = args.indexOf('--since')
   const since = sinceAt < 0 ? undefined : args.splice(sinceAt, 2)[1]
   const [given] = args
-  const db = new DatabaseSync(path.resolve(fileURLToPath(new URL('..', import.meta.url)), '.reeval/history.db'), { readOnly: true })
-  const run = given
-    ? db.prepare('SELECT run_id, profile, started_at FROM runs WHERE run_id = ?').get(given)
-    : db.prepare("SELECT run_id, profile, started_at FROM runs WHERE profile = 'canary' ORDER BY started_at DESC LIMIT 1").get()
-  if (!run) {
-    console.error(`canary-check: no ${given ? `run ${given}` : 'canary run'} in .reeval/history.db`)
+  const root = fileURLToPath(new URL('..', import.meta.url))
+  const runsDir = path.join(root, '.reeval/runs')
+  const sinceDate = since === undefined ? undefined : new Date(since)
+  if (sinceDate && Number.isNaN(sinceDate.getTime())) {
+    console.error(`canary-check: --since ${since} is not a time`)
     process.exit(1)
   }
-  const runId = String(run.run_id)
-  if (since !== undefined && !(new Date(String(run.started_at)) >= new Date(since))) {
-    console.error(`canary-check: the latest canary run ${runId} started at ${String(run.started_at)}, before this canary (${since}); the run was not recorded`)
+  // history.db is only brought up to date by `reeval query`, so the run directories are the source of truth.
+  const newest = readdirSync(runsDir, { withFileTypes: true })
+    .filter((d) => d.isDirectory() && runStart(d.name) !== undefined)
+    .map((d) => d.name)
+    .sort()
+    .at(-1)
+  const runId = given ?? newest
+  if (!runId) {
+    console.error('canary-check: no run in .reeval/runs')
     process.exit(1)
   }
-  const rows = db
-    .prepare(
-      `SELECT e.name, e.file, c.key AS cell, c.outcome,
-              (SELECT COUNT(*) FROM attempts a WHERE a.run_id = c.run_id AND a.eval_key = c.eval_key AND a.cell_key = c.key) AS attempts,
-              (SELECT json_group_array(s.label) FROM assertions s WHERE s.run_id = c.run_id AND s.eval_key = c.eval_key AND s.cell_key = c.key AND s.status = 'fail') AS failed
-       FROM cells c JOIN evals e ON e.run_id = c.run_id AND e.key = c.eval_key
-       WHERE c.run_id = ? ORDER BY e.file, e.name, c.key`,
+  if (!given && sinceDate && !(runStart(runId)! >= sinceDate)) {
+    console.error(`canary-check: the newest run ${runId} started before this canary (${since}); the canary run was not recorded`)
+    process.exit(1)
+  }
+  let run: RunRecord
+  try {
+    run = JSON.parse(execFileSync('pnpm', ['-s', 'reeval', 'show', runId, '--json'], { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 256 * 1024 * 1024 })) as RunRecord
+  } catch (error) {
+    const stderr = (error as { stderr?: string }).stderr?.trim()
+    console.error(`canary-check: cannot read run ${runId} with reeval show: ${stderr || (error instanceof Error ? error.message : String(error))}`)
+    process.exit(1)
+  }
+  const profile = run.profile?.name ?? 'default'
+  if (!given && profile !== 'canary') {
+    console.error(`canary-check: the newest run ${runId} has profile ${profile}, not canary`)
+    process.exit(1)
+  }
+  const cells = run.evals
+    .flatMap((e) =>
+      e.cells.map((c) => {
+        const attempts = e.attempts.filter((a) => a.cell === c.key)
+        return {
+          name: e.name,
+          file: e.file,
+          key: c.key,
+          outcome: c.outcome,
+          attempts: attempts.length,
+          failed: attempts.flatMap((a) => a.assertions.filter((s) => s.status === 'fail').map((s) => s.label)),
+        }
+      }),
     )
-    .all(runId)
-  const cells = rows.map((r) => ({
-    name: String(r.name),
-    file: String(r.file),
-    outcome: String(r.outcome),
-    attempts: Number(r.attempts),
-    failed: (JSON.parse(String(r.failed)) as unknown[]).map(String),
-  }))
-  console.log(`canary-check: run ${runId} (profile ${String(run.profile)})`)
+    .sort((a, b) => a.file.localeCompare(b.file) || a.name.localeCompare(b.name) || a.key.localeCompare(b.key))
+  console.log(`canary-check: run ${runId} (profile ${profile})`)
   let bad = cells.length === 0 ? 1 : 0
   if (cells.length === 0) console.log('no cells')
   for (const cell of cells) {
