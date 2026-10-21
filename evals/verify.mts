@@ -72,7 +72,7 @@ test('session-not-loaded', async () => {
   const first = await app.triage.chat().send('My order is A-1001.')
   assert.ok(first.sessionId, 'the first turn returned no session id')
   const chat = await app.triage.loadChat({ sessionId: first.sessionId })
-  const second = await chat.send('What is its status?')
+  const second = await chat.send('What is the status of my order?')
   assert.equal(second.sessionId, first.sessionId, 'the session changed between turns')
   assertKnowsOrder(second.text, 'A-1001', 'the second turn')
 })

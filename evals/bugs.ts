@@ -108,7 +108,7 @@ export const BUGS: Bug[] = [
     from: "Do not answer them yourself.',\n  store,\n  maxTurns:",
     to: "Do not answer them yourself.',\n  maxTurns:",
     symptom:
-      'In the support chat a customer says "My order is A-1001." and then, in the same conversation, sends "What is its status?". ' +
+      'In the support chat a customer says "My order is A-1001." and then, in the same conversation, sends "What is the status of my order?". ' +
       'The follow-up fails: the chat cannot be picked up again by its session id, so the customer has to start over and repeat the order number. ' +
       'Single questions still get answered.',
     keeps: [/name: 'triage'/, /use: \[\s*agents\(/],

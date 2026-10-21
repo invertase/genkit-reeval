@@ -190,7 +190,7 @@ export const TASKS: Task[] = [
     prompt:
       `${APP} Add a front desk agent. In \`src/agents.ts\`, add and export \`triage\`, the agent customers talk to first. ` +
       'It hands order questions to `orderAgent` and refund requests to `refundAgent` instead of answering them itself. ' +
-      'A conversation with it can be picked up again later by its session id, so a customer who said "My order is A-1001." can ask "What is its status?" in a later request. ' +
+      'A conversation with it can be picked up again later by its session id, so a customer who said "My order is A-1001." can ask "What is the status of my order?" in a later request. ' +
       'Export `triage` from `src/index.ts`. Callers start a conversation with `triage.chat()` and `send(message)`, read the `sessionId` from the response, ' +
       'and continue it with `triage.loadChat({ sessionId })`. ' +
       RULES,
@@ -206,7 +206,7 @@ export const TASKS: Task[] = [
       `${APP} Customers come back to the order desk in later requests, often served by another server process. ` +
       'Make `orderAgent` conversations resumable by session id: the first request starts one with `orderAgent.chat()` and `send(message)` and reads the `sessionId` from the response; ' +
       'a later request, in a new process, continues it with `orderAgent.loadChat({ sessionId })` and `send(message)`. ' +
-      'A customer who said "My order is A-1001." can then ask "What is its status?" and get A-1001\'s status, and two customers\' conversations never mix. ' +
+      'A customer who said "My order is A-1001." can then ask "What is the status of my order?" and get A-1001\'s status, and two customers\' conversations never mix. ' +
       RULES,
     file: 'src/index.ts',
     keeps: keepsFlows,

@@ -33,7 +33,8 @@ export const orderAgent = ai.defineAgent({
   description: 'Answers questions about an order: its status, delivery date, tracking code and total.',
   system:
     'You are the Northwind Supplies order desk. Answer questions about orders using the lookupOrder tool. ' +
-    'Quote the status, ETA and tracking code exactly as the tool returns them. If an order is not found, say so.',
+    'Quote the status, ETA and tracking code exactly as the tool returns them. If an order is not found, say so. ' +
+    'When the customer does not name an order, use the order id from earlier in the conversation; ask for one only when the conversation has none.',
   tools: [lookupOrder],
   maxTurns: 4,
   store,
@@ -55,7 +56,9 @@ export const refundAgent = ai.defineAgent({
 /** Routes each customer message to the right specialist agent. */
 export const triage = ai.defineAgent({
   name: 'triage',
-  system: 'Delegate order questions to orderAgent and refund requests to refundAgent. Do not answer them yourself.',
+  system:
+    'Delegate order questions to orderAgent and refund requests to refundAgent. Do not answer them yourself. ' +
+    'Always put the order id in the delegated task; when the customer does not name an order, use the order id from earlier in the conversation.',
   store,
   maxTurns: 5,
   toolChoice: 'auto',
