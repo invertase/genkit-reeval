@@ -19,7 +19,7 @@ const parseAnswer = (text: string | null): unknown => {
   }
 }
 
-// Set by reeval.oracle.config.ts: gates the control cell so a failing oracle or a passing canary sets the exit code.
+// Set by reeval.oracle.config.ts: gates the control cell so a failing oracle sets the exit code; evals/canary-check.ts judges the canary.
 const gate = process.env.GENKIT_EVAL_GATE === 'all' ? 'all' : 'none'
 
 const show = (value: unknown) => (typeof value === 'string' ? value : (JSON.stringify(value) ?? ''))

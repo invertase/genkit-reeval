@@ -262,6 +262,9 @@ export const TASKS: Task[] = [
   },
 ]
 
+/** The checks `build.eval.ts` records besides the requirements; a requirement check is any other label. */
+export const FIXED_CHECKS = ['agent ran without provider errors', 'leaves package.json alone', 'typechecks', 'verify ran', 'keeps the flows'] as const
+
 const TAP_RESULT = /^\s*(not )?ok \d+ - (.*?)(?: # (SKIP|TODO)\b.*)?$/
 const TAP_PLAN = /^\s*1\.\.\d+\s*$/m
 
@@ -345,7 +348,9 @@ function typecheckWith(files: Record<string, string | null>): string | null {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const verify = readFileSync(new URL('./verify-build.mts', import.meta.url), 'utf8')
+  const buildEval = readFileSync(new URL('./build.eval.ts', import.meta.url), 'utf8')
   const errors: string[] = []
+  for (const label of FIXED_CHECKS) if (!buildEval.includes(`'${label}')`)) errors.push(`build.eval.ts records no check '${label}'`)
   const names = new Set<string>()
   for (const task of TASKS) {
     if (names.has(task.name)) errors.push(`${task.name}: duplicate name`)
@@ -355,6 +360,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const tests = [...verify.matchAll(/^test\('([^']*)'/gm)].flatMap((m) => (m[1]?.startsWith(`${task.name}: `) ? [m[1]] : []))
     const expected = task.checks.map((check) => `${task.name}: ${check}`)
     if (tests.join('\n') !== expected.join('\n')) errors.push(`${task.name}: verify-build.mts tests ${JSON.stringify(tests)}, expected ${JSON.stringify(expected)}`)
+    for (const check of task.checks) if ((FIXED_CHECKS as readonly string[]).includes(check)) errors.push(`${task.name}: check ${check} has a fixed check's name`)
     for (const fails of task.cheat.fails) {
       if (!task.checks.includes(fails)) errors.push(`${task.name}: the cheat fails ${fails}, which is not a check`)
     }

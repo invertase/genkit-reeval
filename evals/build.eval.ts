@@ -7,7 +7,7 @@ import { requirementErrors, TASKS, verifyErrors } from './tasks.ts'
 
 const verify = fs.readFileSync(new URL('./verify-build.mts', import.meta.url), 'utf8')
 
-// Set by reeval.oracle.config.ts: gates the control cell so a failing oracle or a passing canary sets the exit code.
+// Set by reeval.oracle.config.ts: gates the control cell so a failing oracle sets the exit code; evals/canary-check.ts judges the canary.
 const gate = process.env.GENKIT_EVAL_GATE === 'all' ? 'all' : 'none'
 
 const IDIOM_QUESTION =

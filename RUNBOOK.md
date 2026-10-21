@@ -34,11 +34,13 @@ Docker Desktop on this Mac sometimes drops an image tag reference: `docker image
 
 ## Oracle and canary
 
-`reeval.oracle.config.ts` swaps the coding agent for a fake one and runs only the `control` arm on the real Docker sandbox. For a bug, the oracle applies the known fix and writes the right `answer.json`. For a build task, it writes the healthy `src/agents.ts`, `src/index.ts` and `src/tools.ts`. Every case must pass. The canary leaves the bug in place and writes a wrong answer for it, or writes the task's plausible wrong build (`cheat` in `evals/tasks.ts`, with the requirements it must fail). Every case must fail. Some tasks share a start state (`src/agents.ts` is absent at the start of both `build-order-desk` and `build-refund-desk`), so under `GENKIT_EVAL_GATE=all`, which only `reeval.oracle.config.ts` sets, `evals/build.eval.ts` writes the task name to `~/.task` for the oracle to read. A real agent's sandbox has no `~/.task`. `GENKIT_EVAL_GATE=all` gates these cells, so the exit code is the result.
+`reeval.oracle.config.ts` swaps the coding agent for a fake one and runs only the `control` arm on the real Docker sandbox. For a bug, the oracle applies the known fix and writes the right `answer.json`. For a build task, it writes the healthy `src/agents.ts`, `src/index.ts` and `src/tools.ts`. Every case must pass. The canary leaves the bug in place and writes a wrong answer for it, or writes the task's plausible wrong build (`cheat` in `evals/tasks.ts`, with the requirements it must fail). Every case must fail. Some tasks share a start state (`src/agents.ts` is absent at the start of both `build-order-desk` and `build-refund-desk`), so under `GENKIT_EVAL_GATE=all`, which only `reeval.oracle.config.ts` sets, `evals/build.eval.ts` writes the task name to `~/.task` for the oracle to read. A real agent's sandbox has no `~/.task`. `GENKIT_EVAL_GATE=all` gates these cells, so the oracle's exit code is its result.
+
+The canary's reeval run exits 1 when its cells fail, which is what a good canary does. So `pnpm canary` then runs `evals/canary-check.ts` on the run it recorded, and that script's exit code is the result. It passes only when every cell failed, every build cell failed exactly its task's `cheat.fails` among the requirement checks, and every bug cell failed `locates the file`, `names the cause` and `flow works`. It prints one line per cell: `ok` or `BAD`, the outcome and the requirement checks that failed, with the reason under each `BAD` line. If reeval recorded no new canary run, it fails rather than read an old one. To re-judge a recorded run: `node_modules/.bin/tsx evals/canary-check.ts <run id>`.
 
 ```bash
 pnpm oracle     # expect 19 passed, exit 0
-pnpm canary     # expect 19 failed, non-zero exit
+pnpm canary     # reeval reports 19 failed, then expect "canary-check: all 19 cells failed as they must", exit 0
 ```
 
 Each cell is a container that copies the baked `node_modules` in and makes a few Gemini calls, so allow a minute or two each at concurrency 8. The judge runs with `fakeJudge()` here: no key, no model call.

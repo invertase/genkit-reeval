@@ -1,5 +1,6 @@
 // Oracle: the control arm passes every check when the bug is fixed and named or the agents are built, so every eval can pass.
-// Canary (`--profile canary`): an unfixed bug with a wrong answer, or a plausible wrong build (`Task.cheat`), fails every cell, so the checks bite.
+// Canary (`--profile canary`): an unfixed bug with a wrong answer, or a plausible wrong build (`Task.cheat`), must fail every cell, so the checks bite.
+// reeval exits 1 for that canary, as for any failed gate; `pnpm canary` then runs evals/canary-check.ts, whose exit code is the verdict.
 import { readFileSync } from 'node:fs'
 import { defineConfig } from 'reeval'
 import { fakeHarness } from 'reeval/harness'
