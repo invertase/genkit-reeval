@@ -68,6 +68,7 @@ evaluate.each(BUGS)(
     await hideSeedHistory(c, bug.name)
 
     const turn = await c.send(prompt(bug.symptom))
+    expect.soft(c, 'leaves package.json alone').not.toHaveChanged(['package.json', 'package-lock.json'])
 
     const answerText = await c.readFile('answer.json')
     const answer = parseAnswer(answerText)

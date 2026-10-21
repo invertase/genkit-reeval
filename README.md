@@ -39,7 +39,7 @@ The server is never measured without the rules, because `GENKIT.md` is what tell
 
 Two families of cases, 15 in all. Twelve seeded bugs, six in the flows API and six in the agents API: the agent gets a bug report that never names Genkit tooling, must fix it and write `answer.json`. Three build tasks: the app starts without an agent, and the agent must add an order desk, a refund desk with human approval, or a front desk that delegates and resumes sessions. The agents API is newer than the models' training data, so the build tasks are where the tooling's knowledge should show.
 
-Pass is deterministic. A hidden `node:test` file is placed into the sandbox after the agent's turn and drives the flow or agent against real Gemini; the agent never sees it. Two more checks guard against cheating: the answer names the right file and quotes the broken text, and the flows survive. LLM judges and one pairwise question per family are recorded, never counted toward pass. [`STUDY.md`](STUDY.md) has the prompts, the bug table and the build-task table.
+Pass is deterministic. A hidden `node:test` file is placed into the sandbox after the agent's turn and drives the flow or agent against real Gemini; the agent never sees it. More checks guard against cheating: the answer names the right file and quotes the broken text, the flows survive, and `package.json` is untouched. LLM judges and one pairwise question per family are recorded, never counted toward pass. [`STUDY.md`](STUDY.md) has the prompts, the bug table and the build-task table.
 
 The study itself is a few files, for anyone who wants to read what the agent is told and what counts as a pass:
 

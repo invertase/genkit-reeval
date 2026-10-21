@@ -67,7 +67,7 @@ One case, five arms, one attempt each; then the `mcp` arm on Codex for all 15 ca
 - Antigravity: the harness injects its own `GEMINI_API_KEY`, brokered only to its streaming endpoint; the app reads `SUPPORT_DESK_GEMINI_API_KEY`, so the harness key cannot shadow it. Check an Antigravity attempt starts and a flow run from the agent shell reaches Gemini.
 - Agents bug: does the `mcp` arm call `run_flow` on `tryTriage`/`tryRefundDesk`? Does `get_trace` output fit, or is it truncated? Does the agent read the interrupt's error-looking span as the bug?
 - Build task: before the first turn `src/agents.ts` holds `orderAgent` and `refundAgent` only (or is absent for the other two tasks), and the agent's diff shows only what it wrote. Does it write `ai.chat()` or other API that is gone? Does the `mcp` or `skill` arm look up the agents API before it writes?
-- `pnpm reeval query check_discrimination` lists `locates the file`, `names the cause`, `flow works`, `keeps the flow` for the bugs and `typechecks`, one check per requirement (`evals/tasks.ts` `checks`), `keeps the flows` for the build tasks; `pnpm reeval query judgements` has two rows per bug attempt and one per build attempt.
+- `pnpm reeval query check_discrimination` lists `locates the file`, `names the cause`, `flow works`, `keeps the flow`, `leaves package.json alone` for the bugs and `typechecks`, one check per requirement (`evals/tasks.ts` `checks`), `keeps the flows`, `leaves package.json alone` for the build tasks; `pnpm reeval query judgements` has two rows per bug attempt and one per build attempt.
 
 Then the whole smoke profile: `pnpm reeval run --profile smoke` (60 attempts).
 

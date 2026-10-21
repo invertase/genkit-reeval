@@ -48,6 +48,7 @@ evaluate.each(TASKS)(
     await c.writeFile('~/.task', task.name)
 
     await c.send(task.prompt)
+    expect.soft(c, 'leaves package.json alone').not.toHaveChanged(['package.json', 'package-lock.json'])
 
     await expect.soft(c.exec('node_modules/.bin/tsc --noEmit'), 'typechecks').toSucceed()
 

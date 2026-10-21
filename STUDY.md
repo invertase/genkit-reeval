@@ -9,12 +9,13 @@ A real coding agent works in a Docker sandbox on a support-desk app that calls r
 > You are on the support-desk Genkit app in this directory. Bug report: ${symptom}
 > Find the root cause and fix it in the app's source. Then write `answer.json` in the project root: { "file": "<path of the file that had the bug>", "snippet": "<the exact broken text you replaced, copied verbatim, one line is enough>", "cause": "<one sentence>", "evidence": "<what shows this is the cause>" }. Don't change `package.json` or add dependencies.
 
-The symptom never names Genkit tooling. The seeded diff is not in the agent's view, and the agent never sees the checks. Pass is all four:
+The symptom never names Genkit tooling. The seeded diff is not in the agent's view, and the agent never sees the checks. Pass is all five:
 
 - `locates the file`: `answer.json` points at the right file.
 - `names the cause`: the `snippet` in `answer.json`, with whitespace runs collapsed, occurs in the broken file and not in the healthy one, so it quotes the seeded change rather than a fragment both versions share.
 - `flow works`: a `node:test` file (`evals/verify.mts`) is placed into the sandbox after the agent's turn and calls the broken flow against real Gemini.
 - `keeps the flow`: the fix did not delete or stub the flow.
+- `leaves package.json alone`: the turn's diff does not touch `package.json` or `package-lock.json`.
 
 Two judges are recorded, never counted: did the diagnosis come from running the app rather than reading code, and does the final message describe the change. One pairwise question across arms asks whose `answer.json` evidence is observed rather than inferred.
 
@@ -51,7 +52,7 @@ The app starts without the feature. The prompt names the export, the call shape 
 | `build-refund-desk` | no `src/agents.ts`; `src/index.ts` exports the flows only | `pauses for approval`: `refundAgent` interrupts on `approveRefund` with A-1001 and 149.99; `declined refunds nothing`: a decline issues no refund and ends with `finishReason: 'stop'`; `approved refunds the order total`: an approval issues one refund of 149.99 for A-1001 |
 | `build-triage` | `src/agents.ts` has `orderAgent` and `refundAgent` only, without the `agents()` import | `delegates orders`: `triage` hands "Where is order A-1001?" to an order-desk tool (`delegate_to_orderAgent` with the middleware) that returns the order, never calls `lookupOrder` itself, and replies with the status, ETA or tracking code; `delegates refunds`: it hands the A-1001 refund to a refund-desk tool, which answers, and no refund is issued without approval; `resumes by session id`: `triage.loadChat({ sessionId })` continues a conversation and the second turn knows the order |
 
-Pass is every check: `typechecks` (`tsc --noEmit` in the sandbox), one check per requirement in the table (a hidden `node:test` file, `evals/verify-build.mts`, against real Gemini, one `test` per requirement) and `keeps the flows` (the five flows are still exported from `src/index.ts`). One judge asks whether the agent used the agents API rather than hand-rolled `ai.generate` loops. One pairwise question asks which arm's `src/agents.ts` is more idiomatic. Both are recorded, never counted toward pass.
+Pass is every check: `typechecks` (`tsc --noEmit` in the sandbox), one check per requirement in the table (a hidden `node:test` file, `evals/verify-build.mts`, against real Gemini, one `test` per requirement) `keeps the flows` (the five flows are still exported from `src/index.ts`) and `leaves package.json alone` (the turn's diff does not touch `package.json` or `package-lock.json`). One judge asks whether the agent used the agents API rather than hand-rolled `ai.generate` loops. One pairwise question asks which arm's `src/agents.ts` is more idiomatic. Both are recorded, never counted toward pass.
 
 ## Oracle and canary
 
