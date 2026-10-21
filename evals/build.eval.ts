@@ -3,7 +3,7 @@ import { evaluate, expect } from 'reeval'
 import { control, directed, mcp, rules, skill } from './environments.ts'
 import { providerErrors } from './infra.ts'
 import { hideSeedHistory } from './snapshot.ts'
-import { requirementErrors, TASKS } from './tasks.ts'
+import { requirementErrors, TASKS, verifyErrors } from './tasks.ts'
 
 const verify = fs.readFileSync(new URL('./verify-build.mts', import.meta.url), 'utf8')
 
@@ -57,6 +57,7 @@ evaluate.each(TASKS)(
 
     await c.writeFile('~/.verify-build.mts', verify)
     const run = await c.exec(`node_modules/.bin/tsx --test --test-reporter=tap --test-name-pattern '^${task.name}:' ~/.verify-build.mts`)
+    expect.soft(verifyErrors(run, task), 'verify ran').toEqual([])
     for (const [check, errors] of Object.entries(requirementErrors(run.stdout, task, `${run.stdout}\n${run.stderr}`))) {
       expect.soft(errors, check).toEqual([])
     }

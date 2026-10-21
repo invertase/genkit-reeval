@@ -262,12 +262,14 @@ export const TASKS: Task[] = [
   },
 ]
 
-const TAP_RESULT = /^\s*(not )?ok \d+ - (.*?)(?: # (?:SKIP|TODO)\b.*)?$/
+const TAP_RESULT = /^\s*(not )?ok \d+ - (.*?)(?: # (SKIP|TODO)\b.*)?$/
+const TAP_PLAN = /^\s*1\.\.\d+\s*$/m
 
 /**
  * Why each of `task`'s checks failed, read from the TAP that `verify-build.mts` printed for it;
- * an empty list for a check that passed. A check missing from the TAP failed with `output`'s tail,
- * since the file then failed before its tests ran.
+ * an empty list for a check that passed. A check marked `# SKIP` or `# TODO` failed, since it did not
+ * prove its requirement. A check missing from the TAP failed with `output`'s tail, since the file
+ * then failed before its tests ran.
  */
 export function requirementErrors(tap: string, task: Task, output = tap): Record<string, string[]> {
   const lines = tap.split('\n')
@@ -276,6 +278,7 @@ export function requirementErrors(tap: string, task: Task, output = tap): Record
     const m = TAP_RESULT.exec(line)
     if (!m?.[2]?.startsWith(`${task.name}: `)) return
     const check = m[2].slice(task.name.length + 2)
+    if (m[3]) return void results.set(check, [`marked ${m[3]}, so it proved nothing`])
     if (!m[1]) return void results.set(check, [])
     const end = lines.findIndex((l, j) => j > i && /^\s*\.\.\.$/.test(l))
     const block = lines.slice(i + 1, end < 0 ? undefined : end)
@@ -285,6 +288,21 @@ export function requirementErrors(tap: string, task: Task, output = tap): Record
   })
   const tail = output.trim().split('\n').slice(-20).join('\n')
   return Object.fromEntries(task.checks.map((check) => [check, results.get(check) ?? [`did not run:\n${tail}`]]))
+}
+
+/**
+ * Why the `verify-build.mts` run for `task` did not run to a verdict; empty when it did. It did not
+ * when the TAP has no plan, or when it exited non-zero with no failed check of `task` to explain it.
+ */
+export function verifyErrors(run: { exitCode: number; stdout: string; stderr: string }, task: Task): string[] {
+  const tail = `${run.stdout}\n${run.stderr}`.trim().split('\n').slice(-20).join('\n')
+  if (!TAP_PLAN.test(run.stdout)) return [`no TAP plan, exit ${run.exitCode}:\n${tail}`]
+  if (run.exitCode === 0) return []
+  const failed = run.stdout.split('\n').some((line) => {
+    const m = TAP_RESULT.exec(line)
+    return m?.[1] !== undefined && !m[3] && m[2]?.startsWith(`${task.name}: `) === true
+  })
+  return failed ? [] : [`exit ${run.exitCode} with no failed ${task.name} check:\n${tail}`]
 }
 
 const TRIAGE = "name: 'triage'"
@@ -347,6 +365,22 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     if (parsed[first ?? '']?.join() !== "error: 'boom'") errors.push(`${task.name}: TAP failure read as ${JSON.stringify(parsed[first ?? ''])}`)
     for (const check of rest.slice(0, -1)) if (parsed[check]?.length !== 0) errors.push(`${task.name}: TAP pass of ${check} read as a failure`)
     if (!parsed[rest.at(-1) ?? '']?.[0]?.startsWith('did not run')) errors.push(`${task.name}: a check missing from the TAP is not a failure`)
+    for (const directive of ['ok 1 - X # SKIP', 'not ok 1 - X # TODO', 'ok 1 - X # TODO']) {
+      const marked = requirementErrors(directive.replace('X', `${task.name}: ${first}`), task)
+      if (marked[first ?? '']?.length === 0) errors.push(`${task.name}: TAP ${JSON.stringify(directive)} read as a pass`)
+    }
+    const failedRun = `TAP version 13\n${tap.join('\n')}\n1..${tap.length}\n`
+    const crashed = `TAP version 13\n# Error: boom\nnot ok 1 - /root/.verify-build.mts\n  ---\n  error: 'test failed'\n  ...\n1..1\n`
+    const runs: [string, { exitCode: number; stdout: string; stderr: string }, boolean][] = [
+      ['a run with a failed check', { exitCode: 1, stdout: failedRun, stderr: '' }, true],
+      ['a passing run', { exitCode: 0, stdout: failedRun.replace('not ok 1', 'ok 1'), stderr: '' }, true],
+      ['an empty run', { exitCode: 1, stdout: '', stderr: 'Error: boom' }, false],
+      ['a run whose file crashed', { exitCode: 1, stdout: crashed, stderr: '' }, false],
+      ['a run with no plan', { exitCode: 0, stdout: tap.slice(1).join('\n'), stderr: '' }, false],
+    ]
+    for (const [what, run, ran] of runs) {
+      if ((verifyErrors(run, task).length === 0) !== ran) errors.push(`${task.name}: verifyErrors reads ${what} as ${ran ? 'not run' : 'run'}`)
+    }
     const startFile = (file: string): string | null => {
       const text = file in task.start ? task.start[file] : (HEALTHY as Record<string, string | undefined>)[file]
       return text ?? null
