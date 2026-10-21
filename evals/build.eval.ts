@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import { evaluate, expect } from 'reeval'
 import { control, directed, mcp, rules, skill } from './environments.ts'
+import { hideSeedHistory } from './snapshot.ts'
 import { TASKS } from './tasks.ts'
 
 const verify = fs.readFileSync(new URL('./verify-build.mts', import.meta.url), 'utf8')
@@ -42,6 +43,7 @@ evaluate.each(TASKS)(
       const removed = await c.exec(`rm ${file}`)
       if (removed.exitCode !== 0) throw new Error(`${task.name}: could not remove ${file}: ${removed.stderr}`)
     }
+    await hideSeedHistory(c, task.name)
 
     await c.send(task.prompt)
 

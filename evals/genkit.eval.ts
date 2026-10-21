@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import { evaluate, expect, type Turn } from 'reeval'
 import { BUGS, diagnosisErrors } from './bugs.ts'
 import { control, directed, mcp, rules, skill } from './environments.ts'
+import { hideSeedHistory } from './snapshot.ts'
 
 const prompt = (symptom: string) =>
   `You are on the support-desk Genkit app in this directory. Bug report: ${symptom}
@@ -64,6 +65,7 @@ evaluate.each(BUGS)(
     const healthy = (await c.readFile(bug.file)) ?? ''
     if (healthy.split(bug.from).length !== 2) throw new Error(`${bug.name}: healthy snippet not found once in ${bug.file}`)
     await c.writeFile(bug.file, healthy.replace(bug.from, () => bug.to))
+    await hideSeedHistory(c, bug.name)
 
     const turn = await c.send(prompt(bug.symptom))
 
