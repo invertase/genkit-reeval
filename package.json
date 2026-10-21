@@ -12,7 +12,7 @@
   "packageManager": "pnpm@10.18.3",
   "devDependencies": {
     "genkit-cli": "1.44.1",
-    "reeval": "0.9.0",
+    "reeval": "0.11.0",
     "tsx": "^4.23.15",
     "typescript": "^5.9.3"
   },

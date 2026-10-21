@@ -1,0 +1,5 @@
+minimumReleaseAgeExclude:
+  - reeval
+  - '@ai-sdk/*'
+  - ai
+  - '@vitest/*'

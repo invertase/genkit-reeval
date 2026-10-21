@@ -34,7 +34,6 @@ evaluate.each(TASKS)(
     },
   },
   async (c, task) => {
-    await c.sandbox() // 0.9.0 does not start it on readFile: invertase/reeval#384
     for (const [file, text] of Object.entries(task.start)) {
       if (text !== null) {
         await c.writeFile(file, text)
@@ -66,6 +65,6 @@ evaluate.each(TASKS)(
     expect.soft(task.keeps.filter((keep) => !keep.test(built)).map(String), 'keeps the flows').toEqual([])
 
     // Recorded in `judgements`, never asserted: pass and lift stay on the checks.
-    await c.judge(IDIOM_QUESTION, { include: ['src/agents.ts'], files: ['src/agents.ts'] })
+    await c.judge(IDIOM_QUESTION, { state: { diff: ['src/agents.ts'], contents: ['src/agents.ts'] } })
   },
 )

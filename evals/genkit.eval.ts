@@ -57,12 +57,12 @@ evaluate.each(BUGS)(
           question:
             "Which attempt's answer.json evidence describes something observed by running the app (an output, an error, a trace) rather than inferred from reading the code?",
           across: 'environment',
+          state: { transcript: 'tools' },
         },
       ],
     },
   },
   async (c, bug) => {
-    await c.sandbox() // 0.9.0 does not start it on readFile: invertase/reeval#384
     const healthy = (await c.readFile(bug.file)) ?? ''
     if (healthy.split(bug.from).length !== 2) throw new Error(`${bug.name}: healthy snippet not found once in ${bug.file}`)
     await c.writeFile(bug.file, seed(healthy, bug))
@@ -93,7 +93,7 @@ evaluate.each(BUGS)(
         finalMessage: turn.text,
         toolCalls: toolLog(turn),
       },
-      include: [bug.file, 'answer.json'],
+      state: { diff: [bug.file, 'answer.json'] },
     })
     await c.judge(SUMMARY_QUESTION)
   },
