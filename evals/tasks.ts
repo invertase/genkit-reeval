@@ -411,7 +411,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     }
     const tsc = typecheckWith(task.start)
     if (tsc !== null) errors.push(`${task.name}: start state does not typecheck:\n${tsc}`)
-    const cheatTsc = typecheckWith(task.cheat.files)
+    const cheatTsc = typecheckWith({ ...task.start, ...task.cheat.files })
     if (cheatTsc !== null) errors.push(`${task.name}: the cheat does not typecheck:\n${cheatTsc}`)
     for (const keep of task.keeps) {
       const file = task.cheat.files[task.file]
