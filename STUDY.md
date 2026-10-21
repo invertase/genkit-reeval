@@ -12,7 +12,7 @@ A real coding agent works in a Docker sandbox on a support-desk app that calls r
 The symptom never names Genkit tooling. The seeded diff is not in the agent's view, and the agent never sees the checks. Pass is all five:
 
 - `locates the file`: `answer.json` points at the right file.
-- `names the cause`: the `snippet` in `answer.json`, with whitespace runs collapsed, occurs in the broken file and not in the healthy one, so it quotes the seeded change rather than a fragment both versions share.
+- `names the cause`: the `snippet` in `answer.json`, with whitespace runs collapsed, occurs in the broken file and not in the healthy one, so it quotes the seeded change rather than a fragment both versions share, and spans at most one line of context on each side of the broken text, so quoting the whole file does not pass.
 - `flow works`: a `node:test` file (`evals/verify.mts`) is placed into the sandbox after the agent's turn and calls the broken flow against real Gemini.
 - `keeps the flow`: the fix did not delete or stub the flow.
 - `leaves package.json alone`: the turn's diff does not touch `package.json` or `package-lock.json`.

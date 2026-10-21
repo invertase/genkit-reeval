@@ -186,19 +186,23 @@ export function locationErrors(answer: unknown, bug: Bug): string[] {
  * Why `answer` does not name `bug`'s broken text; empty when it does. `healthy` is the healthy
  * `bug.file`. Ignoring whitespace runs, the `snippet` must occur in the seeded file and not in the
  * healthy one, so it overlaps the seeded change: a whole broken line passes, a fragment the two
- * versions share (such as `maxTurns:`) or the healthy text does not.
+ * versions share (such as `maxTurns:`) or the healthy text does not. The snippet may span at most
+ * two lines more than `bug.to`, one of context on each side, so quoting the whole file does not pass.
  */
 export function causeErrors(answer: unknown, bug: Bug, healthy: string): string[] {
-  const snippet = collapse(field(answer, 'snippet'))
+  const raw = field(answer, 'snippet').trim()
+  const snippet = collapse(raw)
   if (snippet === '') return ['snippet is empty']
   const shown = JSON.stringify(snippet)
+  const lines = raw.split('\n').length
+  const most = bug.to.split('\n').length + 2
+  if (lines > most) return [`snippet spans ${lines} lines, more than ${most}`]
   if (!collapse(seed(healthy, bug)).includes(snippet)) return [`snippet ${shown} is not in the broken ${bug.file}`]
   if (collapse(healthy).includes(snippet)) return [`snippet ${shown} is also in the healthy ${bug.file}`]
   return []
 }
 
 const count = (haystack: string, needle: string) => haystack.split(needle).length - 1
-
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const appDir = new URL('./app/', import.meta.url)
@@ -221,7 +225,12 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     for (const snippet of [bug.to, ` ${bug.to.replace(/\n\s*/g, '\n')} `, ...(seededLine ? [seededLine] : [])]) {
       for (const e of causeErrors({ snippet }, bug, source)) errors.push(`${bug.name}: own snippet ${JSON.stringify(snippet)} rejected: ${e}`)
     }
-    for (const snippet of ['', bug.from]) {
+    const seededLines = seed(source, bug).split('\n')
+    const first = seed(source, bug).slice(0, source.indexOf(bug.from)).split('\n').length - 1
+    const last = first + bug.to.split('\n').length - 1
+    const withContext = seededLines.slice(Math.max(0, first - 1), last + 2).join('\n')
+    for (const e of causeErrors({ snippet: withContext }, bug, source)) errors.push(`${bug.name}: own snippet with a context line each side rejected: ${e}`)
+    for (const snippet of ['', bug.from, seed(source, bug)]) {
       if (causeErrors({ snippet }, bug, source).length === 0) errors.push(`${bug.name}: snippet ${JSON.stringify(snippet)} is accepted`)
     }
     for (const other of BUGS) {
