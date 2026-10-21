@@ -7,6 +7,8 @@ export interface Order {
   tracking: string | null;
   total: number;
   refundable: boolean;
+  /** The customer who placed the order. */
+  customerId: string;
 }
 
 /** Orders by id, from the warehouse export. */

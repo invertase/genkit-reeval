@@ -16,6 +16,7 @@ const oracleFiles = {
   '~/.oracle/tasks.ts': source('./evals/tasks.ts'),
   '~/.oracle/app/src/agents.ts': source('./evals/app/src/agents.ts'),
   '~/.oracle/app/src/index.ts': source('./evals/app/src/index.ts'),
+  '~/.oracle/app/src/tools.ts': source('./evals/app/src/tools.ts'),
 }
 const oracle = (args = '') =>
   fakeHarness({

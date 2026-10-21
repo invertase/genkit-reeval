@@ -26,10 +26,11 @@ export type Task = {
 const appDir = new URL('./app/', import.meta.url)
 const healthy = (file: string) => readFileSync(new URL(file, appDir), 'utf8')
 
-/** The healthy files the build tasks strip; the oracle restores them. */
+/** The healthy files the build tasks strip, by workspace path; the oracle restores them. */
 export const HEALTHY = {
-  agents: healthy('src/agents.ts'),
-  index: healthy('src/index.ts'),
+  'src/agents.ts': healthy('src/agents.ts'),
+  'src/index.ts': healthy('src/index.ts'),
+  'src/tools.ts': healthy('src/tools.ts'),
 } as const
 
 function cutOnce(text: string, from: string, to: string | null, what: string): string {
@@ -49,16 +50,16 @@ const AGENTS_EXPORT = /^export \{([^}]*)\} from '\.\/agents\.js';\n/m
 
 /** `src/index.ts` exporting only `keep` from `./agents.js`, or no agents line when `keep` is empty. */
 function indexExporting(keep: string[]): string {
-  const line = AGENTS_EXPORT.exec(HEALTHY.index)
+  const line = AGENTS_EXPORT.exec(HEALTHY['src/index.ts'])
   if (!line) throw new Error('src/index.ts: no agents export line')
   const names = (line[1] ?? '').split(',').map((n) => n.trim()).filter((n) => keep.includes(n))
   if (names.length !== keep.length) throw new Error(`src/index.ts: does not export all of ${keep.join(', ')}`)
-  return HEALTHY.index.replace(line[0], () => (names.length > 0 ? `export { ${names.join(', ')} } from './agents.js';\n` : ''))
+  return HEALTHY['src/index.ts'].replace(line[0], () => (names.length > 0 ? `export { ${names.join(', ')} } from './agents.js';\n` : ''))
 }
 
 /** The healthy `src/agents.ts` with `triage`, its two wrapper flows and the delegation import cut out. */
 const agentsWithoutTriage = cutOnce(
-  cutOnce(HEALTHY.agents, "import { agents } from '@genkit-ai/middleware';\n", "import { FileSessionStore", 'src/agents.ts'),
+  cutOnce(HEALTHY['src/agents.ts'], "import { agents } from '@genkit-ai/middleware';\n", "import { FileSessionStore", 'src/agents.ts'),
   '\n/** Routes each customer message',
   null,
   'src/agents.ts',
@@ -83,6 +84,61 @@ export const orderAgent = ai.defineAgent({
     'with tracking code NW-7F3K2Q and ETA 2026-10-22.',
 });
 `
+
+const STORE_IMPORT = "import { FileSessionStore, z } from 'genkit/beta';\n"
+const REFUND_STORE = "  maxTurns: 6,\n  store,\n"
+const ORDER_STORE = "  maxTurns: 4,\n  store,\n"
+
+/** `agents` with `store` swapped for one that lives only as long as the process. */
+const inMemoryStore = (agents: string, at: string) =>
+  replaceOnce(
+    replaceOnce(agents, STORE_IMPORT, "import { FileSessionStore, InMemorySessionStore, z } from 'genkit/beta';\n"),
+    at,
+    at.replace('store,', 'store: new InMemorySessionStore(),'),
+  )
+
+const SCOPED_LOOKUP = `  async ({ orderId }, { context }) => {
+    const order = ORDERS[orderId.trim().toUpperCase()] ?? null;
+    const customerId: unknown = context.customerId;
+    return customerId === undefined || order?.customerId === customerId ? order : null;
+  },
+`
+
+/** The healthy `src/tools.ts` with `lookupOrder` blind to the signed-in customer. */
+const toolsWithoutScope = replaceOnce(
+  replaceOnce(
+    HEALTHY['src/tools.ts'],
+    "/**\n * Looks up an order by id in the orders database; returns null when there is no such order.\n * A request from a signed-in customer (action context `{ customerId }`) only sees that customer's orders.\n */",
+    '/** Looks up an order by id in the orders database; returns null when there is no such order. */',
+  ),
+  SCOPED_LOOKUP,
+  '  async ({ orderId }) => ORDERS[orderId.trim().toUpperCase()] ?? null,\n',
+)
+
+const RECEIPT_REFUND = `  async ({ orderId, amount }) => {
+    const refundId = createRefund(orderId, amount);
+    ai.currentSession().addArtifacts([{ name: \`receipt-\${refundId}\`, parts: [{ data: { refundId, orderId, amount } }] }]);
+    return { refundId };
+  },
+`
+
+/** The healthy `src/agents.ts` whose `issueRefund` returns the refund id and nothing else. */
+const agentsWithoutReceipt = replaceOnce(
+  HEALTHY['src/agents.ts'],
+  RECEIPT_REFUND,
+  '  async ({ orderId, amount }) => ({ refundId: createRefund(orderId, amount) }),\n',
+)
+
+/** A receipt the model is told to read out, instead of one the caller can take from the response. */
+const agentsWithSpokenReceipt = replaceOnce(
+  replaceOnce(
+    HEALTHY['src/agents.ts'],
+    RECEIPT_REFUND,
+    '  async ({ orderId, amount }) => {\n    const refundId = createRefund(orderId, amount);\n    return { refundId, receipt: `receipt-${refundId}: ${amount} refunded for ${orderId}` };\n  },\n',
+  ),
+  '    outputSchema: z.object({ refundId: z.string() }),\n',
+  '    outputSchema: z.object({ refundId: z.string(), receipt: z.string() }),\n',
+)
 
 const APP = 'You are on the support-desk app in this directory.'
 const RULES = "Keep the existing flows and their exports. Don't change `package.json` or add dependencies."
@@ -122,12 +178,8 @@ export const TASKS: Task[] = [
     checks: ['pauses for approval', 'declined refunds nothing', 'approved refunds the order total'],
     cheat: {
       files: {
-        'src/agents.ts': replaceOnce(
-          HEALTHY.agents,
-          'async ({ orderId, amount }) => ({ refundId: createRefund(orderId, amount) }),',
-          'async ({ orderId }) => ({ refundId: createRefund(orderId, 1) }),',
-        ),
-        'src/index.ts': HEALTHY.index,
+        'src/agents.ts': replaceOnce(HEALTHY['src/agents.ts'], 'const refundId = createRefund(orderId, amount);', 'const refundId = createRefund(orderId, 1);'),
+        'src/index.ts': HEALTHY['src/index.ts'],
       },
       fails: ['approved refunds the order total'],
     },
@@ -145,7 +197,68 @@ export const TASKS: Task[] = [
     file: 'src/index.ts',
     keeps: keepsFlows,
     checks: ['delegates orders', 'delegates refunds', 'resumes by session id'],
-    cheat: { files: { 'src/agents.ts': seed(HEALTHY.agents, sessionNotLoaded), 'src/index.ts': HEALTHY.index }, fails: ['resumes by session id'] },
+    cheat: { files: { 'src/agents.ts': seed(HEALTHY['src/agents.ts'], sessionNotLoaded), 'src/index.ts': HEALTHY['src/index.ts'] }, fails: ['resumes by session id'] },
+  },
+  {
+    name: 'build-order-memory',
+    start: { 'src/agents.ts': replaceOnce(HEALTHY['src/agents.ts'], ORDER_STORE, '  maxTurns: 4,\n') },
+    prompt:
+      `${APP} Customers come back to the order desk in later requests, often served by another server process. ` +
+      'Make `orderAgent` conversations resumable by session id: the first request starts one with `orderAgent.chat()` and `send(message)` and reads the `sessionId` from the response; ' +
+      'a later request, in a new process, continues it with `orderAgent.loadChat({ sessionId })` and `send(message)`. ' +
+      'A customer who said "My order is A-1001." can then ask "What is its status?" and get A-1001\'s status, and two customers\' conversations never mix. ' +
+      RULES,
+    file: 'src/index.ts',
+    keeps: keepsFlows,
+    checks: ['resumes by session id', 'keeps sessions apart'],
+    cheat: { files: { 'src/agents.ts': inMemoryStore(HEALTHY['src/agents.ts'], ORDER_STORE) }, fails: ['resumes by session id', 'keeps sessions apart'] },
+  },
+  {
+    name: 'build-refund-resume',
+    start: { 'src/agents.ts': replaceOnce(HEALTHY['src/agents.ts'], REFUND_STORE, '  maxTurns: 6,\n') },
+    prompt:
+      `${APP} Refund approvals come from a human hours later, in a separate request that another server process may handle. Make \`refundAgent\` conversations survive that. ` +
+      'The first request calls `refundAgent.chat()` and `send(message)`; the turn pauses on the pending `approveRefund` request and the response carries a `sessionId`. ' +
+      'A later request, in a new process, calls `refundAgent.loadChat({ sessionId })`, answers that pending `approveRefund` request and resumes the conversation: ' +
+      'the refund is then issued if approved, and nothing is refunded if declined. Keep the rest of the refund desk as it is. ' +
+      RULES,
+    file: 'src/index.ts',
+    keeps: keepsFlows,
+    checks: ['pauses with a session id', 'approved in a later request', 'declined in a later request'],
+    cheat: {
+      files: { 'src/agents.ts': inMemoryStore(HEALTHY['src/agents.ts'], REFUND_STORE) },
+      fails: ['approved in a later request', 'declined in a later request'],
+    },
+  },
+  {
+    name: 'build-refund-receipt',
+    start: { 'src/agents.ts': agentsWithoutReceipt },
+    prompt:
+      `${APP} Callers of the refund desk need a receipt they can store. When \`refundAgent\` issues a refund, the response of that turn must carry an artifact ` +
+      'named `receipt-<refundId>` (for example `receipt-R-1001`) with one data part `{ refundId: string, orderId: string, amount: number }` describing the refund it issued. ' +
+      'A declined refund has no receipt. Keep the rest of the refund desk as it is. ' +
+      RULES,
+    file: 'src/index.ts',
+    keeps: keepsFlows,
+    checks: ['approved refund has a receipt', 'receipt matches the refund', 'declined refund has no receipt'],
+    cheat: { files: { 'src/agents.ts': agentsWithSpokenReceipt }, fails: ['approved refund has a receipt', 'receipt matches the refund'] },
+  },
+  {
+    name: 'build-customer-scope',
+    start: { 'src/tools.ts': toolsWithoutScope },
+    prompt:
+      `${APP} Orders now record the \`customerId\` of the customer who placed them (see \`src/orders.json\`). ` +
+      "A request from a signed-in customer runs with the action context `{ customerId }`, for example a flow run with `{ context: { customerId: 'C-100' } }` whose handler calls `orderAgent.chat().send(message)`. " +
+      "Scope order lookups to that customer: in such a request `lookupOrder` returns an order only if it belongs to the customer, and null otherwise, so the order desk tells a customer who asks about someone else's order that it was not found, without revealing any of its details. " +
+      'Requests without a customer in the context, such as staff using the `orderStatus` flow, still see every order. ' +
+      RULES,
+    file: 'src/index.ts',
+    keeps: keepsFlows,
+    checks: ['own order answered', 'foreign order refused', 'tool reads the context', 'staff see every order'],
+    cheat: {
+      files: { 'src/tools.ts': replaceOnce(HEALTHY['src/tools.ts'], 'context.customerId', 'context.auth?.customerId') },
+      fails: ['foreign order refused', 'tool reads the context'],
+    },
   },
 ]
 
@@ -176,8 +289,18 @@ export function requirementErrors(tap: string, task: Task, output = tap): Record
 
 const TRIAGE = "name: 'triage'"
 
-/** A build start state, as the oracle detects it: `src/agents.ts` is missing or has no `triage`. */
-export const isBuildStart = (agents: string | null) => agents === null || !agents.includes(TRIAGE)
+/** Text only the healthy app has, by file: each build task's start state lacks at least one. */
+const BUILT: Record<string, string[]> = {
+  'src/agents.ts': [TRIAGE, ORDER_STORE, REFUND_STORE, 'ai.currentSession().addArtifacts('],
+  'src/tools.ts': ['context.customerId'],
+}
+
+/** A build start state, as the oracle detects it: a file in `BUILT` is missing or lacks the healthy text. `read` returns null for a missing file. */
+export const isBuildStart = (read: (file: string) => string | null) =>
+  Object.entries(BUILT).some(([file, marks]) => {
+    const text = read(file)
+    return text === null || marks.some((mark) => !text.includes(mark))
+  })
 
 /** Writes `files` over a scratch copy of the app and runs its `tsc`; returns the compiler output on failure. */
 function typecheckWith(files: Record<string, string | null>): string | null {
@@ -224,21 +347,29 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     if (parsed[first ?? '']?.join() !== "error: 'boom'") errors.push(`${task.name}: TAP failure read as ${JSON.stringify(parsed[first ?? ''])}`)
     for (const check of rest.slice(0, -1)) if (parsed[check]?.length !== 0) errors.push(`${task.name}: TAP pass of ${check} read as a failure`)
     if (!parsed[rest.at(-1) ?? '']?.[0]?.startsWith('did not run')) errors.push(`${task.name}: a check missing from the TAP is not a failure`)
-    const index = task.start['src/index.ts']
-    const agents = task.start['src/agents.ts']
-    if (index === undefined || agents === undefined) errors.push(`${task.name}: start does not set src/index.ts and src/agents.ts`)
-    if (!isBuildStart(agents ?? null)) errors.push(`${task.name}: the oracle would not see a build start state`)
+    const startFile = (file: string): string | null => {
+      const text = file in task.start ? task.start[file] : (HEALTHY as Record<string, string | undefined>)[file]
+      return text ?? null
+    }
+    for (const [file, text] of Object.entries(task.start)) {
+      if (text === (HEALTHY as Record<string, string | undefined>)[file]) errors.push(`${task.name}: start sets ${file} to its healthy text`)
+    }
+    const index = startFile('src/index.ts')
+    const agents = startFile('src/agents.ts')
+    if (!isBuildStart(startFile)) errors.push(`${task.name}: the oracle would not see a build start state`)
     for (const keep of task.keeps) {
-      if (!keep.test(HEALTHY.index)) errors.push(`${task.name}: keeps ${keep} does not match the healthy src/index.ts`)
+      if (!keep.test(HEALTHY['src/index.ts'])) errors.push(`${task.name}: keeps ${keep} does not match the healthy src/index.ts`)
       if (index && !keep.test(index)) errors.push(`${task.name}: keeps ${keep} does not match the start src/index.ts`)
     }
-    for (const gone of ['triage', 'tryTriage', 'tryRefundDesk']) {
-      if (index && new RegExp(`\\b${gone}\\b`).test(index)) errors.push(`${task.name}: start src/index.ts still exports ${gone}`)
-      if (agents && new RegExp(`\\b${gone}\\b`).test(agents)) errors.push(`${task.name}: start src/agents.ts still has ${gone}`)
+    if (agents === null || !agents.includes(TRIAGE)) {
+      for (const gone of ['triage', 'tryTriage', 'tryRefundDesk']) {
+        if (index && new RegExp(`\\b${gone}\\b`).test(index)) errors.push(`${task.name}: start src/index.ts still exports ${gone}`)
+        if (agents && new RegExp(`\\b${gone}\\b`).test(agents)) errors.push(`${task.name}: start src/agents.ts still has ${gone}`)
+      }
+      if (agents?.includes('@genkit-ai/middleware')) errors.push(`${task.name}: start src/agents.ts still imports the delegation middleware`)
     }
     if (agents === null && index && index.includes('./agents.js')) errors.push(`${task.name}: start src/index.ts imports the removed src/agents.ts`)
     if (agents) {
-      if (agents.includes('@genkit-ai/middleware')) errors.push(`${task.name}: start src/agents.ts still imports the delegation middleware`)
       for (const kept of ['orderAgent', 'refundAgent']) {
         if (!agents.includes(`export const ${kept} = ai.defineAgent(`)) errors.push(`${task.name}: start src/agents.ts lost ${kept}`)
         if (index && !new RegExp(`\\b${kept}\\b`).test(index)) errors.push(`${task.name}: start src/index.ts does not export ${kept}`)
@@ -253,9 +384,13 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       if (file !== undefined && !keep.test(file)) errors.push(`${task.name}: the cheat's ${task.file} fails keeps ${keep}`)
     }
   }
-  if (!isBuildStart(null) || isBuildStart(HEALTHY.agents)) errors.push('isBuildStart misreads the healthy or the missing src/agents.ts')
-  for (const bug of BUGS.filter((b) => b.file === 'src/agents.ts')) {
-    if (isBuildStart(HEALTHY.agents.replace(bug.from, () => bug.to))) errors.push(`${bug.name}: the oracle would take its seed for a build start state`)
+  const healthyFile = (file: string) => readFileSync(new URL(file, appDir), 'utf8')
+  if (isBuildStart(healthyFile)) errors.push('isBuildStart takes the healthy app for a build start state')
+  if (!isBuildStart((file) => (file === 'src/agents.ts' ? null : healthyFile(file)))) errors.push('isBuildStart misreads a missing src/agents.ts')
+  for (const bug of BUGS) {
+    if (isBuildStart((file) => (file === bug.file ? seed(healthyFile(file), bug) : healthyFile(file)))) {
+      errors.push(`${bug.name}: the oracle would take its seed for a build start state`)
+    }
   }
   if (errors.length > 0) {
     console.error(errors.join('\n'))

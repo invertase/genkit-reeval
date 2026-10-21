@@ -58,8 +58,8 @@ export const BUGS: Bug[] = [
     name: 'order-id-case',
     kind: 'flow',
     file: 'src/tools.ts',
-    from: 'async ({ orderId }) => ORDERS[orderId.trim().toUpperCase()] ?? null,',
-    to: 'async ({ orderId }) => ORDERS[orderId] ?? null,',
+    from: 'const order = ORDERS[orderId.trim().toUpperCase()] ?? null;',
+    to: 'const order = ORDERS[orderId] ?? null;',
     symptom:
       'Some customers with valid orders are told their order does not exist. ' +
       'One customer asked the orderStatus flow "where is order a-1001?" and got that answer, but A-1001 is in our system and has shipped. ' +

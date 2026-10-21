@@ -13,7 +13,11 @@ const issueRefund = ai.defineTool(
     inputSchema: z.object({ orderId: z.string(), amount: z.number() }),
     outputSchema: z.object({ refundId: z.string() }),
   },
-  async ({ orderId, amount }) => ({ refundId: createRefund(orderId, amount) }),
+  async ({ orderId, amount }) => {
+    const refundId = createRefund(orderId, amount);
+    ai.currentSession().addArtifacts([{ name: `receipt-${refundId}`, parts: [{ data: { refundId, orderId, amount } }] }]);
+    return { refundId };
+  },
 );
 
 const approveRefund = ai.defineInterrupt({
@@ -32,6 +36,7 @@ export const orderAgent = ai.defineAgent({
     'Quote the status, ETA and tracking code exactly as the tool returns them. If an order is not found, say so.',
   tools: [lookupOrder],
   maxTurns: 4,
+  store,
 });
 
 /** Handles refund requests and pauses for human approval before refunding. */

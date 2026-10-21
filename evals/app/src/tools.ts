@@ -2,7 +2,10 @@ import { z } from 'genkit/beta';
 import { ai } from './ai.js';
 import { ORDERS } from './db.js';
 
-/** Looks up an order by id in the orders database; returns null when there is no such order. */
+/**
+ * Looks up an order by id in the orders database; returns null when there is no such order.
+ * A request from a signed-in customer (action context `{ customerId }`) only sees that customer's orders.
+ */
 export const lookupOrder = ai.defineTool(
   {
     name: 'lookupOrder',
@@ -20,5 +23,9 @@ export const lookupOrder = ai.defineTool(
       })
       .nullable(),
   },
-  async ({ orderId }) => ORDERS[orderId.trim().toUpperCase()] ?? null,
+  async ({ orderId }, { context }) => {
+    const order = ORDERS[orderId.trim().toUpperCase()] ?? null;
+    const customerId: unknown = context.customerId;
+    return customerId === undefined || order?.customerId === customerId ? order : null;
+  },
 );

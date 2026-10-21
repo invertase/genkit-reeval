@@ -13,7 +13,8 @@ const gate = process.env.GENKIT_EVAL_GATE === 'all' ? 'all' : 'none'
 const IDIOM_QUESTION =
   "Did the agent build the feature with Genkit's agents API (`ai.defineAgent`, `ai.defineInterrupt` for the approval step, the `agents()` middleware from `@genkit-ai/middleware` for delegation, a session store such as `FileSessionStore` for resumable conversations) " +
   'rather than hand-rolled `ai.generate` loops, flows posing as agents, or APIs Genkit no longer has such as `ai.chat()`? ' +
-  'Judge only the parts the task needed: an order desk needs `defineAgent` with the tool; a refund desk also needs an interrupt; a front desk also needs delegation and a store.'
+  'Judge only the parts the task needed: an order desk needs `defineAgent` with the tool; a refund desk also needs an interrupt; a front desk also needs delegation and a store; ' +
+  'a conversation resumed in a later request needs a persistent store such as `FileSessionStore`; a refund receipt needs a session artifact; a customer-scoped lookup needs the tool to read the action context.'
 
 // The pairwise judge has no API hints of its own and has called @genkit-ai/middleware a non-existent package.
 const PAIR_QUESTION =
@@ -21,7 +22,7 @@ const PAIR_QUESTION =
   'Idiomatic means `ai.defineAgent`, `ai.defineInterrupt` for a human approval step, the `agents()` middleware from `@genkit-ai/middleware` (a real package, already in package.json) for delegation, ' +
   'and a session store such as `FileSessionStore` for resumable conversations. Tools that wrap another agent\'s `.chat()`, hand-rolled `ai.generate` loops, and `ai.chat()` (removed from Genkit) are not idiomatic.'
 
-// One family of 3 cases: the arms get one lift, paired by task.
+// One family of 7 cases: the arms get one lift, paired by task.
 evaluate.each(TASKS)(
   'builds a Genkit feature: $name',
   {
