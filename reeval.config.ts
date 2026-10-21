@@ -21,6 +21,7 @@ export default defineConfig({
   profiles: {
     smoke: { limit: { runs: 1, harness: ['claude-code:claude-sonnet-5'] } },
     haiku: { limit: { runs: 1, harness: ['claude-code:claude-haiku-5-5'] } },
+    antigravity: { limit: { runs: 1, harness: ['antigravity:gemini-3.8-flash-medium'] } },
     full: { defaults: { runs: 5 }, record: 'always', budget: { attempts: 2500, duration: '16h' } },
   },
 })
