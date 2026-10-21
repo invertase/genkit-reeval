@@ -46,6 +46,7 @@ const readOrEmpty = (file: string) => {
   }
 }
 
+// Written by evals/build.eval.ts under GENKIT_EVAL_GATE=all only, so a real agent never sees it.
 const taskFile = path.join(os.homedir(), '.task')
 const taskName = fs.existsSync(taskFile) ? fs.readFileSync(taskFile, 'utf8').trim() : null
 const buildStart = isBuildStart((file) => {

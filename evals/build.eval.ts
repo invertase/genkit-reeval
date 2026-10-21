@@ -46,8 +46,8 @@ evaluate.each(TASKS)(
       if (removed.exitCode !== 0) throw new Error(`${task.name}: could not remove ${file}: ${removed.stderr}`)
     }
     await hideSeedHistory(c, task.name)
-    // Outside the workspace, so not in the diff: the oracle reads it, since two tasks share a start state.
-    await c.writeFile('~/.task', task.name)
+    // Only the oracle reads it, since two tasks share a start state; a real agent could read its home dir.
+    if (gate === 'all') await c.writeFile('~/.task', task.name)
 
     const turn = await c.send(task.prompt)
     expect.soft(providerErrors(turn), 'agent ran without provider errors').toEqual([])
