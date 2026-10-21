@@ -111,7 +111,7 @@ export const TASKS: Task[] = [
     prompt:
       `${APP} Add a refund desk agent. Create \`src/agents.ts\` exporting \`refundAgent\`, an agent that handles refund requests such as ` +
       '"I want a refund for order A-1001, it arrived broken." It looks the order up with the existing `lookupOrder` tool from `src/tools.ts`, ' +
-      'then pauses for a human to approve the refund, and only if approved issues it with a tool named `issueRefund` built on `createRefund` from `src/db.ts`. ' +
+      'then pauses for a human to approve the refund of the order total as the lookup returns it (the agent never asks the customer for an amount), and only if approved issues it with a tool named `issueRefund` built on `createRefund` from `src/db.ts`. ' +
       'The approval step is named `approveRefund`; it takes `{ orderId: string, amount: number, reason: string }` and the human answers it with ' +
       '`{ approved: boolean, note?: string }`. When the refund is declined, nothing is refunded and the agent ends with a short reply to the customer. ' +
       'Export `refundAgent` from `src/index.ts`. Callers hold a conversation with it: `refundAgent.chat()` starts one and `send(message)` sends a message; ' +

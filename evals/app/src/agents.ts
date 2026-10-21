@@ -38,7 +38,9 @@ export const orderAgent = ai.defineAgent({
 export const refundAgent = ai.defineAgent({
   name: 'refundAgent',
   description: 'Handles refund requests for an order. Refunds need human approval.',
-  system: 'Look up the order, then call approveRefund, then issueRefund only if approved. Never refund without approval.',
+  system:
+    'Look up the order, then call approveRefund, then issueRefund only if approved. Never refund without approval. ' +
+    'The refund amount is always the order total as lookupOrder returns it; never ask the customer for an amount.',
   tools: [lookupOrder, approveRefund, issueRefund],
   toolChoice: 'auto',
   maxTurns: 6,
