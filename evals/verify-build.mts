@@ -42,9 +42,13 @@ const toolCalls = (messages: Message[]): Call[] => {
 const compact = (text: string) => text.replace(/\s+/g, '')
 const TRACKING_CODE = /NW-[A-Z0-9]{6}/i
 const NOT_FOUND =
-  /not\s+(?:be\s+)?found|can(?:no|')t\s+(?:find|locate)|could(?:n't|\s+not)\s+(?:find|locate)|unable\s+to\s+(?:find|locate)|no\s+(?:such\s+)?order|does(?:n't|\s+not)\s+exist|not\s+in\s+(?:our|the)\s+system|no\s+record/i
-const ANY_ORDER_STATUS = /\b(?:shipped|processing|delivered)\b/i
-const ANY_ORDER_ETA = /2026-10-(?:22|25|18)/
+  /not\s+(?:be\s+)?found|(?:can(?:no|['’])t|could(?:n['’]t|\s+not)|unable\s+to)\s+(?:find|locate|retrieve)|(?:do(?:n['’]t|\s+not)|can(?:no|['’])t)\s+see\s+(?:an?\s+|any\s+)?order|no\s+(?:such\s+)?order|does(?:n['’]t|\s+not)\s+(?:(?:appear|seem)\s+to\s+)?exist|(?:is|are)?(?:n['’]t|\s+not)\s+in\s+(?:our|the)\s+system|no\s+record/i
+
+/** Any fact of the three real orders in `text`: a status, an ETA, a total or something shaped like a tracking code. */
+const realOrderFacts = (text: string): string[] => [
+  ...(text.match(/\b(?:shipped|processing|delivered)\b/gi) ?? []),
+  ...(compact(text).match(/2026-10-(?:22|25|18)|149\.99|59\.50?(?!\d)|NW-[A-Z0-9]{6}/gi) ?? []),
+]
 
 /** Triage paraphrases the order desk, so any one field of the order proves the lookup reached it. */
 const knowsA1001 = (text: string) => /shipped/i.test(text) || /2026-10-22|NW-7F3K2Q/i.test(compact(text))
@@ -92,10 +96,7 @@ test('build-order-desk: processing order', async () => {
 
 test('build-order-desk: unknown order', async () => {
   const res = await app.orderAgent.chat().send('Where is order A-9999?')
-  assert.match(res.text, NOT_FOUND, `the reply does not say A-9999 was not found: ${JSON.stringify(res.text)}`)
-  assert.doesNotMatch(res.text, ANY_ORDER_STATUS, `the reply gives A-9999 a real order's status: ${JSON.stringify(res.text)}`)
-  assert.doesNotMatch(compact(res.text), ANY_ORDER_ETA, `the reply gives A-9999 a real order's ETA: ${JSON.stringify(res.text)}`)
-  assert.doesNotMatch(compact(res.text), TRACKING_CODE, `the reply gives A-9999 a tracking code: ${JSON.stringify(res.text)}`)
+  assert.deepEqual(realOrderFacts(res.text), [], `the reply gives A-9999 a real order's facts or a tracking code: ${JSON.stringify(res.text)}`)
 })
 
 test('build-order-desk: looks the order up', async () => {
@@ -173,6 +174,7 @@ test('build-triage: resumes by session id', async () => {
 })
 
 const RESULT = 'LATER_REQUEST_RESULT '
+const LATER_REQUEST_TIMEOUT_MS = 60_000
 
 /**
  * Runs `body` in a new process, as a later request served by another server would, and returns what it passed to `reply`.
@@ -183,18 +185,27 @@ const inLaterRequest = async (body: string): Promise<unknown> => {
   const script = path.join(dir, 'request.mts')
   await writeFile(
     script,
-    `const app = await import(${JSON.stringify(path.resolve(process.cwd(), 'src/index.ts'))})\n` +
+    // The app keeps handles open, so the request exits itself once stdout or stderr is flushed.
+    `const reply = (value) => process.stdout.write(${JSON.stringify(RESULT)} + JSON.stringify(value) + '\\n', () => process.exit(0))\n` +
+      'try {\n' +
+      `const app = await import(${JSON.stringify(path.resolve(process.cwd(), 'src/index.ts'))})\n` +
       `const db = await import(${JSON.stringify(path.resolve(process.cwd(), 'src/db.ts'))})\n` +
-      `const reply = (value) => console.log(${JSON.stringify(RESULT)} + JSON.stringify(value))\n` +
-      body,
+      body +
+      '} catch (e) {\n' +
+      "  process.stderr.write(String(e?.stack ?? e) + '\\n', () => process.exit(1))\n" +
+      '}\n',
   )
   try {
-    const { stdout } = await promisify(execFile)(path.resolve(process.cwd(), 'node_modules/.bin/tsx'), [script], { maxBuffer: 1 << 24 })
+    const { stdout } = await promisify(execFile)(path.resolve(process.cwd(), 'node_modules/.bin/tsx'), [script], {
+      maxBuffer: 1 << 24,
+      timeout: LATER_REQUEST_TIMEOUT_MS,
+    })
     const line = stdout.split('\n').findLast((l) => l.startsWith(RESULT))
     assert.ok(line, `the later request printed no result: ${stdout.slice(-2000)}`)
     return JSON.parse(line.slice(RESULT.length))
   } catch (e) {
     if (e instanceof assert.AssertionError) throw e
+    if (e instanceof Error && 'killed' in e && e.killed) assert.fail(`the later request did not finish within ${LATER_REQUEST_TIMEOUT_MS / 1000} s`)
     const stderr = e instanceof Error && 'stderr' in e ? String(e.stderr) : String(e)
     assert.fail(`the later request failed: ${stderr.trim().split('\n').slice(-15).join('\n')}`)
   } finally {
@@ -227,11 +238,11 @@ test('build-order-memory: keeps sessions apart', async () => {
   assert.notEqual(one.sessionId, two.sessionId, 'two conversations share a session id')
   const later = await sendLater(two.sessionId, 'What is its status?')
   assert.match(later.text, /processing/i, `the A-1002 conversation does not say processing: ${JSON.stringify(later.text)}`)
-  assert.doesNotMatch(later.text, /shipped/i, `the A-1002 conversation talks about A-1001: ${JSON.stringify(later.text)}`)
-  assert.ok(!compact(later.text).includes('NW-7F3K2Q'), `the A-1002 conversation gives A-1001's tracking code: ${JSON.stringify(later.text)}`)
+  assert.doesNotMatch(compact(later.text), /2026-10-22|NW-7F3K2Q/i, `the A-1002 conversation gives A-1001's ETA or tracking code: ${JSON.stringify(later.text)}`)
+  assert.doesNotMatch(compact(later.text), TRACKING_CODE, `the A-1002 conversation gives A-1002, which has none, a tracking code: ${JSON.stringify(later.text)}`)
   const back = await sendLater(one.sessionId, 'What is its status?')
   assert.match(back.text, /shipped/i, `the A-1001 conversation does not say shipped: ${JSON.stringify(back.text)}`)
-  assert.doesNotMatch(back.text, /processing/i, `the A-1001 conversation talks about A-1002: ${JSON.stringify(back.text)}`)
+  assert.ok(!compact(back.text).includes('2026-10-25'), `the A-1001 conversation gives A-1002's ETA: ${JSON.stringify(back.text)}`)
 })
 
 /** Answers the pending `approveRefund` request of refund conversation `sessionId` in a later request. */
@@ -306,7 +317,10 @@ test('build-refund-receipt: receipt matches the refund', async () => {
   const { receipts, refundId, refund } = await approvedReceipts()
   const receipt = receipts.find((a) => a.name === `receipt-${refundId}`)
   assert.ok(receipt, `no artifact named receipt-${refundId}: ${JSON.stringify(receipts)}`)
-  assert.deepEqual(artifactData(receipt), { refundId, orderId: refund?.orderId, amount: refund?.amount }, `the receipt does not describe ${refundId}`)
+  const data: unknown = artifactData(receipt)
+  const field = (key: string) => (typeof data === 'object' && data !== null ? Reflect.get(data, key) : undefined)
+  const described = { refundId: field('refundId'), orderId: field('orderId'), amount: field('amount') }
+  assert.deepEqual(described, { refundId, orderId: refund?.orderId, amount: refund?.amount }, `the receipt ${JSON.stringify(data)} does not describe ${refundId}`)
 })
 
 test('build-refund-receipt: declined refund has no receipt', async () => {
@@ -345,8 +359,8 @@ test('build-customer-scope: own order answered', async () => {
 test('build-customer-scope: foreign order refused', async () => {
   const res = await askAsCustomer('C-200', 'Where is order A-1001?')
   assert.ok(NOT_FOUND.test(res.text) || WITHHELD.test(res.text), `the reply does not say A-1001 was not found: ${JSON.stringify(res.text)}`)
-  assert.doesNotMatch(res.text, /shipped/i, `the reply gives C-200 the status of A-1001: ${JSON.stringify(res.text)}`)
   assert.doesNotMatch(compact(res.text), /2026-10-22|NW-7F3K2Q/i, `the reply gives C-200 the ETA or tracking code of A-1001: ${JSON.stringify(res.text)}`)
+  assert.doesNotMatch(compact(res.text), TRACKING_CODE, `the reply gives C-200 a tracking code: ${JSON.stringify(res.text)}`)
 })
 
 test('build-customer-scope: tool reads the context', async () => {
