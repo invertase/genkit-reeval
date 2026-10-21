@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import { evaluate, expect, type Turn } from 'reeval'
 import { BUGS, causeErrors, locationErrors, seed } from './bugs.ts'
 import { control, directed, mcp, rules, skill } from './environments.ts'
+import { providerErrors } from './infra.ts'
 import { hideSeedHistory } from './snapshot.ts'
 
 const prompt = (symptom: string) =>
@@ -68,6 +69,7 @@ evaluate.each(BUGS)(
     await hideSeedHistory(c, bug.name)
 
     const turn = await c.send(prompt(bug.symptom))
+    expect.soft(providerErrors(turn), 'agent ran without provider errors').toEqual([])
     expect.soft(c, 'leaves package.json alone').not.toHaveChanged(['package.json', 'package-lock.json'])
 
     const answerText = await c.readFile('answer.json')

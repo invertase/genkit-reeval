@@ -97,6 +97,14 @@ pnpm reeval analyze --save             # one LLM call over the digest, citations
 pnpm reeval studio build --out site    # static site with every transcript and diff (read before publishing)
 ```
 
+Before reading any rate, find the attempts the provider stopped: the `agent ran without provider errors` check fails when the transcript holds a billing, quota or rate-limit error (the Haiku run of 2026-10-20 had 38 of these, all `Credit balance is too low`, recorded as `fail`). reeval 0.9.0 and 0.11.0 give an eval no way to mark them `infra_error`, so they still count as failures in `lift`:
+
+```bash
+pnpm reeval query -- "SELECT cell_key, attempt_key FROM assertions WHERE label = 'agent ran without provider errors' AND status = 'fail' ORDER BY 1, 2"
+```
+
+If it prints anything, do not cite the run. Fix the cause, rerun the affected cases (`pnpm reeval run --profile full <harness> <case>...`), and cite the clean run; the stopped run stays in `evals/.history` as a record.
+
 Pass is every check, which is what `lift` and `family_lift` pool. Fix rate is the `flow works` check alone; build rate is the share of attempts that pass every requirement check. The judges are recorded, never asserted; a failed attempt with a low verdict shows `error_kind = 'judge'` in `failing_attempts`, so read `first_failed_check` for the real cause.
 
 The README tables come from the four queries in `queries/`. Each reads one run: find it with `SELECT run_id, profile, started_at, attempts FROM runs ORDER BY started_at DESC LIMIT 5`, then run a query with the id in place of `<run id>`:

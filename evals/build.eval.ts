@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import { evaluate, expect } from 'reeval'
 import { control, directed, mcp, rules, skill } from './environments.ts'
+import { providerErrors } from './infra.ts'
 import { hideSeedHistory } from './snapshot.ts'
 import { requirementErrors, TASKS } from './tasks.ts'
 
@@ -47,7 +48,8 @@ evaluate.each(TASKS)(
     // Outside the workspace, so not in the diff: the oracle reads it, since two tasks share a start state.
     await c.writeFile('~/.task', task.name)
 
-    await c.send(task.prompt)
+    const turn = await c.send(task.prompt)
+    expect.soft(providerErrors(turn), 'agent ran without provider errors').toEqual([])
     expect.soft(c, 'leaves package.json alone').not.toHaveChanged(['package.json', 'package-lock.json'])
 
     await expect.soft(c.exec('node_modules/.bin/tsc --noEmit'), 'typechecks').toSucceed()
