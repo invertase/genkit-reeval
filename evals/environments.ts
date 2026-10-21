@@ -10,7 +10,7 @@ export const PINS = {
 export const control = defineEnvironment('control', ({ directory, secret }) => ({
   files: directory('./app', { glob: ['!.genkit/', '!answer.json'] }),
   env: {
-    GEMINI_API_KEY: secret.fromEnv('GOOGLE_GENERATIVE_AI_API_KEY', { hosts: secret.hosts.gemini }),
+    SUPPORT_DESK_GEMINI_API_KEY: secret.fromEnv('GOOGLE_GENERATIVE_AI_API_KEY', { hosts: secret.hosts.gemini }),
     GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS: 'true',
   },
   setup: [
@@ -30,7 +30,7 @@ export const mcp = rules.extendEnvironment('mcp', ({ mcp, secret }) => ({
   mcp: {
     genkit: mcp.stdio('genkit', ['mcp', '--no-update-notification', '--project-root', '/reeval/workspace'], {
       env: {
-        GEMINI_API_KEY: secret.fromEnv('GOOGLE_GENERATIVE_AI_API_KEY', { hosts: secret.hosts.gemini }),
+        SUPPORT_DESK_GEMINI_API_KEY: secret.fromEnv('GOOGLE_GENERATIVE_AI_API_KEY', { hosts: secret.hosts.gemini }),
       },
     }),
   },
