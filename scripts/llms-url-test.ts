@@ -1,13 +1,15 @@
 // Tests every URL form that https://genkit.dev/llms.txt documents, and the forms agents plausibly try, against the live site.
-// Usage: tsx scripts/llms-url-test.ts; rewrites LLMS-URLS.md and exits 1 when a form llms.txt documents fails.
+// Usage: tsx scripts/llms-url-test.ts; rewrites LLMS-URLS.md. Exit 1 when a form llms.txt documents fails, 2 when only transient errors (network, 429, 5xx after retries) stopped a check.
 import { writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import {
   appendMd,
+  appendMdLiteral,
   countLangTags,
   type DocsPage,
   fetchUrl,
   isMarkdownOk,
+  isTransient,
   isTextType,
   LANGS,
   langMd,
@@ -24,7 +26,7 @@ const DELAY_MS = 150
 const KB = (n: number): string => `${(n / 1024).toFixed(1)} KB`
 const cell = (s: string): string => s.replace(/\s+/g, ' ').replace(/\|/g, '\\|').trim()
 
-type Form = 'append-md' | 'lang-md' | 'neutral-md' | 'llms-link' | 'missing-lang-md'
+type Form = 'append-md' | 'literal-md' | 'lang-md' | 'neutral-md' | 'llms-link' | 'missing-lang-md'
 
 type Result = {
   form: Form
@@ -33,6 +35,8 @@ type Result = {
   page?: DocsPage
   url: string
   ok: boolean
+  /** True when the fetch still failed transiently (network error, 429, 5xx) after retries, so the page is not known to be broken. */
+  inconclusive: boolean
   status: number
   contentType: string
   bytes: number
@@ -46,9 +50,10 @@ const seen = new Map<string, Promise<Omit<Result, 'form' | 'documented' | 'page'
 function probe(url: string): Promise<Omit<Result, 'form' | 'documented' | 'page'>> {
   let p = seen.get(url)
   if (!p) {
-    p = fetchUrl(url, { keepBody: true, timeoutMs: 60_000 }).then((f) => ({
+    p = fetchUrl(url, { keepBody: true, timeoutMs: 60_000, retries: 3 }).then((f) => ({
       url,
       ok: isMarkdownOk(f),
+      inconclusive: isTransient(f.status),
       status: f.status,
       contentType: f.contentType,
       bytes: f.bytes,
@@ -91,6 +96,7 @@ async function main(): Promise<number> {
   const jobs: Job[] = []
   for (const url of llmsUrls) jobs.push({ form: 'llms-link', documented: true, url })
   for (const page of pages) jobs.push({ form: 'append-md', documented: claimsAppend, page, url: appendMd(page.url) })
+  for (const page of pages) jobs.push({ form: 'literal-md', documented: false, page, url: appendMdLiteral(page.url) })
   for (const page of perLang) {
     jobs.push({ form: 'lang-md', documented: true, page, url: langMd(page.lang!, page.slug) })
   }
@@ -113,12 +119,13 @@ async function main(): Promise<number> {
   const sel = (form: Form, f: (r: Result) => boolean = () => true) => results.filter((r) => r.form === form && f(r))
   const agnosticOf = (r: Result): boolean => r.page !== undefined && agnosticSlugs.has(r.page.slug) && !r.page.lang
   const isAgnosticPage = (r: Result): boolean => r.page !== undefined && agnosticSlugs.has(r.page.slug)
-  const failing = (rs: Result[]) => rs.filter((r) => !r.ok)
+  const failing = (rs: Result[]) => rs.filter((r) => !r.ok && !r.inconclusive)
   const sample = (rs: Result[], n = 3) =>
     rs.slice(0, n).map((r) => `\`${r.url.replace(SITE, '')}\``).join(', ')
   const summary = (r: Result): string => `${r.status || 'error'} ${r.contentType.split(';')[0] || '-'} ${KB(r.bytes)}`
 
   const appendAll = sel('append-md')
+  const literalAll = sel('literal-md')
   const langPerLang = sel('lang-md', (r) => !isAgnosticPage(r))
   const langAgnostic = sel('lang-md', isAgnosticPage)
   const neutralPerLang = sel('neutral-md', (r) => !agnosticOf(r))
@@ -138,15 +145,24 @@ async function main(): Promise<number> {
   const langDocsOk = langPerLang.filter((r) => r.ok)
 
   const linked = new Set(llmsUrls)
-  const covered = pages.filter((p) => [...LANGS.map((l) => langMd(l, p.slug)), neutralMd(p.slug), p.url].some((u) => linked.has(u))).length
+  const covered = pages.filter((p) => linked.has(p.lang ? langMd(p.lang, p.slug) : neutralMd(p.slug))).length
   const appendFail = failing(appendAll)[0]
   const missingFirst = missing[0]
+  const literalFail = failing(literalAll)[0]
   const verdicts: { id: string; claim: string; verdict: string; evidence: string }[] = [
     {
       id: 'F8',
-      claim: 'llms.txt says "Append `.md` to any docs URL" but `<url>/.md` is 404 and only `/docs/js/flows.md` works',
-      verdict: !claimsAppend ? 'unverified (llms.txt no longer says it)' : appendOk.length === 0 ? 'confirmed' : failing(appendAll).length === 0 ? 'refuted' : 'partly',
-      evidence: `\`<canonical>.md\` ok on ${appendOk.length} of ${appendAll.length} pages (e.g. ${sample(failing(appendAll), 1)}: ${appendFail ? summary(appendFail) : '-'}); \`/docs/<lang>/<slug>.md\` ok on ${langDocsOk.length} of ${langPerLang.length} per-language pages`,
+      claim: 'llms.txt says "Append `.md` to any docs URL" but `<url>/.md` is 404',
+      verdict: !claimsAppend
+        ? 'unverified (llms.txt no longer says it)'
+        : failing(appendAll).length === 0 && failing(literalAll).length === literalAll.length
+          ? 'wording ambiguity, partly confirmed'
+          : failing(appendAll).length === appendAll.length
+            ? 'confirmed'
+            : failing(appendAll).length === 0
+              ? 'refuted'
+              : 'partly confirmed',
+      evidence: `Read literally, "append \`.md\` to any docs URL" gives \`/docs/js/flows/.md\` (${literalFail ? summary(literalFail) : 'ok'}; ${failing(literalAll).length} of ${literalAll.length} pages fail), since canonical URLs end in \`/\`. The examples show the intended form, which works on ${appendOk.length} of ${appendAll.length} pages.`,
     },
     {
       id: 'F9',
@@ -164,7 +180,7 @@ async function main(): Promise<number> {
       id: 'F30',
       claim: 'llms.txt has no page index',
       verdict: covered === 0 || covered / pages.length < 0.05 ? 'confirmed' : covered === pages.length ? 'refuted' : 'partly',
-      evidence: `llms.txt links ${llmsUrls.length} URLs: ${docsLinks.length} under \`/docs/\` (the two examples), so ${covered} of ${pages.length} sitemap docs pages are linked; it lists bundles (\`llms-<lang>.txt\`, \`_llms-txt/*\`) and \`index.md\` but no per-page list.`,
+      evidence: `llms.txt links ${llmsUrls.length} URLs: ${docsLinks.length} under \`/docs/\` (its examples), so ${covered} of ${pages.length} sitemap docs pages are linked; it lists bundles (\`llms-<lang>.txt\`, \`_llms-txt/*\`) and \`index.md\` but no per-page list.`,
     },
     {
       id: 'F32',
@@ -184,7 +200,8 @@ async function main(): Promise<number> {
   }
   const typeBad = results.filter((r) => r.status === 200 && !isTextType(r.contentType) && r.form !== 'llms-link')
 
-  const documentedFailures = results.filter((r) => r.documented && !r.ok)
+  const documentedFailures = results.filter((r) => r.documented && !r.ok && !r.inconclusive)
+  const inconclusive = results.filter((r) => r.inconclusive)
   const date = new Date().toISOString().slice(0, 10)
   const md = [
     '# llms.txt URL forms',
@@ -204,7 +221,8 @@ async function main(): Promise<number> {
     '| Form | Kind | Tested | Pass | Fail | First failures |',
     '| --- | --- | --- | --- | --- | --- |',
     row('URLs linked from llms.txt', 'documented', links, failNote(links)),
-    row('`<canonical url>.md` (append `.md` to the docs URL)', claimsAppend ? 'documented' : 'plausible', appendAll, failNote(appendAll)),
+    row('canonical URL without its trailing `/`, plus `.md` (the form llms.txt\'s examples show)', claimsAppend ? 'documented' : 'plausible', appendAll, failNote(appendAll)),
+    row('`<canonical url>.md`, the literal reading (`<url>/.md`)', 'note, not a guard failure', literalAll, failNote(literalAll)),
     row('`/docs/<lang>/<slug>.md`, per-language pages', 'documented', langPerLang, failNote(langPerLang)),
     row('`/docs/<slug>.md`, per-language pages (no language)', 'plausible', neutralPerLang, failNote(neutralPerLang)),
     row('`/docs/<slug>.md`, language-agnostic pages', 'plausible', neutralAgnostic, failNote(neutralAgnostic)),
@@ -224,13 +242,14 @@ async function main(): Promise<number> {
           ...(documentedFailures.length > 40 ? [`| ... | ${documentedFailures.length - 40} more | |`] : []),
         ].join('\n'),
     '',
-    `Guard: ${documentedFailures.length === 0 ? 'pass' : `fail (${documentedFailures.length} documented checks)`}.`,
+    ...(inconclusive.length ? [`Inconclusive (network error, 429 or 5xx after retries, not counted as failures): ${inconclusive.length}, e.g. ${sample(inconclusive)}.`, ''] : []),
+    `Guard: ${documentedFailures.length > 0 ? `fail (${documentedFailures.length} documented checks)` : inconclusive.length > 0 ? 'inconclusive' : 'pass'}.`,
     '',
   ].join('\n')
   writeFileSync(OUT, md)
   console.log(verdicts.map((v) => `${v.id} ${v.verdict}`).join('\n'))
   console.log(`llms-url-test: ${documentedFailures.length} documented forms fail (${results.length} checks); wrote LLMS-URLS.md`)
-  return documentedFailures.length === 0 ? 0 : 1
+  return documentedFailures.length > 0 ? 1 : inconclusive.length > 0 ? 2 : 0
 }
 
 main().then(

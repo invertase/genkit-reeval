@@ -5,3 +5,5 @@
 {"turn":0,"type":"tool","toolCallId":"4","tool":"bash","input":{"command":"curl -sL https://genkit.dev/docs/flows.md | head -50"},"output":"","ok":true,"durationMs":5}
 {"turn":0,"type":"tool","toolCallId":"5","tool":"bash","input":{"command":"echo see https://genkit.dev/docs/js/flows.md"},"output":"","ok":true,"durationMs":5}
 {"turn":0,"type":"tool","toolCallId":"6","tool":"read","input":{"command":"curl https://genkit.dev/x"},"output":"","ok":true,"durationMs":5}
+{"turn":0,"type":"tool","toolCallId":"7","tool":"shell","input":{"command":"curl -s https://genkit.dev/docs/go/flows.md | head -5 && echo https://genkit.dev/docs/never-fetched.md"},"output":"","ok":true,"durationMs":5}
+{"turn":0,"type":"tool","toolCallId":"8","tool":"bash","input":{"command":"curl https://genkit.dev/docs/$PAGE.md; wget https://genkit.dev/docs/{a,b}.md"},"output":"","ok":true,"durationMs":5}

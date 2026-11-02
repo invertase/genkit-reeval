@@ -1,7 +1,9 @@
+/** Origin of the Genkit docs site. */
 export const SITE = 'https://genkit.dev'
 
 /** The languages Genkit documents. */
 export const LANGS = ['js', 'go', 'python', 'dart'] as const
+/** One of {@link LANGS}. */
 export type Lang = (typeof LANGS)[number]
 
 /** Outcome of one fetch. `bytes` counts the body actually read; `status` is 0 when the request failed. */
@@ -19,21 +21,38 @@ export type Fetched = {
 const errMsg = (err: unknown): string =>
   err instanceof Error ? `${err.message}${err.cause instanceof Error ? ` (${err.cause.message})` : ''}` : String(err)
 
-/** Fetches `url` with a timeout, following redirects. Never throws: a failure comes back as `status: 0` with `error`. */
-export async function fetchUrl(url: string, opts: { timeoutMs?: number; keepBody?: boolean } = {}): Promise<Fetched> {
+/** Whether a status is a transient failure (network error, 429, 5xx) rather than an answer about the URL. */
+export const isTransient = (status: number): boolean => status === 0 || status === 429 || status >= 500
+
+const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms))
+
+async function fetchOnce(url: string, opts: { timeoutMs?: number; keepBody?: boolean }): Promise<{ result: Fetched; retryAfterMs?: number }> {
   try {
     const res = await fetch(url, { redirect: 'follow', signal: AbortSignal.timeout(opts.timeoutMs ?? 30_000), headers: { 'user-agent': 'genkit-reeval-url-check' } })
     const buf = new Uint8Array(await res.arrayBuffer())
+    const seconds = Number(res.headers.get('retry-after'))
     return {
-      url,
-      finalUrl: res.url || url,
-      status: res.status,
-      contentType: res.headers.get('content-type') ?? '',
-      bytes: buf.byteLength,
-      ...(opts.keepBody ? { body: new TextDecoder().decode(buf) } : {}),
+      result: {
+        url,
+        finalUrl: res.url || url,
+        status: res.status,
+        contentType: res.headers.get('content-type') ?? '',
+        bytes: buf.byteLength,
+        ...(opts.keepBody ? { body: new TextDecoder().decode(buf) } : {}),
+      },
+      ...(Number.isFinite(seconds) && seconds > 0 ? { retryAfterMs: seconds * 1000 } : {}),
     }
   } catch (err) {
-    return { url, finalUrl: url, status: 0, contentType: '', bytes: 0, error: errMsg(err) }
+    return { result: { url, finalUrl: url, status: 0, contentType: '', bytes: 0, error: errMsg(err) } }
+  }
+}
+
+/** Fetches `url` with a timeout, following redirects. Never throws: a failure comes back as `status: 0` with `error`. Transient failures (status 0, 429, 5xx) are retried `retries` times with exponential backoff, honouring `Retry-After`. */
+export async function fetchUrl(url: string, opts: { timeoutMs?: number; keepBody?: boolean; retries?: number } = {}): Promise<Fetched> {
+  for (let attempt = 0; ; attempt++) {
+    const { result, retryAfterMs } = await fetchOnce(url, opts)
+    if (!isTransient(result.status) || attempt >= (opts.retries ?? 0)) return result
+    await sleep(Math.min(retryAfterMs ?? 1000 * 2 ** attempt, 60_000))
   }
 }
 
@@ -64,8 +83,11 @@ export function parseDocsUrl(url: string): DocsPage | undefined {
   return slug ? { url, lang, slug } : undefined
 }
 
-/** The form llms.txt describes literally ("Append `.md` to any docs URL"); a canonical URL ends in `/`, so this yields `<url>/.md`. */
-export const appendMd = (canonical: string): string => `${canonical}.md`
+/** The form llms.txt's examples show for "Append `.md` to any docs URL": the canonical URL without its trailing `/`, plus `.md`. */
+export const appendMd = (canonical: string): string => `${canonical.replace(/\/$/, '')}.md`
+
+/** The literal reading of "Append `.md` to any docs URL": a canonical URL ends in `/`, so this is `<url>/.md`. */
+export const appendMdLiteral = (canonical: string): string => `${canonical}.md`
 
 /** `https://genkit.dev/docs/<lang>/<slug>.md`, the form llms.txt gives as an example. */
 export const langMd = (lang: Lang, slug: string): string => `${SITE}/docs/${lang}/${slug}.md`

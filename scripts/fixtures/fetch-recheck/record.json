@@ -9,7 +9,8 @@
       ],
       "attempts": [
         { "cell": "c1", "files": { "transcript": { "path": "a1.jsonl" } } },
-        { "cell": "c2", "files": { "transcript": { "path": "a2.jsonl" } } }
+        { "cell": "c2", "files": { "transcript": { "path": "a2.jsonl" } } },
+        { "cell": "c2", "files": { "transcript": { "path": "missing.jsonl" } } }
       ]
     }
   ]

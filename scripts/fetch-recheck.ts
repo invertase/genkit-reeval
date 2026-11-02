@@ -5,7 +5,6 @@ import { execFileSync } from 'node:child_process'
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { isShell } from '../evals/probes/transcript.ts'
 import { type Fetched, fetchUrl, isTextType, pool } from './llms-urls.ts'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
@@ -23,8 +22,19 @@ type RunRecord = {
 /** One URL an agent fetched, from a `web-fetch` event or a `curl`/`wget` shell call. */
 export type Fetch = { url: string; via: 'web-fetch' | 'shell'; agentOk: boolean | null }
 
-const GENKIT_URL = /https?:\/\/(?:[\w-]+\.)*genkit\.dev[^\s'"`)<>\\]*/g
-const SHELL_FETCH = /\b(?:curl|wget)\b/
+const GENKIT_URL = /https?:\/\/(?:[\w-]+\.)*genkit\.dev[^\s'"`)<>\\|&;]*/g
+const FETCH_COMMAND = /^\s*(?:\w+=\S+\s+)*(?:sudo\s+)?(?:curl|wget)\b/
+const isShell = (tool: string): boolean => tool === 'bash' || tool === 'shell'
+
+/** The genkit.dev URLs in the curl or wget segments of a shell command line; URLs that need shell expansion are dropped. */
+export function shellUrls(command: string): string[] {
+  return command
+    .split(/&&|\|\||[;|\n]/)
+    .filter((segment) => FETCH_COMMAND.test(segment))
+    .flatMap((segment) => segment.match(GENKIT_URL) ?? [])
+    .map((url) => url.replace(/[.,]+$/, ''))
+    .filter((url) => !/[${}]/.test(url))
+}
 
 /** The fetches in one transcript's JSONL lines: `web-fetch` events, plus genkit.dev URLs in shell commands that run curl or wget. */
 export function fetchesOf(lines: string[]): Fetch[] {
@@ -40,23 +50,29 @@ export function fetchesOf(lines: string[]): Fetch[] {
     if (e.type === 'web-fetch' && typeof e.url === 'string') out.push({ url: e.url, via: 'web-fetch', agentOk: e.ok ?? null })
     if (e.type !== 'tool' || typeof e.tool !== 'string') continue
     const command = typeof (e.input as { command?: unknown } | null)?.command === 'string' ? (e.input as { command: string }).command : ''
-    if (!isShell({ tool: e.tool, command, ok: e.ok ?? null, stalled: false, durationMs: null }) || !SHELL_FETCH.test(command)) continue
-    for (const url of command.match(GENKIT_URL) ?? []) out.push({ url: url.replace(/[.,;]+$/, ''), via: 'shell', agentOk: e.ok ?? null })
+    if (!isShell(e.tool)) continue
+    for (const url of shellUrls(command)) out.push({ url, via: 'shell', agentOk: e.ok ?? null })
   }
   return out
 }
 
 type Group = { environment: string; harness: string; fetches: Fetch[] }
 
-/** The fetches of every attempt in `run`, grouped by cell environment and harness. */
-export function collect(run: RunRecord, runDir: string): Group[] {
+/** The fetches of every attempt in `run`, grouped by cell environment and harness, and how many attempts had no transcript to read. */
+export function collect(run: RunRecord, runDir: string): { groups: Group[]; attempts: number; skipped: number } {
+  let attempts = 0
+  let skipped = 0
   const groups = new Map<string, Group>()
   for (const e of run.evals) {
     const cells = new Map(e.cells.map((c) => [c.key, c]))
     for (const a of e.attempts) {
+      attempts++
       const cell = cells.get(a.cell)
       const rel = a.files?.transcript?.path
-      if (!cell || !rel || !existsSync(path.join(runDir, rel))) continue
+      if (!cell || !rel || !existsSync(path.join(runDir, rel))) {
+        skipped++
+        continue
+      }
       const fetches = fetchesOf(readFileSync(path.join(runDir, rel), 'utf8').split('\n'))
       const key = `${cell.environment}\n${cell.harness}`
       const g = groups.get(key) ?? { environment: cell.environment, harness: cell.harness, fetches: [] }
@@ -64,7 +80,7 @@ export function collect(run: RunRecord, runDir: string): Group[] {
       groups.set(key, g)
     }
   }
-  return [...groups.values()].sort((a, b) => a.environment.localeCompare(b.environment) || a.harness.localeCompare(b.harness))
+  return { groups: [...groups.values()].sort((a, b) => a.environment.localeCompare(b.environment) || a.harness.localeCompare(b.harness)), attempts, skipped }
 }
 
 type Row = { environment: string; harness: string; fetches: number; unique: number; agentFailed: number; notFound: number; nonMarkdown: number; bytes: number }
@@ -94,10 +110,10 @@ export function summarize(groups: Group[], fetched: Map<string, Fetched>) {
 }
 
 const NOTE =
-  'Status, content type and bytes are from fetching each URL again at report time, not from the agent\'s own request: reeval fetch events carry only the URL and ok. A page that changed since the run, or that answers differently to this client, shows here as it is now. "Agent failed" is the event\'s own ok flag. "Non-markdown" counts fetches whose re-fetch is not `text/markdown` or `text/plain` (including failed ones).'
+  'Status, content type and bytes are from fetching each URL again at report time, not from the agent\'s own request: reeval fetch events carry only the URL and ok. A page that changed since the run, or that answers differently to this client, shows here as it is now. "Agent failed" is the event\'s own ok flag. "Non-markdown" counts fetches whose re-fetch is not `text/markdown` or `text/plain` (including failed ones). Shell URLs come only from curl and wget calls and only for genkit.dev; web-fetch events cover every host.'
 
 /** The report as markdown. */
-export function render(runId: string, rows: Row[], worst: ReturnType<typeof summarize>['worst'], date: string): string {
+export function render(runId: string, rows: Row[], worst: ReturnType<typeof summarize>['worst'], date: string, coverage: string): string {
   const table = (rs: Row[]): string[] => [
     '| Environment | Harness | Fetches | Unique URLs | Agent failed | 404 (re-fetch) | Non-markdown (re-fetch) | Bytes (re-fetch) |',
     '| --- | --- | --- | --- | --- | --- | --- | --- |',
@@ -112,7 +128,7 @@ export function render(runId: string, rows: Row[], worst: ReturnType<typeof summ
   return [
     `# Fetch re-check: ${runId}`,
     '',
-    `Re-fetched on ${date}. ${NOTE}`,
+    `Re-fetched on ${date}. ${coverage} ${NOTE}`,
     '',
     '## Per arm and harness',
     '',
@@ -171,11 +187,17 @@ async function main(): Promise<number> {
     console.error(`fetch-recheck: cannot read run ${runId}: ${stderr || (error instanceof Error ? error.message : String(error))}`)
     return 1
   }
-  const groups = collect(run, path.join(runsDir, runId))
+  const { groups, attempts, skipped } = collect(run, path.join(runsDir, runId))
+  const coverage = `Transcripts read: ${attempts - skipped} of ${attempts} attempts${skipped ? ` (${skipped} skipped: no transcript file)` : ''}.`
+  if (attempts - skipped === 0) {
+    console.error(`fetch-recheck: no transcript found for run ${runId} under ${runsDir} (${attempts} attempts)`)
+    return 1
+  }
+  if (skipped) console.error(`fetch-recheck: ${coverage}`)
   const urls = [...new Set(groups.flatMap((g) => g.fetches.map((f) => f.url)))]
-  const results = await pool(urls, 4, 150, (url) => fetchUrl(url))
+  const results = await pool(urls, 4, 150, (url) => fetchUrl(url, { retries: 2 }))
   const { rows, worst } = summarize(groups, new Map(results.map((r) => [r.url, r])))
-  const md = render(runId, rows, worst, new Date().toISOString().slice(0, 10))
+  const md = render(runId, rows, worst, new Date().toISOString().slice(0, 10), coverage)
   console.log(md)
   if (out) writeFileSync(out, md)
   return 0

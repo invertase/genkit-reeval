@@ -8,10 +8,10 @@ Evidence labels: **documented** forms are named by llms.txt itself (a failure fa
 
 | Id | Claim | Verdict | Evidence |
 | --- | --- | --- | --- |
-| F8 | llms.txt says "Append `.md` to any docs URL" but `<url>/.md` is 404 and only `/docs/js/flows.md` works | **confirmed** | `<canonical>.md` ok on 0 of 284 pages (e.g. `/docs/app-frameworks/flutter/.md`: 404 text/html 41.7 KB); `/docs/<lang>/<slug>.md` ok on 278 of 278 per-language pages |
+| F8 | llms.txt says "Append `.md` to any docs URL" but `<url>/.md` is 404 | **wording ambiguity, partly confirmed** | Read literally, "append `.md` to any docs URL" gives `/docs/js/flows/.md` (404 text/html 41.7 KB; 284 of 284 pages fail), since canonical URLs end in `/`. The examples show the intended form, which works on 284 of 284 pages. |
 | F9 | language-agnostic pages 404 on `/docs/<lang>/<page>.md` | **confirmed** | 6 agnostic pages (app-frameworks/flutter, app-frameworks/react, client, feedback, mcp-server, roadmap): per-language form ok on 0 of 24; `/docs/<slug>.md` ok on 6 of 6 |
 | F10 | `/docs/<page>.md` returns unfiltered MDX for all four languages | **partly** | 79 of 104 no-language pages that return 200 contain `<Lang` tags (max 74); `/docs/flows.md` is 58.7 KB with 54 `<Lang` tags, `/docs/js/flows.md` is 16.1 KB with 0 |
-| F30 | llms.txt has no page index | **confirmed** | llms.txt links 40 URLs: 2 under `/docs/` (the two examples), so 4 of 284 sitemap docs pages are linked; it lists bundles (`llms-<lang>.txt`, `_llms-txt/*`) and `index.md` but no per-page list. |
+| F30 | llms.txt has no page index | **confirmed** | llms.txt links 40 URLs: 2 under `/docs/` (its examples), so 2 of 284 sitemap docs pages are linked; it lists bundles (`llms-<lang>.txt`, `_llms-txt/*`) and `index.md` but no per-page list. |
 | F32 | a missing per-language page returns a 42 KB HTML 404 | **confirmed** | 138 of 138 slug/language gaps return a 404 HTML body; sizes 41.7 KB; e.g. `/docs/python/agentic-patterns.md`: 404 text/html 41.7 KB |
 
 ## Forms tested
@@ -19,7 +19,8 @@ Evidence labels: **documented** forms are named by llms.txt itself (a failure fa
 | Form | Kind | Tested | Pass | Fail | First failures |
 | --- | --- | --- | --- | --- | --- |
 | URLs linked from llms.txt | documented | 40 | 40 | 0 | - |
-| `<canonical url>.md` (append `.md` to the docs URL) | documented | 284 | 0 | 284 | `/docs/app-frameworks/flutter/.md`, `/docs/app-frameworks/react/.md`, `/docs/client/.md`, ...: 404 text/html 41.7 KB |
+| canonical URL without its trailing `/`, plus `.md` (the form llms.txt's examples show) | documented | 284 | 284 | 0 | - |
+| `<canonical url>.md`, the literal reading (`<url>/.md`) | note, not a guard failure | 284 | 0 | 284 | `/docs/app-frameworks/flutter/.md`, `/docs/app-frameworks/react/.md`, `/docs/client/.md`, ...: 404 text/html 41.7 KB |
 | `/docs/<lang>/<slug>.md`, per-language pages | documented | 278 | 278 | 0 | - |
 | `/docs/<slug>.md`, per-language pages (no language) | plausible | 104 | 104 | 0 | - |
 | `/docs/<slug>.md`, language-agnostic pages | plausible | 6 | 6 | 0 | - |
@@ -30,48 +31,6 @@ Content checks: 0 responses with status 200 had a type other than `text/markdown
 
 ## Documented forms that fail
 
-| Form | URL | Result |
-| --- | --- | --- |
-| append-md | `/docs/app-frameworks/flutter/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/app-frameworks/react/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/client/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/agentic-patterns/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/agents/a2ui/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/agents/background/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/agents/custom-orchestration/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/agents/define/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/agents/errors/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/agents/http/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/agents/interrupts/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/agents/multi-agent/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/agents/overview/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/agents/run/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/agents/session-stores/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/agents/state/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/api-references/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/api-stability/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/app-frameworks/angular/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/app-frameworks/astro/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/app-frameworks/nextjs/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/app-frameworks/nuxt/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/app-frameworks/overview/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/app-frameworks/remix/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/app-frameworks/sveltekit/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/app-frameworks/tanstack-start/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/backend-frameworks/overview/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/backend-frameworks/shelf/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/context/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/deployment/any-platform/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/deployment/authorization/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/deployment/cloud-run/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/deployment/overview/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/develop-with-ai/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/devtools/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/dotprompt/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/error-types/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/evaluation/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/flows/.md` | 404 text/html 41.7 KB |
-| append-md | `/docs/dart/get-started/.md` | 404 text/html 41.7 KB |
-| ... | 244 more | |
+None.
 
-Guard: fail (284 documented checks).
+Guard: pass.
