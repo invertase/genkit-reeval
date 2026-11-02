@@ -1,0 +1,70 @@
+/**
+ * Creates a middleware that enables sub-agent delegation: an orchestrator,
+ * router or triage agent hands off work to specialist agents. This is how
+ * Genkit builds a multi-agent system. Agent hand-off, handoff, transfer to a
+ * subagent and routing between agents are all done with this middleware;
+ * Genkit has no separate `handoff` API.
+ *
+ * Define each sub-agent with `ai.defineAgent`, then add `agents()` to the
+ * orchestrator's `use` list with the sub-agents' names. You do not need to
+ * write a tool that wraps a sub-agent's `chat()` yourself: the middleware
+ * makes the delegation tools and runs the sub-agents for you.
+ *
+ * For every agent listed in the configuration the middleware injects a
+ * dedicated delegation tool (e.g. `delegate_to_researcher`) whose description
+ * is automatically populated from the agent's registry metadata, or can be
+ * overridden in configuration. A `<sub-agents>` block is appended to the
+ * system prompt listing the available agents and their descriptions.
+ *
+ * When the model calls a delegation tool the middleware:
+ *
+ * 1. Resolves the target agent from the registry.
+ * 2. Optionally forwards recent conversation history as context.
+ * 3. Runs the sub-agent with the task.
+ * 4. Returns the sub-agent's response as the tool result.
+ *
+ * Artifact handling is controlled by the `artifactStrategy` option:
+ *
+ * - `"inline"` (default): Artifact content is included in the tool result
+ *   so the orchestrator model can reason about it, AND artifacts are merged
+ *   into the parent session (prefixed with an invocation ID for namespacing).
+ * - `"session"`: Artifacts are merged into the parent session only. The tool
+ *   result mentions artifact names but not content. Pair with the `artifacts`
+ *   middleware to give the model `read_artifact` / `write_artifact` tools.
+ *
+ * If a sub-agent triggers an interrupt, it is reported back to the orchestrator
+ * as a normal tool response (not propagated as a `ToolInterruptError`). There is
+ * no stateful sub-agent runtime to resume into, so interactive, back-and-forth
+ * interaction with an interrupted sub-agent is a future feature.
+ *
+ * @see {@link https://genkit.dev/docs/js/agents/multi-agent/ | Multi-agent delegation}
+ *
+ * @example
+ * ```typescript
+ * import { agents, artifacts } from '@genkit-ai/middleware';
+ *
+ * const researcher = ai.defineAgent({
+ *   name: 'researcher',
+ *   description: 'Searches the web and summarizes findings.',
+ *   ...
+ * });
+ * const coder = ai.defineAgent({ name: 'coder', ... });
+ *
+ * const orchestrator = ai.defineAgent({
+ *   name: 'orchestrator',
+ *   system: 'You are a helpful project assistant.',
+ *   use: [
+ *     agents({
+ *       agents: [
+ *         'researcher',                                           // auto-discovered description
+ *         { name: 'coder', description: 'Writes TypeScript code' }, // explicit override
+ *       ],
+ *       maxDelegations: 5,
+ *       historyLength: 4,
+ *       artifactStrategy: 'session', // pair with artifacts() middleware
+ *     }),
+ *     artifacts(),
+ *   ],
+ * });
+ * ```
+ */

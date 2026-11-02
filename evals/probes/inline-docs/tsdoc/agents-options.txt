@@ -1,0 +1,18 @@
+/**
+ * Options for {@link agents}, the middleware for sub-agent delegation
+ * (hand-off) in a multi-agent system.
+ *
+ * - `agents`: the sub-agents the orchestrator can delegate to, each by its
+ *   registered name, or as `{ name, description }` to override the
+ *   description the model sees. Required.
+ * - `toolPrefix`: the prefix of the generated delegation tool names. Default
+ *   `'delegate_to'`, so the tools are `delegate_to_<agent>`; `''` uses the
+ *   bare agent names.
+ * - `maxDelegations`: the most delegations allowed per generate call, which
+ *   stops runaway delegation loops. Default unlimited.
+ * - `historyLength`: how many recent user and model messages to forward to the
+ *   sub-agent as context. Default `0`: only the task is sent.
+ * - `artifactStrategy`: `'inline'` (default) or `'session'`; see {@link agents}.
+ *
+ * @see {@link https://genkit.dev/docs/js/agents/multi-agent/ | Multi-agent delegation}
+ */
