@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { type AttemptContext, expect } from 'reeval'
 import { verifyMcpServer } from '../mcp-client.ts'
 import { parseResult } from '../probe.ts'
-import { callsOf, isShell, observeWeb } from '../transcript.ts'
+import { callsOf, isShell, observeHarnessKey, observeWeb } from '../transcript.ts'
 
 /** Every check label of the docs suite, so `cases.ts` and the runners cannot drift apart. */
 export const CHECK = {
@@ -200,6 +200,7 @@ const DOCS_COMMAND = /genkit\.dev|\bllms[\w-]*\.txt/
 /** Records the web activity, plus the shell commands that reach genkit.dev or an llms.txt (a shell `curl` makes no web-fetch event) and what the harness left unreported. */
 export function observeDocsWeb(c: AttemptContext): void {
   observeWeb(c)
+  observeHarnessKey(c)
   const commands = callsOf(c).filter((call) => isShell(call) && DOCS_COMMAND.test(call.command))
   c.observe('web-shell-docs-commands', commands.map((call) => call.command.slice(0, 200)).slice(0, 10))
   const events = c.turns.flatMap((t) => t.transcript)
@@ -211,9 +212,14 @@ export function observeDocsWeb(c: AttemptContext): void {
 const hasDep = (ws: Workspace, name: string) => ws.deps.includes(name)
 const importsPkg = (ws: Workspace, name: string) => ws.imports.includes(name)
 
+const ANTHROPIC_PLACEHOLDER = 'unused-by-the-checks'
+
+/** Prefix for every run of the agent's app: the harness's own key is not in the checks' shell, and an app that builds the Anthropic plugin needs some value to construct while Gemini serves the call. */
+const ANTHROPIC_ENV = `ANTHROPIC_API_KEY=${ANTHROPIC_PLACEHOLDER}`
+
 /** `errors` is empty when `npm start` exits 0 within two minutes and prints at least five words. */
 async function startErrors(c: AttemptContext): Promise<string[]> {
-  const run = await c.exec('timeout 120 npm start --silent', { retries: 1, interval: 3000 })
+  const run = await c.exec(`${ANTHROPIC_ENV} timeout 120 npm start --silent`, { retries: 1, interval: 3000 })
   if (run.exitCode !== 0) return [`npm start exited ${run.exitCode}: ${run.stderr.trim().slice(-400)}`]
   const words = run.stdout.trim().split(/\s+/).filter(Boolean).length
   return words >= 5 ? [] : [`npm start printed ${words} words: ${JSON.stringify(run.stdout.slice(0, 200))}`]
@@ -258,7 +264,7 @@ const randomCode = () => `${pickWord()}-${pickWord()}-${randomInt(1000, 10000)}`
 
 /** Exit 124 (a turn that never returns) becomes a result line with exit 0, so `retries` does not rerun a hang. */
 const turnCommand = (session: string, message: string) =>
-  `timeout 180 node_modules/.bin/tsx ~/.verify-chat.mts ${session} '${message.replaceAll("'", `'\\''`)}'; rc=$?; ` +
+  `${ANTHROPIC_ENV} timeout 180 node_modules/.bin/tsx ~/.verify-chat.mts ${session} '${message.replaceAll("'", `'\\''`)}'; rc=$?; ` +
   `if [ $rc -eq 124 ]; then echo 'PROBE_RESULT {"ok":false,"error":"turn did not return within 180s"}'; exit 0; fi; exit $rc`
 
 const RUNNERS: Record<string, (c: AttemptContext, ws: Workspace) => Promise<void>> = {
@@ -275,7 +281,7 @@ const RUNNERS: Record<string, (c: AttemptContext, ws: Workspace) => Promise<void
     expect(DEPRECATED_JS.filter((n) => hasDep(ws, n) || importsPkg(ws, n)), CHECK.noDeprecatedImports).toEqual([])
     await typecheck(c)
     await c.writeFile('~/.verify-structured.mts', verifyScript('verify-structured.mts'))
-    const run = await c.exec('timeout 180 node_modules/.bin/tsx ~/.verify-structured.mts', { retries: 1, interval: 3000 })
+    const run = await c.exec(`${ANTHROPIC_ENV} timeout 180 node_modules/.bin/tsx ~/.verify-structured.mts`, { retries: 1, interval: 3000 })
     expect(resultErrors(run), CHECK.flowReturnsContact).toEqual([])
   },
 
@@ -283,7 +289,7 @@ const RUNNERS: Record<string, (c: AttemptContext, ws: Workspace) => Promise<void
     expect(hasDep(ws, '@genkit-ai/mcp'), CHECK.usesMcp).toBe(true)
     expect(['genkitx-mcp'].filter((n) => hasDep(ws, n) || importsPkg(ws, n)), CHECK.noLegacyMcp).toEqual([])
     await typecheck(c)
-    const served = await verifyMcpServer(c, { command: 'npm', args: ['run', '--silent', 'mcp'], expectTool: 'add', call: { arguments: { a: 2, b: 3 }, expect: '\\b5\\b' } })
+    const served = await verifyMcpServer(c, { command: 'npm', args: ['run', '--silent', 'mcp'], env: { ANTHROPIC_API_KEY: ANTHROPIC_PLACEHOLDER }, expectTool: 'add', call: { arguments: { a: 2, b: 3 }, expect: '\\b5\\b' } })
     expect(served, CHECK.serverListsTool).toEqual([])
   },
 

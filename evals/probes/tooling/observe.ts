@@ -1,5 +1,5 @@
 import type { AttemptContext } from 'reeval'
-import { type Call, callsOf, genkitCli, isShell, observeGenkitCommands, observeWeb } from '../transcript.ts'
+import { type Call, callsOf, genkitCli, isShell, observeGenkitCommands, observeHarnessKey, observeWeb } from '../transcript.ts'
 import { mcpAddInvocations, rejectedOptions } from './gates.ts'
 
 /** The calls to the Genkit MCP server's tools, whatever the harness calls them. */
@@ -16,6 +16,7 @@ export function observeTooling(c: AttemptContext): void {
   observeGenkitCommands(c)
   c.observe('genkit-mcp-calls', mcp.slice(0, 12).map((call) => `${call.ok === false ? 'FAILED ' : ''}${call.tool.replace(/^mcp__genkit__/, '')}`))
   observeWeb(c)
+  observeHarnessKey(c)
   c.observe('stalled', calls.filter((call) => call.stalled).map((call) => clip(`${call.tool}: ${call.command}`)).slice(0, 5))
 }
 
