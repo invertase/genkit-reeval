@@ -9,7 +9,9 @@ const TRANSIENT = /ECONNRESET|ECONNREFUSED|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|fetch f
 const [session, message] = process.argv.slice(2)
 const result: { ok: boolean; error?: string; reply?: string; sessionId?: string; transient?: boolean } = { ok: false }
 try {
-  const app = (await import(pathToFileURL(path.resolve(process.cwd(), 'src/index.ts')).href)) as Record<string, unknown>
+  const loaded = import(pathToFileURL(path.resolve(process.cwd(), 'src/index.ts')).href)
+  const never = new Promise<never>((_, reject) => setTimeout(() => reject(new Error('import of src/index.ts did not return within 30s')), 30_000))
+  const app = (await Promise.race([loaded, never])) as Record<string, unknown>
   if (typeof app.turn !== 'function') throw new Error('src/index.ts does not export a function named turn')
   const out: unknown = await app.turn(session === '-' ? undefined : session, message)
   if (typeof out !== 'object' || out === null) throw new Error(`turn returned ${JSON.stringify(out)}, not an object`)

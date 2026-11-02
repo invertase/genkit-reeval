@@ -325,9 +325,9 @@ export const PROBES: Probe[] = [
     prompt:
       'Using Genkit and Gemini, add two flows in `src/flows.ts`: a flow named `speak` that turns a text string into speech, ' +
       'and a flow named `drawImage` that generates an image from a text description. Export both by those names.',
-    checks: [PROVIDER_CHECK, CHECK.exportsMediaFlows, CHECK.noRetiredMedia, CHECK.typechecks],
+    checks: [PROVIDER_CHECK, CHECK.exportsMediaFlows, CHECK.noShutDownMedia, CHECK.noDeprecatedMedia, CHECK.typechecks, CHECK.mediaModelsExist],
     oracle: { files: { 'package.json': packageJson(GEMINI), 'src/flows.ts': MEDIA_ORACLE }, exec: INSTALL },
-    cheat: { files: { 'package.json': packageJson(GEMINI), 'src/flows.ts': MEDIA_CHEAT }, exec: INSTALL, fails: [CHECK.noRetiredMedia] },
+    cheat: { files: { 'package.json': packageJson(GEMINI), 'src/flows.ts': MEDIA_CHEAT }, exec: INSTALL, fails: [CHECK.noShutDownMedia, CHECK.noDeprecatedMedia] },
   },
   {
     name: 'chat-session',

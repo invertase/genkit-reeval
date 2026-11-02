@@ -29,8 +29,9 @@ export type DocsArms<L extends Language> = {
  * The context-channel arms over `base`: `open` (any host, the agent may search and fetch freely),
  * `docsite` (fetches limited to genkit.dev and the package registries), `llms` (`docsite` plus a
  * rule to read llms.txt first), `index` (`docsite` plus a compressed docs index as the rules) and
- * `hosted` (`docsite` plus the AGENTS.md block of genkit.dev's develop-with-ai page, which points at
- * the hosted rules file; only for JS and Go, the languages that have one).
+ * `hosted` (`docsite` plus Go's develop-with-ai AGENTS.md block, adapted to the language: it points at
+ * the hosted rules file `GENKIT.<language>.md`, the per-page markdown URLs and `llms-<language>.txt`;
+ * only for JS and Go, the languages that have a hosted rules file, and only Go's page prints the block).
  * Server-side web search (Claude Code's WebSearch) runs on the harness's own API, so no egress
  * policy can refuse it; read `webSearches` instead. The arms are named `<id>-open`, `<id>-docsite`,
  * `<id>-llms`, `<id>-index` and `<id>-hosted`.
