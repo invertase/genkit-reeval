@@ -12,18 +12,36 @@ export const geminiEnv = ({ secret }: Pick<EnvironmentHelpers, 'secret'>, name =
 /** The language a docs index and a skill are for. */
 export type Language = 'js' | 'go' | 'python'
 
+/** The languages with a hosted rules file at `https://genkit.dev/GENKIT.<language>.md`. */
+export type HostedLanguage = 'js' | 'go'
+
+const HOSTED: HostedLanguage[] = ['js', 'go']
+
+/** The arms `docsArms` builds for `language`; `hosted` exists only where genkit.dev hosts a rules file. */
+export type DocsArms<L extends Language> = {
+  open: Environment
+  docsite: Environment
+  llms: Environment
+  index: Environment
+} & (L extends HostedLanguage ? { hosted: Environment } : unknown)
+
 /**
  * The context-channel arms over `base`: `open` (any host, the agent may search and fetch freely),
  * `docsite` (fetches limited to genkit.dev and the package registries), `llms` (`docsite` plus a
- * rule to read llms.txt first) and `index` (`docsite` plus a compressed docs index as the rules).
+ * rule to read llms.txt first), `index` (`docsite` plus a compressed docs index as the rules) and
+ * `hosted` (`docsite` plus the AGENTS.md block of genkit.dev's develop-with-ai page, which points at
+ * the hosted rules file; only for JS and Go, the languages that have one).
  * Server-side web search (Claude Code's WebSearch) runs on the harness's own API, so no egress
  * policy can refuse it; read `webSearches` instead. The arms are named `<id>-open`, `<id>-docsite`,
- * `<id>-llms` and `<id>-index`.
+ * `<id>-llms`, `<id>-index` and `<id>-hosted`.
  */
-export function docsArms(base: Environment, language: Language, id: string) {
+export function docsArms<L extends Language>(base: Environment, language: L, id: string): DocsArms<L> {
   const open = base.extendEnvironment(`${id}-open`, { egress: 'allow-all' })
   const docsite = base.extendEnvironment(`${id}-docsite`, { egress: { allow: DOCSITE_ALLOW } })
   const llms = docsite.extendEnvironment(`${id}-llms`, ({ file }) => ({ rules: file('./rules/llms-first.md') }))
   const index = docsite.extendEnvironment(`${id}-index`, ({ file }) => ({ rules: file(`./rules/index-${language}.md`) }))
-  return { open, docsite, llms, index }
+  const arms = { open, docsite, llms, index }
+  if (!(HOSTED as Language[]).includes(language)) return arms as DocsArms<L>
+  const hosted = docsite.extendEnvironment(`${id}-hosted`, ({ file }) => ({ rules: file(`./rules/hosted-${language}.md`) }))
+  return { ...arms, hosted } as DocsArms<L>
 }
