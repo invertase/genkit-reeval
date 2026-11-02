@@ -1,5 +1,4 @@
-import { fileURLToPath } from 'node:url'
-import type { Turn } from 'reeval'
+import { expect, type Turn } from 'reeval'
 
 /** The skills `npx skills add genkit-ai/skills` installs, one per Genkit language. */
 export const GENKIT_SKILLS = ['developing-genkit-js', 'developing-genkit-go', 'developing-genkit-python', 'developing-genkit-dart'] as const
@@ -7,8 +6,8 @@ export const GENKIT_SKILLS = ['developing-genkit-js', 'developing-genkit-go', 'd
 /** What `toHaveCalledSkill` reads of a turn. */
 export type SkillSubject = Pick<Turn, 'transcript' | 'unreported'>
 
-/** Harness kinds whose transcripts show a skill load, as a `skill` call or a read of its `SKILL.md`; the others are observed only. */
-const GATED_HARNESSES = ['claude-code', 'codex']
+/** Harness kinds whose recorded transcripts show a skill load; every other harness is observed only. */
+const GATED_HARNESSES = ['claude-code']
 
 /** Whether the skill checks gate on the harness with this cell id. */
 export const gatesSkills = (harness: string): boolean => GATED_HARNESSES.some((kind) => harness === kind || harness.startsWith(`${kind}:`))
@@ -31,13 +30,14 @@ export function asSkillSubject(turn: SkillSubject): SkillSubject {
   }
 }
 
+/** A call's target as the matcher reads it: the first of these keys, else the input, cut at 300 characters. */
 const targetOf = (input: unknown): string => {
-  if (!isRecord(input)) return typeof input === 'string' ? input : ''
+  if (!isRecord(input)) return String(input ?? '').slice(0, 300)
   for (const key of ['path', 'file_path', 'filePath', 'pattern', 'glob_pattern', 'command', 'url', 'query']) {
     const value = input[key]
-    if (typeof value === 'string') return value
+    if (typeof value === 'string') return value.slice(0, 300)
   }
-  return JSON.stringify(input)
+  return JSON.stringify(input).slice(0, 300)
 }
 
 /** The Genkit skills a turn loaded, for the `skills-called` observation; the gates use the matcher. */
@@ -51,28 +51,21 @@ export function skillsCalled(turn: SkillSubject): string[] {
   )
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const tool = (name: string, input: unknown): SkillSubject => ({ unreported: [], transcript: [{ type: 'tool', tool: name, input, output: '', ok: true } as SkillSubject['transcript'][number]] })
-  const cases: [string, SkillSubject, string[]][] = [
-    ['Claude Code Skill load', tool('Skill', { skill: 'developing-genkit-python' }), ['developing-genkit-python']],
-    ['namespaced Skill load', tool('Skill', { skill: 'genkit:developing-genkit-go' }), ['developing-genkit-go']],
-    ['skill load by name', tool('skill', { name: 'developing-genkit-js' }), ['developing-genkit-js']],
-    ['read of the installed SKILL.md', tool('read', { path: '/work/.agents/skills/developing-genkit-python/SKILL.md' }), ['developing-genkit-python']],
-    ['read through the Claude Code symlink', tool('read', { file_path: '.claude/skills/developing-genkit-dart/SKILL.md' }), ['developing-genkit-dart']],
-    ['shell cat of a SKILL.md', tool('bash', { command: 'cat .agents/skills/developing-genkit-go/SKILL.md' }), ['developing-genkit-go']],
-    ['unrelated skill', tool('Skill', { skill: 'pdf' }), []],
-    ['skill name in prose only', tool('bash', { command: 'echo developing-genkit-python' }), []],
-    ['listing of the skills directory', tool('bash', { command: 'ls .agents/skills' }), []],
-  ]
-  const errors = cases.flatMap(([label, subject, want]) => {
-    const got = skillsCalled(subject)
-    return got.join() === want.join() ? [] : [`${label}: got ${JSON.stringify(got)}, want ${JSON.stringify(want)}`]
-  })
-  const normalized = asSkillSubject(tool('Skill', { skill: 'x' })).transcript[0]
-  if (normalized?.type !== 'tool' || !isRecord(normalized.input) || normalized.input.name !== 'x') errors.push('asSkillSubject does not copy skill to name')
-  for (const harness of ['claude-code:claude-sonnet-5', 'codex:gpt-5.6-luna']) if (!gatesSkills(harness)) errors.push(`gatesSkills(${harness}) should be true`)
-  for (const harness of ['fake', 'antigravity:gemini-3.8-flash-medium', 'cursor:composer-2.5', 'claude-codex']) if (gatesSkills(harness)) errors.push(`gatesSkills(${harness}) should be false`)
-  for (const e of errors) console.error(e)
-  console.log(errors.length === 0 ? `skills ok: ${cases.length + 6} cases` : `skills: ${errors.length} mismatches`)
-  process.exit(errors.length === 0 ? 0 : 1)
+/** The label of the session-wide check that the agent used the Python Genkit skill. */
+export const PYTHON_SKILL_CHECK = 'session used the Python Genkit skill'
+
+/** The label of the check that the last turn used none of the other languages' Genkit skills. */
+export const OTHER_SKILL_CHECK = 'no other-language Genkit skill'
+
+/**
+ * Gates the skill use of a two-turn session. A skill loaded on an earlier turn stays in context
+ * and is not loaded again, so the Python skill counts from any turn; another language's skill
+ * counts only when the last turn loaded it.
+ */
+export function checkSkills(turns: readonly Turn[]): void {
+  const session = asSkillSubject({ transcript: turns.flatMap((t) => t.transcript), unreported: [...new Set(turns.flatMap((t) => t.unreported))] })
+  expect(session, PYTHON_SKILL_CHECK).toHaveCalledSkill('developing-genkit-python')
+  const last = turns.at(-1)
+  if (last === undefined) return
+  for (const other of GENKIT_SKILLS.filter((name) => name !== 'developing-genkit-python')) expect(asSkillSubject(last), OTHER_SKILL_CHECK).not.toHaveCalledSkill(other)
 }

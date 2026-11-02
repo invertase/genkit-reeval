@@ -7,13 +7,22 @@ import { callsOf, isShell, observeGenkitCommands, observeWeb } from '../transcri
 import { GO_MODULE, PROBES, PY_SKILL_TASK } from './cases.ts'
 import { arms } from './environments.ts'
 import { agentsImportErrors } from './imports.ts'
-import { asSkillSubject, gatesSkills, GENKIT_SKILLS, skillsCalled } from './skills.ts'
+import { checkSkills, gatesSkills, skillsCalled } from './skills.ts'
 
 const hidden = (file: string) => readFileSync(new URL(`./sandbox/hidden/${file}`, import.meta.url), 'utf8')
 const probe = (name: string): Probe => {
   const found = PROBES.find((p) => p.name === name)
   if (!found) throw new Error(`no probe ${name}`)
   return found
+}
+
+/** Why the report of `py-celsius.py` does not show a tool that returns 212 for 100; empty when it does. */
+function celsiusErrors(report: ProbeResult | string): string[] {
+  if (typeof report === 'string') return [report]
+  const calls = Array.isArray(report.calls) ? (report.calls as { tool?: string; output?: unknown; error?: string }[]) : []
+  if (calls.length === 0) return ['app.py exposes no Genkit tool']
+  if (calls.some((call) => typeof call.output === 'number' && Math.abs(call.output - 212) < 1e-6)) return []
+  return calls.map((call) => `${call.tool}(100) gave ${call.error ?? JSON.stringify(call.output)}, not 212`)
 }
 
 /** The project's interpreter: the `.venv` the agent made, else the system `python3`. */
@@ -267,15 +276,12 @@ const pySkillSetup = probe('py-skill-setup')
       noProviderErrors(task)
       c.observe('skills-called', { turn1: skillsCalled(turn), turn2: skillsCalled(task) })
 
-      const tool = await c.exec("grep -rEq --include=*.py --exclude-dir=.venv '@ai\\.tool|\\.tool\\(|@tool' .")
-      expect(tool.exitCode === 0 ? [] : ['no Python file defines a tool with the Genkit decorator'], 'turn 2 defines a Genkit tool').toEqual([])
+      await c.writeFile('~/.verify-py-celsius.py', hidden('py-celsius.py'))
+      const calls = parseResult(await c.exec(python('~/.verify-py-celsius.py')))
+      expect(celsiusErrors(calls), 'turn 2 tool converts 100 to 212').toEqual([])
       await expect(await c.exec(python('-c "import app"')), 'turn 2 imports resolve').toSucceed()
 
-      if (gatesSkills(c.attempt.cell.harness)) {
-        const seen = asSkillSubject(task)
-        expect(seen, 'turn 2 used the Python Genkit skill').toHaveCalledSkill('developing-genkit-python')
-        for (const other of GENKIT_SKILLS.filter((name) => name !== 'developing-genkit-python')) expect(seen, 'turn 2 used no other-language Genkit skill').not.toHaveCalledSkill(other)
-      }
+      if (gatesSkills(c.attempt.cell.harness)) checkSkills(c.turns)
     },
   )
 }

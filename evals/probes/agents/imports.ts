@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process'
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -12,7 +12,8 @@ export const IMPORTS_SCRIPT = new URL('./sandbox/hidden/py-imports.py', import.m
 export function agentsImportErrors(report: ProbeResult | string): string[] {
   if (typeof report === 'string') return [report]
   const list = (key: string) => (Array.isArray(report[key]) ? report[key].map(String) : [])
-  const [legacy, exp] = [list('legacy'), list('exp')]
+  const [legacy, exp, unparsed] = [list('legacy'), list('exp'), list('unparsed')]
+  if (unparsed.length > 0) return [`cannot read the imports of ${unparsed.join(', ')}: not valid Python 3`]
   if (legacy.length > 0) return [`imports genkit.agent, which Genkit 0.12.0 removed: ${legacy.join(', ')}`]
   return exp.length > 0 ? [] : ['no Python file imports the agents API from genkit.exp']
 }
@@ -37,6 +38,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     ['legacy only in a docstring', { 'app.py': '"""Was: from genkit.agent import define_agent"""\nfrom genkit.exp import Genkit\n' }, true],
     ['genkit.agents is another module', { 'app.py': 'from genkit.exp import Genkit\nfrom genkit.agents_util import x\n' }, true],
     ['legacy import in .venv is not the agent code', { 'app.py': 'from genkit.exp import Genkit\n', '.venv/lib/x.py': 'from genkit.agent import y\n' }, true],
+    ['a file that does not parse', { 'app.py': 'from genkit.exp import Genkit\n', 'broken.py': 'def (:\n' }, false],
     ['relative import is not genkit', { 'app.py': 'from genkit.exp import Genkit\nfrom .agent import y\n' }, true],
   ]
   const errors: string[] = []
@@ -54,7 +56,6 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       rmSync(dir, { recursive: true, force: true })
     }
   }
-  if (!readFileSync(IMPORTS_SCRIPT, 'utf8').includes('PROBE_RESULT')) errors.push('script prints no result')
   for (const e of errors) console.error(e)
   console.log(errors.length === 0 ? `imports ok: ${cases.length} cases` : `imports: ${errors.length} mismatches`)
   process.exit(errors.length === 0 ? 0 : 1)

@@ -62,7 +62,7 @@ pnpm probe evals/probes/docs/                # one suite, by path: a bare `docs`
 pnpm -s tsx scripts/docs-audit.ts            # rewrites DOCS-AUDIT.md; no agent, no Docker
 ```
 
-The Go and Python probes build `evals/probes/images/{go,python}.Dockerfile` the first time they run. Several hidden checks call real Gemini, so the oracle needs `GOOGLE_GENERATIVE_AI_API_KEY`. `pnpm -s tsx evals/probes/registry.ts`, `evals/probes/docs/checks.ts` and `evals/probes/tooling/gates.ts` are self-checks: each prints `OK` or a pass count.
+The Go and Python probes build `evals/probes/images/{go,python}.Dockerfile` the first time they run. Several hidden checks call real Gemini, so the oracle needs `GOOGLE_GENERATIVE_AI_API_KEY`. `pnpm -s tsx evals/probes/registry.ts`, `evals/probes/docs/checks.ts`, `evals/probes/tooling/gates.ts`, `evals/probes/agents/imports.ts` and `evals/probes/agents/skills-gate.ts` are self-checks: each prints `OK` or a pass count.
 
 ## Smoke
 

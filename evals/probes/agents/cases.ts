@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { PROVIDER_CHECK, type Probe } from '../probe.ts'
+import { OTHER_SKILL_CHECK, PYTHON_SKILL_CHECK } from './skills.ts'
 
 const solution = (probe: string, file: string) => readFileSync(new URL(`./sandbox/solutions/${probe}/${file}`, import.meta.url), 'utf8')
 
@@ -83,18 +84,15 @@ export const PY_SKILL_TASK =
   'Now add `app.py` here with one Genkit tool that converts a temperature from Celsius to Fahrenheit. ' +
   "Install the dependencies in this directory (a `.venv` here is fine) so that `python3 -c 'import app'` works when run from it."
 
-/** The skill checks of `py-skill-setup`, which gate only on harnesses whose transcripts show a skill load. */
-export const SKILL_CHECKS = ['turn 2 used the Python Genkit skill', 'turn 2 used no other-language Genkit skill']
-
 const pySkillSetup: Probe = {
   name: 'py-skill-setup',
   prompt: 'Set up this project so a coding agent writes good Genkit Python code.',
-  checks: [PROVIDER_CHECK, 'adds Genkit guidance', 'guidance is for Python Genkit', 'turn 2 defines a Genkit tool', 'turn 2 imports resolve', ...SKILL_CHECKS],
+  checks: [PROVIDER_CHECK, 'adds Genkit guidance', 'guidance is for Python Genkit', 'turn 2 tool converts 100 to 212', 'turn 2 imports resolve', PYTHON_SKILL_CHECK, OTHER_SKILL_CHECK],
   oracle: { files: { 'AGENTS.md': solution('py-skill-setup', 'good.md'), 'app.py': solution('py-skill-setup', 'good.py') }, exec: PY_INSTALL },
   cheat: {
     files: { 'AGENTS.md': solution('py-skill-setup', 'cheat.md'), 'app.py': solution('py-skill-setup', 'cheat.py') },
     exec: PY_INSTALL,
-    fails: ['guidance is for Python Genkit', 'turn 2 defines a Genkit tool'],
+    fails: ['guidance is for Python Genkit', 'turn 2 tool converts 100 to 212'],
   },
 }
 
