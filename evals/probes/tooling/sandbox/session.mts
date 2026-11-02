@@ -1,4 +1,4 @@
-// Run as `ANSWER=<answer.json> tsx ~/.verify-session.mts` in the workspace; prints one JSON line `{ answers, session }`, each a list of problems.
+// Run as `ANSWER=<answer.json> tsx ~/.verify-session.mts` in the workspace; prints one `PROBE_RESULT {"answers":[...],"session":[...]}` line, each a list of problems.
 // `answers`: both replies carry the order facts. `session`: one stored session holds both questions and both replies.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import path from 'node:path'
@@ -56,4 +56,4 @@ const found = squash(turn1) !== '' && squash(turn2) !== '' && snapshots.some((s)
   return users.some((u) => u.includes(squash(Q1))) && users.some((u) => u.includes(squash(Q2))) && models.includes(squash(turn1)) && models.includes(squash(turn2))
 })
 if (!found) session.push('no stored session holds both questions and both replies')
-console.log(JSON.stringify({ answers, session }))
+console.log('PROBE_RESULT ' + JSON.stringify({ answers, session }))

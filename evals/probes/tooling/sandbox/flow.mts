@@ -1,4 +1,4 @@
-// Run as `FLOW=<export> FIELDS=<a,b> tsx ~/.verify-flow.mts` in the workspace; prints one JSON line `{ errors }` and exits 0; a thrown error exits 1 with no JSON.
+// Run as `FLOW=<export> FIELDS=<a,b> tsx ~/.verify-flow.mts` in the workspace; prints one `PROBE_RESULT {"errors":[...]}` line and exits 0; a thrown error exits 1 with no JSON.
 import path from 'node:path'
 
 const flowName = process.env.FLOW ?? ''
@@ -28,5 +28,5 @@ try {
   console.error(`the flow threw: ${error instanceof Error ? error.message : String(error)}`)
   process.exit(1)
 }
-console.log(JSON.stringify({ errors }))
+console.log('PROBE_RESULT ' + JSON.stringify({ errors }))
 process.exit(0)

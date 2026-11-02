@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs'
-import type { Probe } from '../probe.ts'
+import { PROVIDER_CHECK, type Probe } from '../probe.ts'
 import { CHECK } from './checks.ts'
 
 /** Versions the oracle and the canary install; an agent installs whatever the registry's `latest` is. */
@@ -183,7 +183,7 @@ export const PROBES: Probe[] = [
   {
     name: 'pkg-gemini-haiku',
     prompt: 'Add Gemini to this project with Genkit and make `npm start` print a haiku about the sea.',
-    checks: [CHECK.usesGoogleGenai, CHECK.noLegacyGemini, CHECK.noModelConstants, CHECK.typechecks, CHECK.startPrints],
+    checks: [PROVIDER_CHECK, CHECK.usesGoogleGenai, CHECK.noLegacyGemini, CHECK.noModelConstants, CHECK.typechecks, CHECK.startPrints],
     oracle: { files: { 'package.json': packageJson(GEMINI), 'src/index.ts': HAIKU_ORACLE }, exec: INSTALL },
     cheat: {
       files: { 'package.json': packageJson({ genkit: PINS.genkit, '@genkit-ai/googleai': PINS.legacyGoogleai }), 'src/index.ts': HAIKU_CHEAT },
@@ -196,14 +196,14 @@ export const PROBES: Probe[] = [
     prompt:
       'Using Genkit and Gemini, add a flow named `extractContact` that takes a message as a plain string and returns the sender\'s `name` and `email` as an object. ' +
       'Put it in `src/flows.ts` and export it as `extractContact`.',
-    checks: [CHECK.outputSchema, CHECK.noDeprecatedImports, CHECK.typechecks, CHECK.flowReturnsContact],
+    checks: [PROVIDER_CHECK, CHECK.outputSchema, CHECK.noDeprecatedImports, CHECK.typechecks, CHECK.flowReturnsContact],
     oracle: { files: { 'package.json': packageJson(GEMINI), 'src/flows.ts': STRUCTURED_ORACLE }, exec: INSTALL },
     cheat: { files: { 'package.json': packageJson(GEMINI), 'src/flows.ts': STRUCTURED_CHEAT }, exec: INSTALL, fails: [CHECK.outputSchema] },
   },
   {
     name: 'mcp-server',
     prompt: 'Using Genkit, define a tool named `add` that adds two numbers `a` and `b`, and expose it as an MCP server over stdio. `npm run mcp` must start the server.',
-    checks: [CHECK.usesMcp, CHECK.noLegacyMcp, CHECK.typechecks, CHECK.serverListsTool],
+    checks: [PROVIDER_CHECK, CHECK.usesMcp, CHECK.noLegacyMcp, CHECK.typechecks, CHECK.serverListsTool],
     oracle: {
       files: { 'package.json': packageJson({ genkit: PINS.genkit, '@genkit-ai/mcp': PINS.mcp }, { mcp: 'tsx src/mcp.ts' }), 'src/mcp.ts': MCP_ORACLE },
       exec: INSTALL,
@@ -217,7 +217,7 @@ export const PROBES: Probe[] = [
   {
     name: 'anthropic-plugin',
     prompt: 'Use Claude through Genkit: add a flow named `askClaude` in `src/flows.ts` that takes a question as a string and answers it with a Claude model.',
-    checks: [CHECK.usesAnthropic, CHECK.noAnthropicSdk, CHECK.noStaleClaude, CHECK.registersAnthropic, CHECK.typechecks],
+    checks: [PROVIDER_CHECK, CHECK.usesAnthropic, CHECK.noAnthropicSdk, CHECK.noStaleClaude, CHECK.registersAnthropic, CHECK.typechecks],
     oracle: {
       files: { 'package.json': packageJson({ genkit: PINS.genkit, '@genkit-ai/anthropic': PINS.anthropic }), 'src/flows.ts': ANTHROPIC_ORACLE },
       exec: INSTALL,
@@ -233,7 +233,7 @@ export const PROBES: Probe[] = [
     prompt:
       'Using Genkit, make `npm start` print a short joke written by Gemini. ' +
       'If the Gemini call fails, it should fall back to another model instead of failing.',
-    checks: [CHECK.usesFallback, CHECK.typechecks, CHECK.startPrints],
+    checks: [PROVIDER_CHECK, CHECK.usesFallback, CHECK.typechecks, CHECK.startPrints],
     oracle: {
       files: { 'package.json': packageJson({ ...GEMINI, '@genkit-ai/middleware': PINS.middleware }), 'src/index.ts': FALLBACK_ORACLE },
       exec: INSTALL,

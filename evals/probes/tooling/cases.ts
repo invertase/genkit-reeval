@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs'
-import type { Probe } from '../probe.ts'
+import { PROVIDER_CHECK, type Probe } from '../probe.ts'
 
 const aiSource = readFileSync(new URL('../../app/src/ai.ts', import.meta.url), 'utf8')
 
@@ -38,7 +38,7 @@ export const PROBES: Probe[] = [
     name: 'cli-verify',
     prompt:
       'Add a flow `summarizeTicket2` to this app. It takes `{ text }` and returns `{ summary, priority }`, where priority is low, medium or high. Export it from `src/index.ts` like the other flows. Then prove that it works.',
-    checks: ['agent ran without provider errors', 'typechecks', 'flow returns summary and priority'],
+    checks: [PROVIDER_CHECK, 'typechecks', 'flow returns summary and priority'],
     oracle: {
       files: {
         'src/ticket2.ts': TICKET2(`const Ticket2Schema = z.object({ summary: z.string(), priority: z.enum(['low', 'medium', 'high']) });
@@ -73,7 +73,7 @@ export const summarizeTicket2 = ai.defineFlow(
     name: 'cli-upgrade',
     prompt: 'Upgrade genkit and all `@genkit-ai/*` packages in this app to the latest version.',
     checks: [
-      'agent ran without provider errors',
+      PROVIDER_CHECK,
       'genkit packages at one latest version',
       'dependency tree is consistent',
       'typechecks',
@@ -92,7 +92,7 @@ export const summarizeTicket2 = ai.defineFlow(
     prompt:
       'Add an evaluation that checks answer faithfulness for `summarizeTicket`, so that `genkit eval:flow summarizeTicket` uses it. The app starts from `src/index.ts`, which `npm run dev` runs.',
     checks: [
-      'agent ran without provider errors',
+      PROVIDER_CHECK,
       'evaluator is registered',
       'eval:flow finds the evaluator',
       'typechecks',
@@ -110,7 +110,7 @@ export const summarizeTicket2 = ai.defineFlow(
     name: 'devui-missing-env',
     prompt:
       'The support-desk app is already running for me. Run the `greet` flow for the customer "Dana" and tell me its output and its trace ID, so that I can find the trace in the Dev UI. Save both to `answer.txt` as well.',
-    checks: ['agent ran without provider errors', 'no source file changed', 'reports a real greet trace and its output'],
+    checks: [PROVIDER_CHECK, 'no source file changed', 'reports a real greet trace and its output'],
     oracle: { exec: GREET_ANSWER },
     cheat: {
       files: {
@@ -123,7 +123,7 @@ export const summarizeTicket2 = ai.defineFlow(
     name: 'devui-two-runtimes',
     prompt:
       'Two copies of the support-desk app are already running in this sandbox: the one in this directory and another in `second-app/`. Use the running copy, do not start another. Run the `greet` flow in the second app for the customer "Dana" and tell me its output. Save it to `answer.txt` as well.',
-    checks: ['agent ran without provider errors', 'no source file changed', 'reports the greeting from the running second app'],
+    checks: [PROVIDER_CHECK, 'no source file changed', 'reports the greeting from the running second app'],
     oracle: {
       exec: `cd second-app
 genkit --non-interactive flow:run greet '{"customerName":"Dana"}' > /tmp/greet.log 2>&1
@@ -140,7 +140,7 @@ sed -n '/^Result:/{n;p;}' /tmp/greet.log > answer.txt
     name: 'mcp-offline-docs',
     prompt:
       "Using the Genkit docs tools, find out how a flow streams its output to a caller. Write what you found to `answer.md`: the function names to use on both sides and a short example.",
-    checks: ['agent ran without provider errors', 'answer says the docs failed'],
+    checks: [PROVIDER_CHECK, 'answer says the docs failed'],
     oracle: {
       files: {
         'answer.md': `# Streaming a flow
@@ -177,7 +177,7 @@ The caller uses \`flow.stream(input)\`, iterates \`stream\` and awaits \`output\
   {
     name: 'mcp-broken-server',
     prompt: 'List the flows (not agents) this app defines. Write their names as a JSON array to `flows.json`.',
-    checks: ['agent ran without provider errors', 'lists only real flows', 'lists every flow'],
+    checks: [PROVIDER_CHECK, 'lists only real flows', 'lists every flow'],
     oracle: { files: { 'flows.json': `${JSON.stringify(REAL_FLOWS)}\n` } },
     cheat: {
       files: { 'flows.json': `${JSON.stringify([...REAL_FLOWS, 'processRefund'])}\n` },
@@ -188,7 +188,7 @@ The caller uses \`flow.stream(input)\`, iterates \`stream\` and awaits \`output\
     name: 'agent-two-turn',
     prompt:
       'Prove that the `triage` agent answers a two-turn conversation correctly. In the first turn the customer asks "Where is order A-1001?". In the second turn, in the same conversation, the customer asks "What is its tracking code?". Write `answer.json` as `{ "turn1": "<triage\'s reply>", "turn2": "<triage\'s reply>" }`.',
-    checks: ['agent ran without provider errors', 'replies answer both questions', 'replies come from one two-turn session'],
+    checks: [PROVIDER_CHECK, 'replies answer both questions', 'replies come from one two-turn session'],
     oracle: {
       files: {
         'two-turn.ts': `import { writeFileSync } from 'node:fs';

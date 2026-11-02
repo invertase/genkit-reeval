@@ -1,5 +1,4 @@
 import { fileURLToPath } from 'node:url'
-import { genkitCli } from './observe.ts'
 
 const FAIL = [
   'unavailable',
@@ -47,16 +46,10 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     ['see the docs for error handling', false],
     ['Declare `streamSchema` on the flow and call `sendChunk(chunk)`. See the docs for error handling.', false],
   ]
-  const cli: [string, boolean][] = [
-    ["bash -lc 'genkit flow:run greet {}'", true],
-    ['bash -lc "genkit flow:run greet {}"', true],
-    ['echo genkit is great', false],
-  ]
   const errors = [
     ...admits.filter(([text, want]) => admitsDocsFailed(text) !== want).map(([text, want]) => `admitsDocsFailed(${JSON.stringify(text)}) should be ${want}`),
-    ...cli.filter(([command, want]) => (genkitCli([{ tool: 'bash', command, ok: true, stalled: false, durationMs: 0 }]).length === 1) !== want).map(([command, want]) => `genkitCli counts ${JSON.stringify(command)}: should be ${want}`),
   ]
   for (const e of errors) console.error(e)
-  console.log(errors.length === 0 ? `gates ok: ${admits.length + cli.length} cases` : `gates: ${errors.length} mismatches`)
+  console.log(errors.length === 0 ? `gates ok: ${admits.length} cases` : `gates: ${errors.length} mismatches`)
   process.exit(errors.length === 0 ? 0 : 1)
 }

@@ -13,9 +13,8 @@ const SKILL = { go: 'developing-genkit-go', python: 'developing-genkit-python' }
 const IMAGE = { go: new URL('../images/go.Dockerfile', import.meta.url), python: new URL('../images/python.Dockerfile', import.meta.url) } as const
 
 /**
- * The three arms every agents probe compares, over one fixture directory under `evals/probes/fixtures/`:
- * `control` (the fixture and the language's image), `skill` (plus the pinned official skill) and
- * `index` (plus the docs index as the rules).
+ * The two arms every agents probe starts from, over one fixture directory under `evals/probes/fixtures/`:
+ * `control` (the fixture and the language's image) and `skill` (plus the pinned official skill).
  */
 export function arms(id: string, language: Exclude<Language, 'js'>, fixture: string) {
   const control = defineEnvironment(`${id}-control`, ({ directory, secret }) => ({
@@ -27,8 +26,5 @@ export function arms(id: string, language: Exclude<Language, 'js'>, fixture: str
   const skill = control.extendEnvironment(`${id}-skill`, ({ skill }) => ({
     skills: [skill.git('github:genkit-ai/skills', { ref: PINS.skillSha, path: 'skills', only: [SKILL[language]] })],
   }))
-  const index = control.extendEnvironment(`${id}-rules-index`, ({ file }) => ({
-    rules: file(`../rules/index-${language}.md`),
-  }))
-  return { control, skill, index }
+  return { control, skill }
 }

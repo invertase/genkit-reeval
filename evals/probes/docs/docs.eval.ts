@@ -1,7 +1,6 @@
-import { defineEnvironment, evaluate, expect } from 'reeval'
-import { providerErrors } from '../../infra.ts'
+import { defineEnvironment, evaluate } from 'reeval'
 import { docsArms, geminiEnv } from '../environments.ts'
-import { gate, placeSolutions } from '../probe.ts'
+import { gate, noProviderErrors, placeSolutions } from '../probe.ts'
 import { runChecks } from './checks.ts'
 import { PROBES } from './cases.ts'
 
@@ -15,7 +14,7 @@ const empty = defineEnvironment('js-empty', ({ directory, secret }) => ({
   ],
 }))
 
-const { open, docsite, llms, index } = docsArms(empty, 'js')
+const { open, docsite, llms, index } = docsArms(empty, 'js', 'js-empty')
 
 evaluate.each(PROBES)(
   'docs: $name',
@@ -23,7 +22,7 @@ evaluate.each(PROBES)(
   async (c, probe) => {
     await placeSolutions(c, probe)
     const turn = await c.send(probe.prompt)
-    expect(providerErrors(turn), 'agent ran without provider errors').toEqual([])
+    noProviderErrors(turn)
     await runChecks(c, probe.name)
   },
 )

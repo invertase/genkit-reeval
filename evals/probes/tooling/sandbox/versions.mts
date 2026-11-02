@@ -1,4 +1,4 @@
-// Run as `tsx ~/.verify-versions.mts` in the workspace; reads installed versions from node_modules, never package.json specs; prints one JSON line `{ one, tree }`, each a list of problems.
+// Run as `tsx ~/.verify-versions.mts` in the workspace; reads installed versions from node_modules, never package.json specs; prints one `PROBE_RESULT {"one":[...],"tree":[...]}` line, each a list of problems.
 import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 
@@ -36,4 +36,4 @@ try {
 } catch (error) {
   tree.push(`npm ls failed: ${String((error as { stdout?: Buffer }).stdout ?? error).slice(0, 400)}`)
 }
-console.log(JSON.stringify({ one, tree }))
+console.log('PROBE_RESULT ' + JSON.stringify({ one, tree }))

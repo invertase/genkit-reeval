@@ -1,6 +1,8 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { type AttemptContext, expect, type Turn } from 'reeval'
+import { type AttemptContext, expect } from 'reeval'
+import { parseResult } from '../probe.ts'
+import { callsOf, isShell, observeWeb } from '../transcript.ts'
 
 /** Every check label of the docs suite, so `cases.ts` and the runners cannot drift apart. */
 export const CHECK = {
@@ -131,36 +133,13 @@ const STALE: [string, RegExp][] = [
 /** The retired package names, model constants and calls found in the project. */
 export const staleIdentifiers = (ws: Workspace): string[] => STALE.filter(([, pattern]) => pattern.test(ws.everything)).map(([name]) => name)
 
-const hostOf = (url: string) => {
-  try {
-    return new URL(url).host
-  } catch {
-    return url.slice(0, 80)
-  }
-}
-
 const DOCS_COMMAND = /genkit\.dev|\bllms[\w-]*\.txt/
 
-/** The shell commands in the turns that reach genkit.dev or an llms.txt; a shell `curl` makes no web-fetch event. */
-function docsCommands(events: Turn['transcript']): string[] {
-  return events.flatMap((e) => {
-    if (e.type !== 'tool' || !/bash|shell|exec|terminal|command/i.test(e.tool)) return []
-    const input = e.input
-    const command = typeof input === 'object' && input !== null && 'command' in input && typeof input.command === 'string' ? input.command : JSON.stringify(input)
-    return DOCS_COMMAND.test(command) ? [command.slice(0, 200)] : []
-  })
-}
-
-/** Records what the turns did on the web, which no egress policy can show for server-side search. */
-export function observeWeb(c: AttemptContext): void {
-  const events = c.turns.flatMap((t) => t.transcript)
-  const fetches = events.flatMap((e) => (e.type === 'web-fetch' ? [e] : []))
-  const hosts = (ok: boolean) => [...new Set(fetches.filter((f) => f.ok === ok).map((f) => hostOf(f.url)))].slice(0, 20)
-  c.observe('web-searches', events.filter((e) => e.type === 'web-search').length)
-  c.observe('web-fetches', fetches.length)
-  c.observe('web-fetched-hosts-ok', hosts(true))
-  c.observe('web-fetched-hosts-refused', hosts(false))
-  c.observe('web-shell-docs-commands', docsCommands(events).slice(0, 10))
+/** Records the web activity, plus the shell commands that reach genkit.dev or an llms.txt (a shell `curl` makes no web-fetch event) and what the harness left unreported. */
+export function observeDocsWeb(c: AttemptContext): void {
+  observeWeb(c)
+  const commands = callsOf(c).filter((call) => isShell(call) && DOCS_COMMAND.test(call.command))
+  c.observe('web-shell-docs-commands', commands.map((call) => call.command.slice(0, 200)).slice(0, 10))
   c.observe('web-unreported', [...new Set(c.turns.flatMap((t) => t.unreported))])
 }
 
@@ -175,18 +154,12 @@ async function startErrors(c: AttemptContext): Promise<string[]> {
   return words >= 5 ? [] : [`npm start printed ${words} words: ${JSON.stringify(run.stdout.slice(0, 200))}`]
 }
 
-/** Why `run` of a hidden script is not a passing `RESULT {"ok":true,...}` line; empty when it is. A missing or malformed line is a failure. */
+/** Why `run` of a hidden script is not a passing `PROBE_RESULT {"ok":true,...}` line; empty when it is. */
 export function resultErrors(run: { exitCode: number; stdout: string; stderr: string }): string[] {
-  const line = run.stdout.split('\n').reverse().find((l) => l.startsWith('RESULT '))
-  if (line === undefined) return [`no result, exit ${run.exitCode}: ${(run.stderr || run.stdout).trim().slice(-400)}`]
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(line.slice('RESULT '.length))
-  } catch {
-    return [`malformed result: ${line.slice(0, 300)}`]
-  }
-  if (typeof parsed !== 'object' || parsed === null || !('ok' in parsed)) return [`malformed result: ${line.slice(0, 300)}`]
-  return parsed.ok === true ? [] : [line.slice(0, 600)]
+  const result = parseResult(run)
+  if (typeof result === 'string') return [result]
+  if (!('ok' in result)) return [`malformed result: ${JSON.stringify(result).slice(0, 300)}`]
+  return result.ok === true ? [] : [`${JSON.stringify(result).slice(0, 600)}`]
 }
 
 /** Gemini model constants imported from a Genkit package, by their exported names. */
@@ -264,7 +237,7 @@ export async function runChecks(c: AttemptContext, name: string): Promise<void> 
   const run = RUNNERS[name]
   if (!run) throw new Error(`no runner for docs probe ${name}`)
   const ws = await readWorkspace(c)
-  observeWeb(c)
+  observeDocsWeb(c)
   c.observe('stale', staleIdentifiers(ws))
   c.observe('dependencies', ws.deps)
   await run(c, ws)
@@ -317,9 +290,9 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     ['schema shorthand without a definition', asksForSchema(ws([], `const { output } = await ai.generate({ prompt })`)), false],
     ['schema only in a comment', asksForSchema(ws([], `// output: { schema: Contact }`)), false],
     ['schema yaml flow map', asksForSchema(ws([], 'x', { 'prompts/a.prompt': '---\nmodel: x\noutput: {format: json, schema: X}\n---\nhi' })), true],
-    ['result ok', resultErrors({ exitCode: 0, stdout: 'x\nRESULT {"ok":true}\n', stderr: '' }).length === 0, true],
-    ['result not ok', resultErrors({ exitCode: 0, stdout: 'RESULT {"ok":false}\n', stderr: '' }).length === 0, false],
-    ['result malformed', resultErrors({ exitCode: 0, stdout: 'RESULT {oops\n', stderr: '' }).length === 0, false],
+    ['result ok', resultErrors({ exitCode: 0, stdout: 'x\nPROBE_RESULT {"ok":true}\n', stderr: '' }).length === 0, true],
+    ['result not ok', resultErrors({ exitCode: 0, stdout: 'PROBE_RESULT {"ok":false}\n', stderr: '' }).length === 0, false],
+    ['result malformed', resultErrors({ exitCode: 0, stdout: 'PROBE_RESULT {oops\n', stderr: '' }).length === 0, false],
     ['result missing', resultErrors({ exitCode: 1, stdout: '', stderr: 'boom' }).length === 0, false],
   ]
   const wrong = cases.filter(([, got, want]) => got !== want).map(([name, , want]) => `${name}: expected ${want}`)

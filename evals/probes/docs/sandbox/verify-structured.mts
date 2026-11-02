@@ -1,5 +1,5 @@
 // Placed in the sandbox after the agent's turn and run from the workspace as `tsx ~/.verify-structured.mts`.
-// Prints one `RESULT <json>` line; exits 1 on a transport or provider error so `retries` reruns it, 0 otherwise.
+// Prints one `PROBE_RESULT <json>` line; exits 1 on a transport or provider error so `retries` reruns it, 0 otherwise.
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 
@@ -31,5 +31,5 @@ try {
   result.error = error instanceof Error ? error.message : String(error)
   result.transient = TRANSIENT.test(`${result.error} ${error instanceof Error ? String(error.cause ?? '') : ''}`)
 }
-console.log(`RESULT ${JSON.stringify(result)}`)
+console.log(`PROBE_RESULT ${JSON.stringify(result)}`)
 process.exit(result.transient ? 1 : 0)

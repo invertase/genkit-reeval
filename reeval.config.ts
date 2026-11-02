@@ -14,11 +14,12 @@ export const harness = [
   codex({ model: 'gpt-5.6-luna' }),
 ]
 
-/** The judge and analysis model every config shares. */
+/** The judge model and pass threshold every config shares. */
 export const judge = { model: 'google/gemini-3.8-flash', threshold: 0.7 }
+
+/** The model reeval's analysis of a run uses. */
 export const analysis = { model: 'google/gemini-3.8-flash' }
 
-// evals/probes/ has its own configs, reeval.probes.config.ts and reeval.probes.oracle.config.ts.
 export default defineConfig({
   include: ['evals/*.eval.ts'],
   sandbox,

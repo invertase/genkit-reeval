@@ -1,4 +1,5 @@
-import type { AttemptContext } from 'reeval'
+import { type AttemptContext, expect, type Turn } from 'reeval'
+import { providerErrors } from '../infra.ts'
 
 /** Files to place in the workspace and a shell command to run after, both optional. */
 export type Solution = {
@@ -20,6 +21,29 @@ export type Probe = {
   oracle: Solution
   /** a plausible wrong solution the canary writes, and exactly which of `checks` it fails */
   cheat: Solution & { fails: string[] }
+}
+
+/** The check label every probe carries: the agent was not stopped by a provider-side failure. */
+export const PROVIDER_CHECK = 'agent ran without provider errors'
+
+/** Fails the `PROVIDER_CHECK` when the turn hit a billing, quota or rate-limit error. */
+export const noProviderErrors = (turn: Turn): void => expect(providerErrors(turn), PROVIDER_CHECK).toEqual([])
+
+/** Marks the one line a hidden verify script prints for the eval to read: the marker, then a JSON object. */
+export const RESULT_MARKER = 'PROBE_RESULT '
+
+/** What a hidden verify script reported. */
+export type ProbeResult = Record<string, unknown>
+
+/** The last `PROBE_RESULT` line of a script's output as an object, or why there is none; never throws. */
+export function parseResult(run: { exitCode: number; stdout: string; stderr: string }): ProbeResult | string {
+  const line = run.stdout.split('\n').reverse().find((l) => l.startsWith(RESULT_MARKER))
+  if (line === undefined) return `no result, exit ${run.exitCode}: ${(run.stderr || run.stdout).trim().slice(-400)}`
+  try {
+    const parsed: unknown = JSON.parse(line.slice(RESULT_MARKER.length))
+    if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) return parsed as ProbeResult
+  } catch {}
+  return `malformed result: ${line.slice(0, 300)}`
 }
 
 /** Set by `reeval.probes.oracle.config.ts`: the bodies place the solutions and gate every cell. */
@@ -55,6 +79,7 @@ export function probeErrors(probes: Probe[]): string[] {
     if (seen.has(probe.name)) errors.push(`${probe.name}: duplicate name`)
     seen.add(probe.name)
     if (probe.checks.length === 0) errors.push(`${probe.name}: no checks`)
+    else if (!probe.checks.includes(PROVIDER_CHECK)) errors.push(`${probe.name}: checks lack "${PROVIDER_CHECK}"`)
     if (new Set(probe.checks).size !== probe.checks.length) errors.push(`${probe.name}: duplicate check labels`)
     if (probe.cheat.fails.length === 0) errors.push(`${probe.name}: the cheat fails no check`)
     for (const fails of probe.cheat.fails) {

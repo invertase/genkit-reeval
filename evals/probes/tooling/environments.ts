@@ -1,11 +1,14 @@
 import { defineEnvironment } from 'reeval'
 import { mcp as studyMcp } from '../../environments.ts'
+import { geminiEnv } from '../environments.ts'
+
+const APP_KEY = 'SUPPORT_DESK_GEMINI_API_KEY'
 
 /** The `mcp` arm's server, pointed at a project root where the app is not. The server starts and answers; its runtime tools never find the app. */
 export const mcpWrongRoot = studyMcp.extendEnvironment('mcp-wrong-root', ({ mcp, secret }) => ({
   mcp: {
     genkit: mcp.stdio('genkit', ['mcp', '--no-update-notification', '--project-root', '/home/reeval/support-desk'], {
-      env: { SUPPORT_DESK_GEMINI_API_KEY: secret.fromEnv('GOOGLE_GENERATIVE_AI_API_KEY', { hosts: secret.hosts.gemini }) },
+      env: geminiEnv({ secret }, APP_KEY),
     }),
   },
 }))
@@ -16,10 +19,7 @@ export const mcpWrongRoot = studyMcp.extendEnvironment('mcp-wrong-root', ({ mcp,
  */
 const offline = defineEnvironment('offline', ({ directory, secret }) => ({
   files: directory('../../app', { glob: ['!.genkit/', '!answer.json'] }),
-  env: {
-    SUPPORT_DESK_GEMINI_API_KEY: secret.fromEnv('GOOGLE_GENERATIVE_AI_API_KEY', { hosts: secret.hosts.gemini }),
-    GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS: 'true',
-  },
+  env: geminiEnv({ secret }, APP_KEY),
   setup: ['cp -r /opt/support-desk/node_modules .', 'genkit --non-interactive config set analyticsOptOut true'],
   egress: 'deny-all',
 }))
@@ -29,7 +29,7 @@ export const mcpOffline = offline.extendEnvironment('mcp-offline', ({ file, mcp,
   rules: file('../../rules/GENKIT.md'),
   mcp: {
     genkit: mcp.stdio('genkit', ['mcp', '--no-update-notification', '--project-root', '/reeval/workspace'], {
-      env: { SUPPORT_DESK_GEMINI_API_KEY: secret.fromEnv('GOOGLE_GENERATIVE_AI_API_KEY', { hosts: secret.hosts.gemini }) },
+      env: geminiEnv({ secret }, APP_KEY),
     }),
   },
 }))

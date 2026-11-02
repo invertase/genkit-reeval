@@ -1,5 +1,5 @@
 // Run from the workspace as `tsx ~/.verify-mcp/verify.mts`, beside the MCP client the environment setup installed in `~/.verify-mcp`.
-// Prints one `RESULT <json>` line; exits 1 on a transport or provider error so `retries` reruns it, 0 otherwise.
+// Prints one `PROBE_RESULT <json>` line; exits 1 on a transport or provider error so `retries` reruns it, 0 otherwise.
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 
@@ -7,7 +7,7 @@ const TRANSIENT = /ECONNRESET|ECONNREFUSED|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|fetch f
 
 const result: { ok: boolean; listed?: boolean; called?: boolean; tools?: string[]; error?: string; transient?: boolean } = { ok: false }
 const finish = (code: number): never => {
-  console.log(`RESULT ${JSON.stringify(result)}`)
+  console.log(`PROBE_RESULT ${JSON.stringify(result)}`)
   process.exit(code)
 }
 const transport = new StdioClientTransport({

@@ -1,9 +1,9 @@
 import { randomInt } from 'node:crypto'
 import { readFileSync } from 'node:fs'
-import { type AttemptContext, type ExecResult, evaluate, expect, type Turn } from 'reeval'
-import { providerErrors } from '../../infra.ts'
+import { type AttemptContext, type ExecResult, evaluate, expect } from 'reeval'
 import { docsArms } from '../environments.ts'
-import { gate, placeSolutions, type Probe } from '../probe.ts'
+import { gate, noProviderErrors, type ProbeResult, parseResult, placeSolutions, type Probe } from '../probe.ts'
+import { callsOf, isShell, observeGenkitCommands, observeWeb } from '../transcript.ts'
 import { GO_MODULE, PROBES } from './cases.ts'
 import { arms } from './environments.ts'
 
@@ -14,23 +14,13 @@ const probe = (name: string): Probe => {
   return found
 }
 
-const FIXED = 'agent ran without provider errors'
-const RESULT = /^PROBE_RESULT (.*)$/m
-
 /** The project's interpreter: the `.venv` the agent made, else the system `python3`. */
 const python = (args: string) => `PY=$([ -x .venv/bin/python ] && echo .venv/bin/python || echo python3); timeout 300 "$PY" ${args}`
 
 /** What a hidden script printed after `PROBE_RESULT`, or why there is none. */
 function result(run: ExecResult): { reply: string; session: string } | string {
-  if (run.exitCode !== 0) return `exit ${run.exitCode}: ${run.stderr.trim().split('\n').slice(-3).join(' | ')}`
-  const line = RESULT.exec(run.stdout)?.[1]
-  if (line === undefined) return 'printed no result'
-  let parsed: { reply?: unknown; session?: unknown }
-  try {
-    parsed = JSON.parse(line) as { reply?: unknown; session?: unknown }
-  } catch {
-    return `malformed result ${JSON.stringify(line.slice(0, 200))}`
-  }
+  const parsed: ProbeResult | string = parseResult(run)
+  if (typeof parsed === 'string') return parsed
   const { reply, session } = parsed
   return { reply: typeof reply === 'string' ? reply : '', session: typeof session === 'string' ? session : '' }
 }
@@ -76,23 +66,19 @@ function addedGuidance(patch: string, paths: RegExp): Record<string, string> {
   return Object.fromEntries(Object.entries(added).map(([path, lines]) => [path, lines.join('\n')]))
 }
 
-/** Which Genkit CLI subcommands the agent ran, what it fetched and how often it searched, recorded and never gated. */
-function observeContext(c: AttemptContext, turn: Turn): void {
-  const commands = new Set<string>()
-  for (const event of turn.transcript) {
-    if (event.type !== 'tool') continue
-    for (const m of JSON.stringify(event.input ?? '').matchAll(/\bgenkit(?:\s+--[\w-]+)*\s+(docs:\w+|init:ai-tools|mcp|start|flow:run|trace:\w+)/g)) commands.add(m[1] ?? '')
-    for (const m of JSON.stringify(event.input ?? '').matchAll(/\b(npx skills[^"\\]*|skills\.sh)/g)) commands.add(m[1] ?? '')
-  }
-  c.observe('genkit-commands', [...commands].slice(0, 20))
-  c.observe('fetched-urls', turn.transcript.flatMap((e) => (e.type === 'web-fetch' ? [e.url] : [])).slice(0, 20))
-  const conflicts = turn.transcript.flatMap((e) => {
+/** Which Genkit CLI commands and skills installs the agent ran, what it fetched and how often it searched, recorded and never gated. */
+function observeContext(c: AttemptContext): void {
+  const calls = callsOf(c)
+  observeGenkitCommands(c)
+  const installs = calls.filter(isShell).flatMap((call) => [...call.command.matchAll(/\b(npx skills[^"\\]*|skills\.sh)/g)].map((m) => m[1] ?? ''))
+  c.observe('skills-installs', [...new Set(installs)].slice(0, 20))
+  observeWeb(c)
+  const conflicts = c.turns.flatMap((t) => t.transcript).flatMap((e) => {
     if (e.type !== 'tool' || !/\b(pip3?|uv)\b/.test(JSON.stringify(e.input ?? ''))) return []
     const out = JSON.stringify(e.output ?? '')
     return /conflict|ResolutionImpossible/i.test(out) ? [out.slice(0, 300)] : []
   })
   c.observe('install-conflicts', conflicts.slice(0, 5))
-  c.observe('web-searches', turn.transcript.filter((e) => e.type === 'web-search').length)
 }
 
 const AGENT_QUESTION =
@@ -107,15 +93,15 @@ const GO_MOD_REQUIRES = new RegExp(`^\\s*(?:require\\s+)?${GO_MODULE.replaceAll(
 const goNewApp = probe('go-new-app')
 {
   const { control, skill } = go('go-new', 'go-empty')
-  const docs = docsArms(control, 'go')
+  const docs = docsArms(control, 'go', 'go-new')
   evaluate(
     `agents: ${goNewApp.name}`,
     { compare: { baseline: control, variants: [skill, docs.open, docs.docsite, docs.llms, docs.index], gate } },
     async (c) => {
       await placeSolutions(c, goNewApp)
       const turn = await c.send(goNewApp.prompt)
-      expect(providerErrors(turn), FIXED).toEqual([])
-      observeContext(c, turn)
+      noProviderErrors(turn)
+      observeContext(c)
       const mirror = 'github.com/genkit-ai/genkit/go'
       c.observe('mirror-path-mentions', {
         written: turn.transcript.filter((e) => e.type === 'tool' && JSON.stringify(e.input ?? '').includes(mirror)).length,
@@ -143,15 +129,16 @@ const goNewApp = probe('go-new-app')
 
 const goAgentSession = probe('go-agent-session')
 {
-  const { control, skill, index } = go('go-session', 'go-support')
+  const { control, skill } = go('go-session', 'go-support')
+  const { index } = docsArms(control, 'go', 'go-session')
   evaluate(
     `agents: ${goAgentSession.name}`,
     { compare: { baseline: control, variants: [skill, index], gate }, questions: [{ question: AGENT_QUESTION, across: 'environment', task: true, diff: ['*.go'] }] },
     async (c) => {
       await placeSolutions(c, goAgentSession)
       const turn = await c.send(goAgentSession.prompt)
-      expect(providerErrors(turn), FIXED).toEqual([])
-      observeContext(c, turn)
+      noProviderErrors(turn)
+      observeContext(c)
 
       const grep = "grep -rEq --include=*.go --exclude=*_test.go --exclude-dir=.git"
       const imports = await c.exec(`${grep} 'genkit/go/(genkit|ai)/exp"' .`)
@@ -178,15 +165,15 @@ const goAgentSession = probe('go-agent-session')
 const pyToolCalling = probe('py-tool-calling')
 {
   const { control, skill } = py('py-tool', 'py-support')
-  const docs = docsArms(control, 'python')
+  const docs = docsArms(control, 'python', 'py-tool')
   evaluate(
     `agents: ${pyToolCalling.name}`,
     { compare: { baseline: control, variants: [skill, docs.open, docs.docsite, docs.llms, docs.index], gate } },
     async (c) => {
       await placeSolutions(c, pyToolCalling)
       const turn = await c.send(pyToolCalling.prompt)
-      expect(providerErrors(turn), FIXED).toEqual([])
-      observeContext(c, turn)
+      noProviderErrors(turn)
+      observeContext(c)
 
       const tool = await c.exec("grep -rEq --include=*.py --exclude-dir=.venv '@ai\\.tool|\\.tool\\(|@tool' .")
       expect(tool.exitCode === 0 ? [] : ['no Python file defines a tool with the Genkit decorator'], 'defines a Genkit tool').toEqual([])
@@ -208,15 +195,16 @@ const pyToolCalling = probe('py-tool-calling')
 
 const pyAgentSession = probe('py-agent-session')
 {
-  const { control, skill, index } = py('py-session', 'py-support')
+  const { control, skill } = py('py-session', 'py-support')
+  const { index } = docsArms(control, 'python', 'py-session')
   evaluate(
     `agents: ${pyAgentSession.name}`,
     { compare: { baseline: control, variants: [skill, index], gate }, questions: [{ question: AGENT_QUESTION, across: 'environment', task: true, diff: ['*.py'] }] },
     async (c) => {
       await placeSolutions(c, pyAgentSession)
       const turn = await c.send(pyAgentSession.prompt)
-      expect(providerErrors(turn), FIXED).toEqual([])
-      observeContext(c, turn)
+      noProviderErrors(turn)
+      observeContext(c)
 
       const defined = await c.exec("grep -rEq --include=*.py --exclude-dir=.venv 'define_agent\\(' .")
       expect(defined.exitCode === 0 ? [] : ['no Python file calls define_agent'], 'defines the agent with define_agent').toEqual([])
@@ -247,7 +235,8 @@ const pyAgentSession = probe('py-agent-session')
 
 const pySkillSetup = probe('py-skill-setup')
 {
-  const { control, skill, index } = py('py-setup', 'py-empty')
+  const { control, skill } = py('py-setup', 'py-empty')
+  const { index } = docsArms(control, 'python', 'py-setup')
   const GUIDANCE = /(^|\/)(AGENTS|CLAUDE|GEMINI|GENKIT)\.md$|(^|\/)SKILL\.md$|\.mdc$|(^|\/)\.cursorrules$|copilot-instructions\.md$|(^|\/)\.?mcp\.json$|(^|\/)\.(agents|claude|cursor|gemini)\//
   const PYTHON_API = /from genkit(_|\.| )|genkit_google_genai|genkit-google-genai|genkit\.exp|\.define_agent|@ai\.(tool|flow)|run_main/
   evaluate(
@@ -259,8 +248,8 @@ const pySkillSetup = probe('py-skill-setup')
     async (c) => {
       await placeSolutions(c, pySkillSetup)
       const turn = await c.send(pySkillSetup.prompt)
-      expect(providerErrors(turn), FIXED).toEqual([])
-      observeContext(c, turn)
+      noProviderErrors(turn)
+      observeContext(c)
 
       const added = addedGuidance(turn.diff.patch, GUIDANCE)
       c.observe('guidance-files', Object.keys(added).slice(0, 30))

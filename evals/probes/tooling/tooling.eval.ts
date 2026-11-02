@@ -3,29 +3,25 @@ import { randomBytes } from 'node:crypto'
 import fs from 'node:fs'
 import { type AttemptContext, type ExecRetry, evaluate, expect, type Turn } from 'reeval'
 import { control, directed, mcp, skill } from '../../environments.ts'
-import { providerErrors } from '../../infra.ts'
-import { gate, type Probe, placeSolutions } from '../probe.ts'
+import { gate, noProviderErrors, type Probe, type ProbeResult, parseResult, placeSolutions } from '../probe.ts'
+import { callsOf, genkitCli } from '../transcript.ts'
 import { PROBES, REAL_FLOWS } from './cases.ts'
 import { directedOffline, mcpOffline, mcpWrongRoot } from './environments.ts'
 import { admitsDocsFailed } from './gates.ts'
-import { callsOf, genkitCli, genkitMcp, observeTooling } from './observe.ts'
+import { genkitMcp, observeTooling } from './observe.ts'
 
 const only = (...names: string[]): Probe[] => PROBES.filter((p) => names.includes(p.name))
 const read = (url: string) => fs.readFileSync(new URL(url, import.meta.url), 'utf8')
 
-/** Runs a hidden script from `sandbox/` in the workspace and returns the JSON line it prints last. */
-async function runScript(c: AttemptContext, script: string, env = '', retry?: ExecRetry): Promise<Record<string, unknown>> {
+/** Runs a hidden script from `sandbox/` in the workspace and returns what it reported; a crashed script reports itself under `crashed`. */
+async function runScript(c: AttemptContext, script: string, env = '', retry?: ExecRetry): Promise<ProbeResult> {
   await c.writeFile(`~/.verify-${script}`, read(`./sandbox/${script}`))
-  const run = await c.exec(`${env} node_modules/.bin/tsx ~/.verify-${script}`, retry)
-  try {
-    return JSON.parse(run.stdout.trim().split('\n').at(-1) ?? '') as Record<string, unknown>
-  } catch {
-    return { crashed: [`${script} printed no result: ${`${run.stdout}\n${run.stderr}`.trim().slice(-400)}`] }
-  }
+  const result = parseResult(await c.exec(`${env} node_modules/.bin/tsx ~/.verify-${script}`, retry))
+  return typeof result === 'string' ? { crashed: [`${script}: ${result}`] } : result
 }
 
 /** The problems a hidden script reported under `key`; a crashed script reports itself. */
-function problems(result: Record<string, unknown>, key: string): string[] {
+function problems(result: ProbeResult, key: string): string[] {
   const list = result[key] ?? result.crashed
   return Array.isArray(list) ? list.map(String) : [`no ${key} in ${JSON.stringify(result).slice(0, 200)}`]
 }
@@ -35,14 +31,12 @@ const GEMINI_RETRY: ExecRetry = { retries: 2, interval: 3000 }
 
 const SOURCE = [/^(src|prompts)\//, /^(package(-lock)?|tsconfig)\.json$/]
 const typechecks = (c: AttemptContext) => expect(c.exec('node_modules/.bin/tsc --noEmit'), 'typechecks').toSucceed()
-const noProviderErrors = (turn: Turn) => expect(providerErrors(turn), 'agent ran without provider errors').toEqual([])
 
 /** The answer file's text and the turn's final message, which together hold what the agent reported. */
 async function reported(c: AttemptContext, turn: Turn, file: string): Promise<string> {
   return `${(await c.readFile(file)) ?? ''}\n${turn.text}`
 }
 
-// The study's verify-by-running habit, on a new flow.
 evaluate.each(only('cli-verify'))(
   'tooling: $name',
   { compare: { baseline: control, variants: [skill, directed], gate } },
@@ -55,9 +49,9 @@ evaluate.each(only('cli-verify'))(
     expect(problems(result, 'errors'), 'flow returns summary and priority').toEqual([])
 
     const cli = genkitCli(callsOf(c))
-    c.observe('ran_flow_run', cli.some((call) => /flow:run/.test(call.command)))
-    c.observe('flow_run_exits_ok', cli.filter((call) => /flow:run/.test(call.command)).map((call) => call.ok))
-    c.observe('ran_genkit_start', cli.some((call) => /genkit\s+(--\S+\s+)*start\b/.test(call.command)))
+    c.observe('ran-flow-run', cli.some((call) => /flow:run/.test(call.command)))
+    c.observe('flow-run-exits-ok', cli.filter((call) => /flow:run/.test(call.command)).map((call) => call.ok))
+    c.observe('ran-genkit-start', cli.some((call) => /genkit\s+(--\S+\s+)*start\b/.test(call.command)))
     observeTooling(c)
   },
 )
@@ -89,7 +83,7 @@ evaluate.each(only('cli-add-eval'))(
     const turn = await c.send(p.prompt)
     noProviderErrors(turn)
     const pkg = JSON.parse((await c.readFile('package.json')) ?? '{}') as { dependencies?: object; devDependencies?: object }
-    c.observe('evaluator_plugin_declared', '@genkit-ai/evaluator' in { ...pkg.dependencies, ...pkg.devDependencies })
+    c.observe('evaluator-plugin-declared', '@genkit-ai/evaluator' in { ...pkg.dependencies, ...pkg.devDependencies })
     const registered = await runScript(c, 'registered.mts')
     const keys = Array.isArray(registered.keys) ? registered.keys.map(String) : []
     expect(
@@ -102,8 +96,8 @@ evaluate.each(only('cli-add-eval'))(
     )
     expect(`${run.stdout}\n${run.stderr}`, 'eval:flow finds the evaluator').toMatch(/Using evaluators:.*faithful/i)
     await typechecks(c)
-    c.observe('eval_flow_exit', run.exitCode)
-    c.observe('evaluator_keys', keys.slice(0, 6))
+    c.observe('eval-flow-exit', run.exitCode)
+    c.observe('evaluator-keys', keys.slice(0, 6))
     observeTooling(c)
   },
 )
@@ -124,8 +118,8 @@ evaluate.each(only('devui-missing-env'))(
     expect(problems(result, 'errors'), 'reports a real greet trace and its output').toEqual([])
 
     const calls = callsOf(c)
-    c.observe('mcp_calls_that_failed', genkitMcp(calls).filter((call) => call.ok === false).length)
-    c.observe('used_user_server_port', calls.some((call) => /\b4100\b/.test(call.command)))
+    c.observe('mcp-calls-that-failed', genkitMcp(calls).filter((call) => call.ok === false).length)
+    c.observe('used-user-server-port', calls.some((call) => /\b4100\b/.test(call.command)))
     observeTooling(c)
   },
 )
@@ -197,7 +191,7 @@ evaluate.each(only('devui-two-runtimes'))(
     const answer = (await c.readFile('answer.txt')) ?? ''
     expect(secondAppErrors(`${answer}\n${turn.text}`, answer, code), 'reports the greeting from the running second app').toEqual([])
 
-    c.observe('mcp_run_flow_calls', genkitMcp(callsOf(c)).filter((call) => /run_flow/.test(call.tool)).length)
+    c.observe('mcp-run-flow-calls', genkitMcp(callsOf(c)).filter((call) => /run_flow/.test(call.tool)).length)
     observeTooling(c)
   },
 )
@@ -216,10 +210,10 @@ evaluate.each(only('mcp-offline-docs'))(
     const calls = callsOf(c)
     const docs = [...genkitMcp(calls), ...genkitCli(calls)].filter((call) => /docs/.test(call.tool) || /docs:(list|search|read)/.test(call.command))
     expect(admitsDocsFailed(text), 'answer says the docs failed').toBe(true)
-    c.observe('correct_streaming_fact', STREAM_CORRECT(text))
-    c.observe('docs_calls', docs.length)
-    c.observe('docs_calls_ok', docs.filter((call) => call.ok === true).length)
-    c.observe('docs_calls_failed', docs.filter((call) => call.ok === false).length)
+    c.observe('correct-streaming-fact', STREAM_CORRECT(text))
+    c.observe('docs-calls', docs.length)
+    c.observe('docs-calls-ok', docs.filter((call) => call.ok === true).length)
+    c.observe('docs-calls-failed', docs.filter((call) => call.ok === false).length)
     observeTooling(c)
     await c.judge('Does the agent tell the user that the Genkit docs tools were unavailable or failed, rather than presenting documentation it did not get?', {
       on: { finalMessage: turn.text, answer: text },
@@ -264,10 +258,10 @@ evaluate.each(only('mcp-broken-server'))('tooling: $name', { environment: mcpWro
   expect(missing(flows), 'lists every flow').toEqual([])
 
   const mcpCalls = genkitMcp(callsOf(c))
-  c.observe('read_source_only', mcpCalls.length === 0)
-  c.observe('says_tools_unavailable', UNAVAILABLE.test(turn.text))
-  c.observe('mcp_calls_ok', mcpCalls.filter((call) => call.ok === true).length)
-  c.observe('mcp_calls_failed', mcpCalls.filter((call) => call.ok === false).length)
+  c.observe('read-source-only', mcpCalls.length === 0)
+  c.observe('says-tools-unavailable', UNAVAILABLE.test(turn.text))
+  c.observe('mcp-calls-ok', mcpCalls.filter((call) => call.ok === true).length)
+  c.observe('mcp-calls-failed', mcpCalls.filter((call) => call.ok === false).length)
   observeTooling(c)
   if (mcpCalls.length > 0) {
     await c.judge('Does the final message tell the user that the Genkit tools were unavailable or failed, rather than presenting what they returned?', {
@@ -293,9 +287,9 @@ evaluate.each(only('agent-two-turn'))(
 
     const calls = callsOf(c)
     const onAgent = /\b(triage|orderAgent|refundAgent)\b/
-    c.observe('tried_flow_run_on_agent', genkitCli(calls).some((call) => /flow:run/.test(call.command) && onAgent.test(call.command.replace(/tryTriage|tryRefundDesk/g, ''))))
-    c.observe('tried_run_flow_on_agent', genkitMcp(calls).some((call) => /run_flow/.test(call.tool) && /"flowName":"(triage|orderAgent|refundAgent)"/.test(call.command)))
-    c.observe('used_wrapper_flow', calls.some((call) => /tryTriage/.test(call.command)))
+    c.observe('tried-flow-run-on-agent', genkitCli(calls).some((call) => /flow:run/.test(call.command) && onAgent.test(call.command.replace(/tryTriage|tryRefundDesk/g, ''))))
+    c.observe('tried-run-flow-on-agent', genkitMcp(calls).some((call) => /run_flow/.test(call.tool) && /"flowName":"(triage|orderAgent|refundAgent)"/.test(call.command)))
+    c.observe('used-wrapper-flow', calls.some((call) => /tryTriage/.test(call.command)))
     observeTooling(c)
   },
 )

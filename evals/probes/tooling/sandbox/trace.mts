@@ -1,4 +1,4 @@
-// Run as `ANSWER=<file> FLOW=<name> [ROOT=<dir>] tsx ~/.verify-trace.mts`; prints one JSON line `{ errors }`.
+// Run as `ANSWER=<file> FLOW=<name> [ROOT=<dir>] tsx ~/.verify-trace.mts`; prints one `PROBE_RESULT {"errors":[...]}` line.
 // The answer must hold the id of a stored trace of FLOW and that trace's output.
 import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
@@ -24,4 +24,4 @@ const ok = ids.some((id) => {
   return squash(output).length > 0 && squash(answer).includes(squash(output))
 })
 if (ids.length > 0 && !ok) errors.push(`no trace id in the answer belongs to a stored ${flow} run whose output the answer also quotes`)
-console.log(JSON.stringify({ errors }))
+console.log('PROBE_RESULT ' + JSON.stringify({ errors }))
