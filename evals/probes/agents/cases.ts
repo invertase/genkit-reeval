@@ -5,6 +5,8 @@ const solution = (probe: string, file: string) => readFileSync(new URL(`./sandbo
 
 /** The pinned Genkit Go module path and version: the module is still `firebase/genkit/go` although the repository moved to `genkit-ai/genkit`. */
 export const GO_MODULE = 'github.com/firebase/genkit/go'
+
+/** The pinned Genkit Go version, warmed into the Go image's module cache. */
 export const GO_VERSION = 'v1.14.0'
 
 const goMod = (module: string, requires: string) => `module example.com/${module}\n\ngo 1.25.0\n\nrequire ${requires} ${GO_VERSION}\n`
@@ -15,11 +17,11 @@ const PY_INSTALL = 'uv venv --quiet && uv pip install --quiet genkit genkit-goog
 const FIXED = 'agent ran without provider errors'
 
 const APP_KEY = 'The Gemini API key is in the GEMINI_API_KEY environment variable.'
-const ORDERS = '`orders.json` in this directory maps each order id to its `status` and `eta`.'
+const ORDERS = '`orders.json` in this directory maps each order id to its `status` and `eta`; its contents change between calls, so read it on every lookup.'
 
 const goNewApp: Probe = {
   name: 'go-new-app',
-  prompt: `Create a Genkit Go app here whose \`main\` prints a one-line Gemini answer to 'What is Genkit?'. ${APP_KEY}`,
+  prompt: `Create a Genkit Go app here whose \`main\` prints a one-line Gemini answer to 'What is Genkit?' and exits non-zero if the call fails. ${APP_KEY}`,
   checks: [FIXED, 'requires the genkit module', 'builds', 'runs and prints an answer', 'calls the model'],
   oracle: {
     files: { 'main.go': solution('go-new-app', 'good.go'), 'go.mod': goMod('hello', GO_MODULE) },
@@ -34,9 +36,9 @@ const goNewApp: Probe = {
 const goAgentSession: Probe = {
   name: 'go-agent-session',
   prompt:
-    'Build a customer support agent in this directory, as a Go module with `package main` in the project root. ' +
+    'Build a customer support Genkit agent in this directory, as a Go module with `package main` in the project root. ' +
     `It answers customers' questions about their orders with Gemini and has a tool that looks an order up by id; ${ORDERS} ${APP_KEY}\n` +
-    'A customer\'s conversation must persist, so that it continues after the process restarts. Expose this in `package main`:\n' +
+    'The agent keeps a persistent session per customer, so that a conversation continues after the process restarts. Expose this in `package main`:\n' +
     '`func Ask(ctx context.Context, sessionID string, message string) (reply string, newSessionID string, err error)`\n' +
     'An empty `sessionID` starts a new conversation; an id that an earlier call returned continues that conversation, even from a new process. ' +
     '`Ask` sets up everything it needs itself. `main` may chat with the agent however you like.',
@@ -55,21 +57,21 @@ const goAgentSession: Probe = {
 const pyToolCalling: Probe = {
   name: 'py-tool-calling',
   prompt:
-    'Create a Python app here with one tool that looks up the status of an order by id; ' +
+    'Create a Python app here with Genkit and one tool that looks up the status of an order by id; ' +
     `${ORDERS} ${APP_KEY}\n` +
     'Expose `async def ask(question: str) -> str` in `app.py`: it answers the question with Gemini, calling the tool to look orders up. ' +
     "Install the dependencies in this directory (a `.venv` here is fine) so that `python3 -c 'import app'` works when run from it.",
   checks: [FIXED, 'defines a Genkit tool', 'imports resolve', 'answers from the tool'],
   oracle: { files: { 'app.py': solution('py-tool-calling', 'good.py') }, exec: PY_INSTALL },
-  cheat: { files: { 'app.py': solution('py-tool-calling', 'cheat.py') }, exec: PY_INSTALL, fails: ['imports resolve', 'answers from the tool'] },
+  cheat: { files: { 'app.py': solution('py-tool-calling', 'cheat.py') }, exec: PY_INSTALL, fails: ['answers from the tool'] },
 }
 
 const pyAgentSession: Probe = {
   name: 'py-agent-session',
   prompt:
-    'Build a customer support agent in this directory, in Python. ' +
+    'Build a customer support Genkit agent in this directory, in Python. ' +
     `It answers customers' questions about their orders with Gemini and has a tool that looks an order up by id; ${ORDERS} ${APP_KEY}\n` +
-    "A customer's conversation must persist, so that it continues after the process restarts. Expose this in `app.py`:\n" +
+    'The agent keeps a persistent session per customer, so that a conversation continues after the process restarts. Expose this in `app.py`:\n' +
     '`async def ask(session_id: str | None, message: str) -> tuple[str, str]`, returning the reply and the conversation\'s session id.\n' +
     'With `None` it starts a new conversation; an id that an earlier call returned continues that conversation, even from a new process. ' +
     "Install the dependencies in this directory (a `.venv` here is fine) so that `python3 -c 'import app'` works when run from it.",

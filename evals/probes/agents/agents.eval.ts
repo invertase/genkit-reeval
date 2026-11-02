@@ -1,3 +1,4 @@
+import { randomBytes, randomInt } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { type AttemptContext, type ExecResult, evaluate, expect, type Turn } from 'reeval'
 import { providerErrors } from '../../infra.ts'
@@ -24,10 +25,52 @@ function result(run: ExecResult): { reply: string; session: string } | string {
   if (run.exitCode !== 0) return `exit ${run.exitCode}: ${run.stderr.trim().split('\n').slice(-3).join(' | ')}`
   const line = RESULT.exec(run.stdout)?.[1]
   if (line === undefined) return 'printed no result'
-  const parsed: unknown = JSON.parse(line)
-  const { reply, session } = parsed as { reply?: unknown; session?: unknown }
+  let parsed: { reply?: unknown; session?: unknown }
+  try {
+    parsed = JSON.parse(line) as { reply?: unknown; session?: unknown }
+  } catch {
+    return `malformed result ${JSON.stringify(line.slice(0, 200))}`
+  }
+  const { reply, session } = parsed
   return { reply: typeof reply === 'string' ? reply : '', session: typeof session === 'string' ? session : '' }
 }
+
+const VERBS = ['held', 'waiting', 'queued', 'stored', 'parked']
+const FIRST = ['Juniper', 'Marlowe', 'Cobalt', 'Harbor', 'Willow', 'Ember', 'Tamarack', 'Quarry', 'Sable', 'Alder', 'Fennel', 'Granite']
+const SECOND = ['Northgate', 'Millbrook', 'Ridgeway', 'Stonebridge', 'Larkspur', 'Foxglove', 'Ashford', 'Bramley', 'Corvin', 'Dunmore', 'Elmwood', 'Fairhaven']
+const pick = (words: string[]) => words[randomInt(words.length)] ?? ''
+
+/** A one-order table with a random id and a status that holds two random capitalised words, so a hard-coded or guessed answer cannot match; the model keeps real words where it drops codes. */
+function freshOrder() {
+  const marks = [pick(FIRST), pick(SECOND)]
+  return { id: `A-${randomInt(1000, 10000)}`, status: `${pick(VERBS)} at the ${marks.join(' ')} depot`, eta: '2026-12-04', marks }
+}
+
+/** Replaces the workspace's `orders.json` with a fresh order and returns it; the app must read the file when the tool runs. */
+async function placeOrder(c: AttemptContext) {
+  const order = freshOrder()
+  await c.writeFile('orders.json', `${JSON.stringify({ [order.id]: { status: order.status, eta: order.eta } }, null, 2)}\n`)
+  return order
+}
+
+/** The lines a unified `patch` adds, per file whose path matches `paths`; environment-placed files are not in a turn's diff. */
+function addedGuidance(patch: string, paths: RegExp): Record<string, string> {
+  const added: Record<string, string[]> = {}
+  let file: string | undefined
+  for (const line of patch.split('\n')) {
+    if (line.startsWith('+++ ')) {
+      const path = line.slice(4).replace(/^b\//, '')
+      file = path === '/dev/null' || !paths.test(path) ? undefined : path
+    } else if (file !== undefined && line.startsWith('+')) (added[file] ??= []).push(line.slice(1))
+  }
+  return Object.fromEntries(Object.entries(added).map(([path, lines]) => [path, lines.join('\n')]))
+}
+
+/** Whether `reply` names both random words of `order`'s status. */
+const givesStatus = (reply: string, order: { marks: string[] }) => order.marks.every((mark) => squash(reply).includes(squash(mark)))
+
+const squash = (text: string) => text.toLowerCase().replace(/[^a-z0-9]/g, '')
+const shellQuote = (text: string) => `'${text.replaceAll("'", `'\\''`)}'`
 
 /** Which Genkit CLI subcommands the agent ran, what it fetched and how often it searched, recorded and never gated. */
 function observeContext(c: AttemptContext, turn: Turn): void {
@@ -39,6 +82,12 @@ function observeContext(c: AttemptContext, turn: Turn): void {
   }
   c.observe('genkit-commands', [...commands].slice(0, 20))
   c.observe('fetched-urls', turn.transcript.flatMap((e) => (e.type === 'web-fetch' ? [e.url] : [])).slice(0, 20))
+  const conflicts = turn.transcript.flatMap((e) => {
+    if (e.type !== 'tool' || !/\b(pip3?|uv)\b/.test(JSON.stringify(e.input ?? ''))) return []
+    const out = JSON.stringify(e.output ?? '')
+    return /conflict|ResolutionImpossible/i.test(out) ? [out.slice(0, 300)] : []
+  })
+  c.observe('install-conflicts', conflicts.slice(0, 5))
   c.observe('web-searches', turn.transcript.filter((e) => e.type === 'web-search').length)
 }
 
@@ -53,11 +102,11 @@ const GO_MOD_REQUIRES = new RegExp(`^\\s*(?:require\\s+)?${GO_MODULE.replaceAll(
 
 const goNewApp = probe('go-new-app')
 {
-  const { control, skill, index } = go('go-new', 'go-empty')
+  const { control, skill } = go('go-new', 'go-empty')
   const docs = docsArms(control, 'go')
   evaluate(
     `agents: ${goNewApp.name}`,
-    { compare: { baseline: control, variants: [skill, index, docs.open, docs.docsite, docs.llms, docs.index], gate } },
+    { compare: { baseline: control, variants: [skill, docs.open, docs.docsite, docs.llms, docs.index], gate } },
     async (c) => {
       await placeSolutions(c, goNewApp)
       const turn = await c.send(goNewApp.prompt)
@@ -111,8 +160,9 @@ const goAgentSession = probe('go-agent-session')
       const version = await c.exec(`go list -m -f '{{.Version}}' ${GO_MODULE}`)
       c.observe('genkit-go-version', version.stdout.trim() || null)
 
+      await placeOrder(c)
       await c.writeFile('zz_probe_test.go', hidden('go-agent-session.go'))
-      const test = await c.exec("go test -count=1 -timeout 300s -run '^TestTwoProcesses$' ./...")
+      const test = await c.exec("go test -count=1 -timeout 300s -run '^TestProbeTwoProcesses$' .")
       await expect(test, 'second process knows the order').toSucceed()
       c.observe('go-test-tail', `${test.stdout}\n${test.stderr}`.trim().slice(-600))
 
@@ -123,11 +173,11 @@ const goAgentSession = probe('go-agent-session')
 
 const pyToolCalling = probe('py-tool-calling')
 {
-  const { control, skill, index } = py('py-tool', 'py-support')
+  const { control, skill } = py('py-tool', 'py-support')
   const docs = docsArms(control, 'python')
   evaluate(
     `agents: ${pyToolCalling.name}`,
-    { compare: { baseline: control, variants: [skill, index, docs.open, docs.docsite, docs.llms, docs.index], gate } },
+    { compare: { baseline: control, variants: [skill, docs.open, docs.docsite, docs.llms, docs.index], gate } },
     async (c) => {
       await placeSolutions(c, pyToolCalling)
       const turn = await c.send(pyToolCalling.prompt)
@@ -143,10 +193,11 @@ const pyToolCalling = probe('py-tool-calling')
       c.observe('genkit-py-version', version.stdout.trim() || null)
 
       await c.writeFile('~/.verify-py-tool.py', hidden('py-tool.py'))
-      const run = await c.exec(python('~/.verify-py-tool.py "Where is order A-7731?"'))
+      const order = await placeOrder(c)
+      const run = await c.exec(python(`~/.verify-py-tool.py ${shellQuote(`Where is order ${order.id}? Reply with its status.`)}`))
       const out = result(run)
       c.observe('tool-run', typeof out === 'string' ? out.slice(0, 600) : out.reply.slice(0, 600))
-      expect(typeof out === 'string' ? [out] : /back-?order/i.test(out.reply) ? [] : [`the reply does not say A-7731 is backordered: ${JSON.stringify(out.reply)}`], 'answers from the tool').toEqual([])
+      expect(typeof out === 'string' ? [out] : givesStatus(out.reply, order) ? [] : [`the reply does not give the status ${order.status} of ${order.id}: ${JSON.stringify(out.reply)}`], 'answers from the tool').toEqual([])
     },
   )
 }
@@ -172,14 +223,16 @@ const pyAgentSession = probe('py-agent-session')
       c.observe('genkit-py-version', version.stdout.trim() || null)
 
       await c.writeFile('~/.verify-py-turn.py', hidden('py-turn.py'))
-      const first = result(await c.exec(python('~/.verify-py-turn.py "" "My order id is A-7731."')))
-      const second = typeof first === 'string' || first.session === '' ? undefined : result(await c.exec(python(`~/.verify-py-turn.py "${first.session}" "What is the status of my order?"`)))
+      const order = await placeOrder(c)
+      const first = result(await c.exec(python(`~/.verify-py-turn.py '' ${shellQuote(`My order id is ${order.id}. What is its status?`)}`)))
+      const second = typeof first === 'string' || first.session === '' ? undefined : result(await c.exec(python(`~/.verify-py-turn.py ${shellQuote(first.session)} ${shellQuote('What order id did I give you earlier? Reply with only the id.')}`)))
       const errors =
         typeof first === 'string' ? [`first turn: ${first}`]
+        : !givesStatus(first.reply, order) ? [`the first turn does not give the status ${order.status} of ${order.id}: ${JSON.stringify(first.reply)}`]
         : second === undefined ? ['the first turn returned no session id']
         : typeof second === 'string' ? [`second turn: ${second}`]
-        : /back-?order/i.test(second.reply) ? []
-        : [`the second process does not say A-7731 is backordered: ${JSON.stringify(second.reply)}`]
+        : squash(second.reply).includes(squash(order.id)) ? []
+        : [`the second process does not recall ${order.id}: ${JSON.stringify(second.reply)}`]
       c.observe('session-run', errors.map((e) => e.slice(0, 500)))
       expect(errors, 'second process knows the order').toEqual([])
 
@@ -190,14 +243,13 @@ const pyAgentSession = probe('py-agent-session')
 
 const pySkillSetup = probe('py-skill-setup')
 {
-  // No skill arm: reeval installs the skill into the workspace itself, which would pass `adds Genkit guidance` by construction.
-  const { control, index } = py('py-setup', 'py-empty')
-  const GUIDANCE = /(^|\/)(AGENTS|CLAUDE|GEMINI)\.md$|(^|\/)SKILL\.md$|\.mdc$|(^|\/)\.cursorrules$|copilot-instructions\.md$|(^|\/)\.?mcp\.json$|(^|\/)\.(agents|claude|cursor|gemini)\//
+  const { control, skill, index } = py('py-setup', 'py-empty')
+  const GUIDANCE = /(^|\/)(AGENTS|CLAUDE|GEMINI|GENKIT)\.md$|(^|\/)SKILL\.md$|\.mdc$|(^|\/)\.cursorrules$|copilot-instructions\.md$|(^|\/)\.?mcp\.json$|(^|\/)\.(agents|claude|cursor|gemini)\//
   const PYTHON_API = /from genkit(_|\.| )|genkit_google_genai|genkit-google-genai|genkit\.exp|\.define_agent|@ai\.(tool|flow)|run_main/
   evaluate(
     `agents: ${pySkillSetup.name}`,
     {
-      compare: { baseline: control, variants: [index], gate },
+      compare: { baseline: control, variants: [skill, index], gate },
       questions: [{ question: 'Did the agent set the project up from official Genkit tooling (a Genkit skill, `genkit init:ai-tools`, the `genkit mcp` server or genkit.dev docs) rather than writing generic notes from memory?', across: 'environment', task: true, transcript: 'tools' }],
     },
     async (c) => {
@@ -206,12 +258,11 @@ const pySkillSetup = probe('py-skill-setup')
       expect(providerErrors(turn), FIXED).toEqual([])
       observeContext(c, turn)
 
-      const paths = turn.diff.files.filter((f) => f.status !== 'deleted' && GUIDANCE.test(f.path)).map((f) => f.path)
-      c.observe('guidance-files', paths.slice(0, 30))
-      const texts = await Promise.all(paths.map(async (p) => ({ path: p, text: (await c.readFile(p)) ?? '' })))
-      const genkit = texts.filter((t) => /genkit/i.test(t.text))
-      expect(genkit.length > 0 ? [] : [`no new or changed guidance file mentions Genkit (${paths.join(', ') || 'none'})`], 'adds Genkit guidance').toEqual([])
-      expect(genkit.some((t) => PYTHON_API.test(t.text)) ? [] : ['no guidance file shows the Genkit Python API'], 'guidance is for Python Genkit').toEqual([])
+      const added = addedGuidance(turn.diff.patch, GUIDANCE)
+      c.observe('guidance-files', Object.keys(added).slice(0, 30))
+      const genkit = Object.entries(added).filter(([, text]) => /genkit/i.test(text))
+      expect(genkit.length > 0 ? [] : [`no line the agent added to a guidance file mentions Genkit (${Object.keys(added).join(', ') || 'none'})`], 'adds Genkit guidance').toEqual([])
+      expect(genkit.some(([, text]) => PYTHON_API.test(text)) ? [] : ['no line the agent added to a guidance file shows the Genkit Python API'], 'guidance is for Python Genkit').toEqual([])
     },
   )
 }

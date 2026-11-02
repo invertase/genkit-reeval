@@ -3,7 +3,7 @@ FROM ${REEVAL_BASE}
 
 RUN npm i -g genkit-cli@1.44.1
 
-COPY --from=golang:1.26.10-bookworm /usr/local/go /usr/local/go
+COPY --from=golang:1.26.10-bookworm@sha256:23ce71337b726608afb1bc00986e630a05034a87a87ea1fc2cd1ae5cf33387eb /usr/local/go /usr/local/go
 ENV GOROOT=/usr/local/go \
     GOPATH=/opt/go \
     GOCACHE=/opt/gocache \

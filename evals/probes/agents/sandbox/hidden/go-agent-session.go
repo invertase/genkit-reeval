@@ -11,9 +11,9 @@ import (
 	"time"
 )
 
-const marker = "PROBE_RESULT "
+const probeMarker = "PROBE_RESULT "
 
-type turnResult struct {
+type probeTurnResult struct {
 	Reply   string `json:"reply"`
 	Session string `json:"session"`
 }
@@ -22,7 +22,7 @@ type turnResult struct {
 func TestProbeTurn(t *testing.T) {
 	message := os.Getenv("PROBE_MESSAGE")
 	if message == "" {
-		t.Skip("run by TestTwoProcesses")
+		t.Skip("run by TestProbeTwoProcesses")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 	defer cancel()
@@ -30,11 +30,11 @@ func TestProbeTurn(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Ask: %v", err)
 	}
-	out, _ := json.Marshal(turnResult{Reply: reply, Session: session})
-	os.Stdout.WriteString(marker + string(out) + "\n")
+	out, _ := json.Marshal(probeTurnResult{Reply: reply, Session: session})
+	os.Stdout.WriteString(probeMarker + string(out) + "\n")
 }
 
-func runTurn(t *testing.T, session, message string) turnResult {
+func runProbeTurn(t *testing.T, session, message string) probeTurnResult {
 	t.Helper()
 	cmd := exec.Command(os.Args[0], "-test.run=^TestProbeTurn$", "-test.count=1")
 	cmd.Env = append(os.Environ(), "PROBE_SESSION="+session, "PROBE_MESSAGE="+message)
@@ -47,8 +47,8 @@ func runTurn(t *testing.T, session, message string) turnResult {
 		t.Fatalf("turn %q failed: %v\n%s\n%s", message, err, stdout, stderr)
 	}
 	for _, line := range strings.Split(string(stdout), "\n") {
-		if rest, ok := strings.CutPrefix(line, marker); ok {
-			var res turnResult
+		if rest, ok := strings.CutPrefix(line, probeMarker); ok {
+			var res probeTurnResult
 			if err := json.Unmarshal([]byte(rest), &res); err != nil {
 				t.Fatalf("bad result %q: %v", rest, err)
 			}
@@ -56,16 +56,38 @@ func runTurn(t *testing.T, session, message string) turnResult {
 		}
 	}
 	t.Fatalf("turn %q printed no result:\n%s", message, stdout)
-	return turnResult{}
+	return probeTurnResult{}
 }
 
-func TestTwoProcesses(t *testing.T) {
-	first := runTurn(t, "", "My order id is A-7731.")
-	if first.Session == "" {
-		t.Fatal("the first turn returned no session id")
+func probeSquash(s string) string {
+	return regexp.MustCompile(`[^a-z0-9]`).ReplaceAllString(strings.ToLower(s), "")
+}
+
+// TestProbeTwoProcesses reads the one order the probe wrote to orders.json, asks about it in one process and asks for its id in another.
+func TestProbeTwoProcesses(t *testing.T) {
+	raw, err := os.ReadFile("orders.json")
+	if err != nil {
+		t.Fatal(err)
 	}
-	second := runTurn(t, first.Session, "What is the status of my order?")
-	if !regexp.MustCompile(`(?i)back-?order`).MatchString(second.Reply) {
-		t.Fatalf("the second process does not say A-7731 is backordered: %q", second.Reply)
+	var orders map[string]struct {
+		Status string `json:"status"`
+	}
+	if err := json.Unmarshal(raw, &orders); err != nil || len(orders) != 1 {
+		t.Fatalf("orders.json must hold one order: %v", err)
+	}
+	for id, order := range orders {
+		first := runProbeTurn(t, "", "My order id is "+id+". What is its status?")
+		if first.Session == "" {
+			t.Fatal("the first turn returned no session id")
+		}
+		for _, mark := range regexp.MustCompile(`[A-Z][a-z]+`).FindAllString(order.Status, -1) {
+			if !strings.Contains(probeSquash(first.Reply), probeSquash(mark)) {
+				t.Fatalf("the first turn does not give the status %q of %s: %q", order.Status, id, first.Reply)
+			}
+		}
+		second := runProbeTurn(t, first.Session, "What order id did I give you earlier? Reply with only the id.")
+		if !strings.Contains(probeSquash(second.Reply), probeSquash(id)) {
+			t.Fatalf("the second process does not recall %s: %q", id, second.Reply)
+		}
 	}
 }

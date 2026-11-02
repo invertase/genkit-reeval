@@ -1,12 +1,10 @@
 import asyncio
-import json
 import sys
-from pathlib import Path
 
 from pydantic import BaseModel
 
-from genkit.ai import Genkit
-from genkit.plugins.google_genai import GoogleAI
+from genkit import Genkit
+from genkit_google_genai import GoogleAI
 
 ai = Genkit(plugins=[GoogleAI()], model='googleai/gemini-2.5-flash')
 
@@ -17,8 +15,7 @@ class OrderInput(BaseModel):
 
 @ai.tool(name='lookupOrder', description='Looks up the status and delivery ETA of an order by its id.')
 async def lookup_order(input: OrderInput) -> dict:
-    orders = json.loads(Path('orders.json').read_text())
-    return orders.get(input.order_id, {'error': 'no such order'})
+    return {'status': 'backordered', 'eta': '2026-12-04'}
 
 
 async def ask(question: str) -> str:
