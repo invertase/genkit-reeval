@@ -47,6 +47,23 @@ Each cell is a container that copies the baked `node_modules` in and makes a few
 
 If the oracle fails a bug, the check is wrong, not the fix: read `failing_attempts`. One exception: a Gemini stream error such as `Error aggregating stream chunks` is the model, not the check; rerun that bug alone with `pnpm oracle <bug>`. reeval 0.9.0 has no retry for a check, so in a full run that noise lands on whichever attempt it hits, in every arm alike. If the canary passes a bug, the bug does not reproduce with the real model. Two are most at risk: `order-id-case` (Gemini may upper-case `a-1001` before calling the tool) and `stop-sequence` (if the model writes the whole reply on one line). Re-run `pnpm canary <bug>` three times; a stable pass means the cell measures nothing, so redesign the bug in `evals/bugs.ts` and `evals/verify.mts` or drop it (the pooled lift needs at least 6 cases).
 
+## Probes
+
+`evals/probes/` holds smoke probes outside the study. They have their own configs, so the study's plan does not change. There are three suites: `docs` (from an empty JS project, does the docs channel lead to the current API), `agents` (Go and Python) and `tooling` (CLI, MCP server and Dev UI plumbing on the fixture app). Each probe runs once per cell, and nothing is gated in a real run. The arms change from probe to probe. `docsite` limits only the fetches that the sandbox makes: Claude Code's WebSearch runs on Anthropic's API, so read the `web-searches` observation.
+
+Each probe in `evals/probes/<suite>/cases.ts` has a correct solution (`oracle`) and a plausible wrong one (`cheat`, with the checks it must fail). Under `reeval.probes.oracle.config.ts` the eval places both solutions under `~/.probe`, and the fake agent applies one of them. A real agent's sandbox has no `~/.probe`.
+
+```bash
+pnpm probe:oracle                            # expect 18 passed
+pnpm probe:canary                            # expect "canary-check: all 18 cells failed as they must"
+pnpm probe --profile smoke                   # Claude Code Sonnet only: 58 cells
+pnpm probe                                   # all five harnesses: 290 cells
+pnpm probe evals/probes/docs/                # one suite, by path: a bare `docs` also matches `*-docsite` cells
+pnpm -s tsx scripts/docs-audit.ts            # rewrites DOCS-AUDIT.md; no agent, no Docker
+```
+
+The Go and Python probes build `evals/probes/images/{go,python}.Dockerfile` the first time they run. Several hidden checks call real Gemini, so the oracle needs `GOOGLE_GENERATIVE_AI_API_KEY`. `pnpm -s tsx evals/probes/registry.ts`, `evals/probes/docs/checks.ts` and `evals/probes/tooling/gates.ts` are self-checks: each prints `OK` or a pass count.
+
 ## Smoke
 
 ```bash

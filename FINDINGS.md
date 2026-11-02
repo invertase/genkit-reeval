@@ -111,6 +111,34 @@ What `genkit init:ai-tools --tool claude` installs around `GENKIT.md`, and how t
 
 The skill is fetched with `skill.git('github:genkit-ai/skills', { ref, path: 'skills', only: ['developing-genkit-js'] })`. The `path` is required: reeval 0.9.0 looks for `SKILL.md` in the source directory or one level below it, and this repository keeps its skills under `skills/`. Without it every attempt fails as an infra error ("has no SKILL.md"). reeval's default skill exclude list removes nothing from this skill, so every `references/*.md` reaches the agent.
 
-## 6. Results
+## 6. What building the probes taught us
+
+We found these while we built the smoke probes in `evals/probes/` (2026-11-02), before any real agent ran them. "Live" here means fetched from the web or run by hand in the sandbox image, not seen in an agent run. [`DOCS-AUDIT.md`](DOCS-AUDIT.md) has the fetched evidence for the docs items.
+
+### Docs and rules files
+
+- **Four docs examples still call `ai.chat(`** (live). `https://genkit.dev/llms-js.txt` uses `ai.chat(` in fenced code on four pages that are not marked deprecated: "Defining AI workflows", "Tool calling", "Pause generation using interrupts" and "Chat with a PDF file". The same bundle says "The `ai.chat()` API is deprecated."
+- **`GENKIT.js.md` has an old version in its title** (live). `https://genkit.dev/GENKIT.js.md`, which `llms.txt` gives to agents as the rules file, has the title `v1.20.0`. The current `genkit` is 1.43.0. The website copy and the copy that the CLI writes differ by about 130 lines, but they have the same title.
+- **The `llms-<lang>.txt` bundles have no page links** (live). Each bundle is one file of about 1 MB with every page in it. An agent that wants one page must guess its `.md` URL or read the sitemap.
+- **Old Gemini constants typecheck but fail at run time** (live). `@genkit-ai/googleai` 1.28.0 still exports constants such as `gemini25FlashLite`. Gemini answers 404 for that model ("no longer available to new users"). An agent that follows stale docs gets code that compiles and then fails.
+- **The docs disagree about Vertex AI** (from source). The docs call `@genkit-ai/google-genai` the replacement for `@genkit-ai/vertexai`. The Gemini Enterprise page says that `@genkit-ai/vertexai` is "retained for backward compatibility", and npm publishes it at 1.43.0.
+- **`genkitx-mcp` has no deprecation notice** (live). npm shows no deprecation for `genkitx-mcp` 1.14.1, so nothing tells an agent to use `@genkit-ai/mcp`.
+
+### CLI and MCP server
+
+- **With a cold docs cache and no access to genkit.dev, `genkit mcp` stops at start-up** (from source, reproduced in the image). `dist/mcp/server.js` loads the docs bundle before it connects. When `~/.genkit/docs/<version>/bundle.json` is missing and genkit.dev is blocked, the server exits with `TypeError: fetch failed`. The agent then loses every tool, including `run_flow`, `start_runtime` and `get_trace`, not only the docs tools.
+- **With a wrong `--project-root`, `start_runtime` waits 30 s and returns `Error: {}`** (live, in the image). Before that, `list_flows` says "No runtimes found". The error does not say why.
+- **The MCP server sees one project only** (from source). `genkit mcp` watches one `--project-root`. A second app in a subdirectory is reachable only through the CLI from that directory.
+- **An app that the user starts without `GENKIT_ENV=dev` is not visible** (from source). The reflection server starts only in dev, and only that server writes `.genkit/runtimes/*.json`. `flow:run`, `start` and `start_runtime` set `GENKIT_ENV=dev` themselves, so the problem occurs only for an app that the user started.
+- **A partial upgrade fails to install** (live). `@genkit-ai/middleware` 0.11.0 and `@genkit-ai/evaluator` 1.43.0 need `genkit` `^1.43.0`. In an app on `genkit` 1.42.0, `npm install @genkit-ai/evaluator` fails with `ERESOLVE`. `@genkit-ai/middleware` has its own 0.x versions, so "all Genkit packages on one version" is not possible.
+- **`genkit init:ai-tools` does not support Python, and `-y` does not skip its questions** (from source, genkit-cli 1.44.1). In a Python project it prints "Detected runtime 'python' is not yet supported for AI tools context." and then asks for Node.js or Go. The option is declared as `.option('-y', '--yes', ...)`, so `--yes` becomes the description. Without a TTY the command exits with `ExitPromptError`.
+
+### Go and Python
+
+- **The Python skill teaches the API from before 0.12.0** (from source). `developing-genkit-python` at `196e1f64` tells agents to use `from genkit.agent import ...` and `ai.define_agent` on the stable `Genkit`. In genkit 0.12.0 the agents moved to `genkit.exp`, and `from genkit.agent import ...` raises `ModuleNotFoundError: No module named 'genkit.agent'`.
+- **The Go module path does not match the repository** (live). The repository moved to `github.com/genkit-ai/genkit`, but the module is still `github.com/firebase/genkit/go`. The proxy serves `github.com/genkit-ai/genkit/go`, but `go get` on it fails with "module declares its path as: github.com/firebase/genkit/go". The docs and the Go skill use the correct path. The risk is an agent that guesses the path from the repository URL.
+- **The Go agents API panics without `genkit.WithExperimental()`** (from source, v1.14.0). The `genkit/exp` constructors panic unless `genkit.Init` gets that option.
+
+## 7. Results
 
 To fill after the runs: which advice the agents followed, what each channel cost or saved, and which of the items above cost the arms time.
