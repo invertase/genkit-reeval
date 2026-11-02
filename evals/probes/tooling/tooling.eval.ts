@@ -5,7 +5,7 @@ import { type AttemptContext, type ExecRetry, evaluate, expect, type Turn } from
 import { control, directed, mcp, skill } from '../../environments.ts'
 import { verifyMcpServer } from '../mcp-client.ts'
 import { gate, noProviderErrors, type Probe, type ProbeResult, parseResult, placeSolutions } from '../probe.ts'
-import { callsOf, genkitCli } from '../transcript.ts'
+import { callsOf, genkitCli, printedIn, toolOutputs } from '../transcript.ts'
 import { PROBES, REAL_FLOWS } from './cases.ts'
 import { controlClaude, directedOffline, mcpOffline, mcpWrongRoot, skillClaude } from './environments.ts'
 import { admitsDocsFailed, cwdErrors, expandMcpJson, genkitServers, registrationErrors, rootErrors } from './gates.ts'
@@ -92,10 +92,11 @@ evaluate.each(only('cli-add-eval'))(
       'evaluator is registered',
     ).not.toEqual([])
     const run = await c.exec(
-      `timeout 170 genkit --non-interactive eval:flow summarizeTicket '[{"text":"My order never arrived and I need it for Friday."}]' -f -- npm run dev`,
+      `timeout 170 genkit --non-interactive eval:flow summarizeTicket '[{"testCaseId":"late-order","input":{"text":"My order never arrived and I need it for Friday."}}]' -f -- npm run dev`,
       { retries: 1, interval: 3000 },
     )
-    expect(`${run.stdout}\n${run.stderr}`, 'eval:flow finds the evaluator').toMatch(/Using evaluators:.*faithful/i)
+    const listed = /Using evaluators:.*faithful/i.test(`${run.stdout}\n${run.stderr}`)
+    expect(run.exitCode === 0 && listed ? [] : [`exit ${run.exitCode}, faithfulness evaluator ${listed ? 'listed' : 'not listed'}`], 'eval:flow runs with the evaluator').toEqual([])
     await typechecks(c)
     c.observe('eval-flow-exit', run.exitCode)
     c.observe('evaluator-keys', keys.slice(0, 6))
@@ -299,6 +300,16 @@ evaluate.each(only('mcp-setup-claude'))(
   },
 )
 
+/** The replies in `answer.json` that no tool call of the attempt returned; a printed run or a read of the file shows a reply, and session files may be gone by now. */
+function unprinted(text: string | null, outputs: string[]): string[] {
+  try {
+    const parsed = JSON.parse(text ?? '') as Record<string, unknown>
+    return ['turn1', 'turn2'].filter((key) => !printedIn(String(parsed[key] ?? ''), outputs)).map((key) => `${key} was never returned by any tool call, so no run of the agent shows it`)
+  } catch {
+    return ['answer.json is not JSON']
+  }
+}
+
 // `genkit flow:run` and `run_flow` address /flow/ actions only, and each `tryTriage` call starts a new conversation.
 evaluate.each(only('agent-two-turn'))(
   'tooling: $name',
@@ -307,9 +318,9 @@ evaluate.each(only('agent-two-turn'))(
     await placeSolutions(c, p)
     const turn = await c.send(p.prompt)
     noProviderErrors(turn)
-    const result = await runScript(c, 'session.mts', 'ANSWER=answer.json')
+    const result = await runScript(c, 'answers.mts', 'ANSWER=answer.json')
     expect(problems(result, 'answers'), 'replies answer both questions').toEqual([])
-    expect(problems(result, 'session'), 'replies come from one two-turn session').toEqual([])
+    expect(unprinted(await c.readFile('answer.json'), toolOutputs(c)), 'replies come from a real two-turn run').toEqual([])
 
     const calls = callsOf(c)
     const onAgent = /\b(triage|orderAgent|refundAgent)\b/
