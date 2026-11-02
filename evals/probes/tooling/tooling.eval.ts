@@ -3,12 +3,13 @@ import { randomBytes } from 'node:crypto'
 import fs from 'node:fs'
 import { type AttemptContext, type ExecRetry, evaluate, expect, type Turn } from 'reeval'
 import { control, directed, mcp, skill } from '../../environments.ts'
+import { verifyMcpServer } from '../mcp-client.ts'
 import { gate, noProviderErrors, type Probe, type ProbeResult, parseResult, placeSolutions } from '../probe.ts'
 import { callsOf, genkitCli } from '../transcript.ts'
 import { PROBES, REAL_FLOWS } from './cases.ts'
-import { directedOffline, mcpOffline, mcpWrongRoot } from './environments.ts'
-import { admitsDocsFailed } from './gates.ts'
-import { genkitMcp, observeTooling } from './observe.ts'
+import { controlClaude, directedOffline, mcpOffline, mcpWrongRoot, skillClaude } from './environments.ts'
+import { admitsDocsFailed, cwdErrors, expandMcpJson, genkitServers, registrationErrors, rootErrors } from './gates.ts'
+import { genkitMcp, observeClaudeSetup, observeTooling } from './observe.ts'
 
 const only = (...names: string[]): Probe[] => PROBES.filter((p) => names.includes(p.name))
 const read = (url: string) => fs.readFileSync(new URL(url, import.meta.url), 'utf8')
@@ -272,6 +273,31 @@ evaluate.each(only('mcp-broken-server'))('tooling: $name', { environment: mcpWro
     })
   }
 })
+
+// Claude Code expands `${VAR}` in `.mcp.json` when it starts a server, so the checks read the file expanded.
+evaluate.each(only('mcp-setup-claude'))(
+  'tooling: $name',
+  { compare: { baseline: controlClaude, variants: [skillClaude], gate } },
+  async (c, p) => {
+    await placeSolutions(c, p)
+    const turn = await c.send(p.prompt)
+    noProviderErrors(turn)
+    observeClaudeSetup(c)
+    observeTooling(c)
+    const workspace = (await c.exec('pwd')).stdout.trim()
+    const sandboxEnv = Object.fromEntries((await c.exec('env')).stdout.split('\n').flatMap((line) => (line.includes('=') ? [[line.slice(0, line.indexOf('=')), line.slice(line.indexOf('=') + 1)]] : [])))
+    const mcpJson = expandMcpJson(await c.readFile('.mcp.json'), { ...sandboxEnv, PWD: workspace })
+    expect(registrationErrors(mcpJson), 'registers genkit mcp in .mcp.json').toEqual([])
+    expect(cwdErrors(mcpJson), 'registration has no --cwd').toEqual([])
+    expect(rootErrors(mcpJson, workspace), 'project root is the workspace').toEqual([])
+
+    const [server] = genkitServers(mcpJson)
+    const started = server
+      ? await verifyMcpServer(c, { command: server.command, args: server.args, env: server.env, expectTool: 'list_flows' })
+      : ['no registered server to start']
+    expect(started, 'registered server answers tools/list').toEqual([])
+  },
+)
 
 // `genkit flow:run` and `run_flow` address /flow/ actions only, and each `tryTriage` call starts a new conversation.
 evaluate.each(only('agent-two-turn'))(
