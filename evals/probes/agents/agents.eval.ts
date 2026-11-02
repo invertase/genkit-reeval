@@ -120,19 +120,23 @@ const goNewApp = probe('go-new-app')
         inDiff: turn.diff.patch.includes(mirror),
       })
 
-      const mod = (await c.readFile('go.mod')) ?? ''
+      const found = await c.exec("find . -name go.mod -not -path './.git/*' -not -path '*/vendor/*' | awk '{ print gsub(\"/\", \"/\"), $0 }' | sort -n | head -1 | cut -d' ' -f2-")
+      const appDir = found.stdout.trim().replace(/\/?go\.mod$/, '') || '.'
+      c.observe('go-app-dir', appDir)
+      const inApp = (command: string) => `cd ${shellQuote(appDir)} && ${command}`
+      const mod = (await c.readFile(`${appDir}/go.mod`)) ?? ''
       expect(GO_MOD_REQUIRES.test(mod) ? [] : [`go.mod does not require ${GO_MODULE}`], 'requires the genkit module').toEqual([])
 
-      const build = await c.exec('go build ./...')
+      const build = await c.exec(inApp('go build ./...'))
       await expect(build, 'builds').toSucceed()
-      const version = await c.exec(`go list -m -f '{{.Version}}' ${GO_MODULE}`)
+      const version = await c.exec(inApp(`go list -m -f '{{.Version}}' ${GO_MODULE}`))
       c.observe('genkit-go-version', version.stdout.trim() || null)
 
-      const run = build.exitCode === 0 ? await c.exec('timeout 120 go run .') : undefined
+      const run = build.exitCode === 0 ? await c.exec(inApp('timeout 120 go run .')) : undefined
       const runErrors = run === undefined ? ['does not build'] : run.exitCode !== 0 ? [`exit ${run.exitCode}: ${run.stderr.trim().slice(-300)}`] : run.stdout.trim().length < 20 ? [`prints ${JSON.stringify(run.stdout.trim())}`] : []
       expect(runErrors, 'runs and prints an answer').toEqual([])
 
-      const bad = build.exitCode === 0 ? await c.exec('GEMINI_API_KEY=invalid timeout 120 go run .') : undefined
+      const bad = build.exitCode === 0 ? await c.exec(inApp('GEMINI_API_KEY=invalid timeout 120 go run .')) : undefined
       expect(bad === undefined ? ['does not build'] : bad.exitCode === 0 ? ['exits 0 with an invalid key'] : [], 'calls the model').toEqual([])
     },
   )
