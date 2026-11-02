@@ -94,7 +94,7 @@ export const summarizeTicket2 = ai.defineFlow(
     checks: [
       PROVIDER_CHECK,
       'evaluator is registered',
-      'eval:flow finds the evaluator',
+      'eval:flow runs with the evaluator',
       'typechecks',
     ],
     oracle: {
@@ -103,7 +103,7 @@ export const summarizeTicket2 = ai.defineFlow(
     },
     cheat: {
       exec: 'npm pkg set dependencies.@genkit-ai/evaluator=1.42.0',
-      fails: ['evaluator is registered', 'eval:flow finds the evaluator'],
+      fails: ['evaluator is registered', 'eval:flow runs with the evaluator'],
     },
   },
   {
@@ -205,7 +205,7 @@ The caller uses \`flow.stream(input)\`, iterates \`stream\` and awaits \`output\
     name: 'agent-two-turn',
     prompt:
       'Prove that the `triage` agent answers a two-turn conversation correctly. In the first turn the customer asks "Where is order A-1001?". In the second turn, in the same conversation, the customer asks "What is its tracking code?". Write `answer.json` as `{ "turn1": "<triage\'s reply>", "turn2": "<triage\'s reply>" }`.',
-    checks: [PROVIDER_CHECK, 'replies answer both questions', 'replies come from one two-turn session'],
+    checks: [PROVIDER_CHECK, 'replies answer both questions', 'replies come from a real two-turn run'],
     oracle: {
       files: {
         'two-turn.ts': `import { writeFileSync } from 'node:fs';
@@ -215,6 +215,7 @@ const chat = triage.chat();
 const turn1 = (await chat.send('Where is order A-1001?')).text;
 const turn2 = (await chat.send('What is its tracking code?')).text;
 writeFileSync('answer.json', JSON.stringify({ turn1, turn2 }, null, 2));
+console.log(JSON.stringify({ turn1, turn2 }, null, 2));
 `,
       },
       exec: 'node_modules/.bin/tsx two-turn.ts',
@@ -223,7 +224,7 @@ writeFileSync('answer.json', JSON.stringify({ turn1, turn2 }, null, 2));
       files: {
         'answer.json': `${JSON.stringify({ turn1: 'Order A-1001 has shipped.', turn2: 'The tracking code is NW-7F3K2Q.' }, null, 2)}\n`,
       },
-      fails: ['replies come from one two-turn session'],
+      fails: ['replies come from a real two-turn run'],
     },
   },
 ]

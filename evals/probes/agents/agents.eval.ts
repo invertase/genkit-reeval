@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import { type AttemptContext, type ExecResult, evaluate, expect } from 'reeval'
 import { docsArms } from '../environments.ts'
 import { gate, noProviderErrors, type ProbeResult, parseResult, placeSolutions, type Probe } from '../probe.ts'
-import { callsOf, isShell, observeGenkitCommands, observeWeb } from '../transcript.ts'
+import { callsOf, isShell, observeGenkitCommands, observeHarnessKey, observeWeb, skillsInstalls } from '../transcript.ts'
 import { GO_MODULE, PROBES, PY_SKILL_TASK } from './cases.ts'
 import { arms } from './environments.ts'
 import { agentsImportErrors } from './imports.ts'
@@ -81,9 +81,9 @@ function addedGuidance(patch: string, paths: RegExp): Record<string, string> {
 function observeContext(c: AttemptContext): void {
   const calls = callsOf(c)
   observeGenkitCommands(c)
-  const installs = calls.filter(isShell).flatMap((call) => [...call.command.matchAll(/\b(npx skills[^"\\]*|skills\.sh)/g)].map((m) => m[1] ?? ''))
-  c.observe('skills-installs', [...new Set(installs)].slice(0, 20))
+  c.observe('skills-installs', [...new Set(skillsInstalls(calls.filter(isShell).map((call) => call.command)))].slice(0, 20))
   observeWeb(c)
+  observeHarnessKey(c)
   const conflicts = c.turns.flatMap((t) => t.transcript).flatMap((e) => {
     if (e.type !== 'tool' || !/\b(pip3?|uv)\b/.test(JSON.stringify(e.input ?? ''))) return []
     const out = JSON.stringify(e.output ?? '')
@@ -155,6 +155,8 @@ const goAgentSession = probe('go-agent-session')
       noProviderErrors(turn)
       observeContext(c)
 
+      await c.judge(AGENT_QUESTION, { task: true, transcript: 'tools', diff: ['*.go'] })
+
       const grep = "grep -rEq --include=*.go --exclude=*_test.go --exclude-dir=.git"
       const imports = await c.exec(`${grep} 'genkit/go/(genkit|ai)/exp"' .`)
       expect(imports.exitCode === 0 ? [] : ['no Go file imports genkit/exp or ai/exp'], 'imports the agents packages').toEqual([])
@@ -171,8 +173,6 @@ const goAgentSession = probe('go-agent-session')
       const test = await c.exec(`PROBE_ORDER_ID=${order.id} go test -count=1 -timeout 300s -run '^TestProbeTwoProcesses$' .`)
       await expect(test, 'second process knows the order').toSucceed()
       c.observe('go-test-tail', `${test.stdout}\n${test.stderr}`.trim().slice(-600))
-
-      await c.judge(AGENT_QUESTION, { task: true, transcript: 'tools', diff: ['*.go'] })
     },
   )
 }
