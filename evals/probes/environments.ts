@@ -1,7 +1,7 @@
 import { DEFAULT_EGRESS_ALLOW, type Environment, type EnvironmentHelpers } from 'reeval'
 
-/** Hosts the `docsite` arms may fetch beyond the package registries: Genkit's own docs only. */
-export const DOCSITE_ALLOW = [...DEFAULT_EGRESS_ALLOW, 'genkit.dev', '*.genkit.dev', 'proxy.golang.org', 'sum.golang.org']
+/** Hosts the `docsite` arms may fetch beyond the package registries: Genkit's own docs and the Go module proxy, whose zips `proxy.golang.org` serves from `storage.googleapis.com`. */
+export const DOCSITE_ALLOW = [...DEFAULT_EGRESS_ALLOW, 'genkit.dev', '*.genkit.dev', 'proxy.golang.org', 'sum.golang.org', 'storage.googleapis.com']
 
 /** The app's Gemini key, brokered to Gemini's host only, under `name`: the variable the app reads. */
 export const geminiEnv = ({ secret }: Pick<EnvironmentHelpers, 'secret'>, name = 'GEMINI_API_KEY') => ({
