@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs'
+import { randomInt } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import { type AttemptContext, expect } from 'reeval'
 import { parseResult } from '../probe.ts'
@@ -22,6 +23,12 @@ export const CHECK = {
   noStaleClaude: 'no retired claude model names',
   registersAnthropic: 'registers the anthropic plugin',
   usesFallback: 'uses the fallback middleware',
+  exportsMediaFlows: 'exports the speak and drawImage flows',
+  noShutDownMedia: 'no shut-down media model ids',
+  noDeprecatedMedia: 'no media model ids that shut down on 2026-11-17',
+  mediaModelsExist: 'every media model id exists on the Gemini API',
+  noDeprecatedChat: 'no ai.chat, createSession or loadSession',
+  secondProcessRecalls: 'second process recalls the first turn',
 } as const
 
 /** The MCP client the hidden `verify-mcp.mts` imports; installed after the turn, outside the workspace. */
@@ -120,6 +127,63 @@ const DEPRECATED_JS = ['@genkit-ai/googleai', '@genkit-ai/vertexai', '@genkit-ai
 
 const STALE_CLAUDE = /\bclaude-(?:3|2|instant|opus-4-1)[\w.-]*/
 
+/**
+ * Media model ids the Gemini API has shut down, from https://ai.google.dev/gemini-api/docs/deprecations
+ * read on 2026-11-02. Each entry is a regex source for a whole id: the Imagen and Veo families are shut
+ * down whole (Veo on the Gemini API only; Veo on Vertex AI is not affected), the rest are single ids.
+ */
+export const SHUT_DOWN_MEDIA = [
+  'imagen-[\\w.-]+',
+  'veo-[\\w.-]+',
+  'gemini-2\\.5-flash-image-preview',
+  'gemini-2\\.0-flash-(?:preview|exp)-image-generation',
+  'gemini-3-pro-image-preview',
+  'gemini-3\\.1-flash-image-preview',
+] as const
+
+/** The date the ids in `DEPRECATED_MEDIA` shut down; the deprecations page of 2026-11-02 lists them as deprecated, still served. */
+export const DEPRECATED_MEDIA_SHUTDOWN = '2026-11-17'
+
+/** Preview TTS model ids that the Gemini API still serves until `DEPRECATED_MEDIA_SHUTDOWN`. */
+export const DEPRECATED_MEDIA = ['gemini-2\\.5-(?:flash|pro)-preview-tts', 'gemini-3\\.1-flash-tts-preview'] as const
+
+/** The contents of every string literal in `code`. */
+const literals = (code: string): string[] => [...code.matchAll(/(['"`])((?:\\.|(?!\1)[^\\\n])*)\1/g)].map((m) => m[2] ?? '')
+
+const modelId = (literal: string) => literal.replace(/^(?:[\w-]+\/)+/, '')
+
+const firstIdIn = (code: string, patterns: readonly string[]): string | null => {
+  const whole = new RegExp(`^(?:${patterns.join('|')})$`)
+  return literals(code).map(modelId).find((id) => whole.test(id)) ?? null
+}
+
+/** The first shut-down media model id that `code` uses as a whole string literal, or null. */
+export const shutDownMedia = (code: string): string | null => firstIdIn(code, SHUT_DOWN_MEDIA)
+
+/** The first deprecated media model id that `code` uses as a whole string literal, or null. */
+export const deprecatedMedia = (code: string): string | null => firstIdIn(code, DEPRECATED_MEDIA)
+
+const MEDIA_ID = /^(?:gemini-[\w.-]*(?:tts|image|banana|omni)[\w.-]*|imagen-[\w.-]+|veo-[\w.-]+|lyria-[\w.-]+)$/
+
+/** The media model ids `code` names as whole string literals, once each. */
+export const mediaIds = (code: string): string[] => [...new Set(literals(code).map(modelId).filter((id) => MEDIA_ID.test(id)))]
+
+/** The media ids that neither retired check covers, which must exist on the Gemini API. */
+export const unbannedMediaIds = (code: string): string[] =>
+  mediaIds(code).filter((id) => shutDownMedia(`'${id}'`) === null && deprecatedMedia(`'${id}'`) === null)
+
+/** True when `code` exports a flow, function or constant named `name`, directly or in an export list. */
+export const exportsName = (code: string, name: string): boolean =>
+  new RegExp(`\\bexport\\s+(?:async\\s+)?(?:const|let|function)\\s+${escape(name)}\\b|\\bexport\\s*\\{[^}]*\\b${escape(name)}\\b[^}]*\\}`).test(code)
+
+/** The first call of the removed `chat`, `createSession` or `loadSession` API in `code`, or null; the Genkit instance is found by `const X = genkit(`, and the session calls are banned on any receiver. Declarations of helpers with those names pass. */
+export function deprecatedChat(code: string): string | null {
+  const names = new Set(['ai', ...[...code.matchAll(/\b(?:const|let|var)\s+([\w$]+)\s*=\s*genkit\s*\(/g)].map((m) => m[1] ?? '')])
+  const instance = new RegExp(`(?<![\\w$.])(?:${[...names].map(escape).join('|')})\\.(?:chat|createSession|loadSession)\\s*\\(`)
+  const anyReceiver = /\.(?:createSession|loadSession)\s*\(/
+  return instance.exec(code)?.[0] ?? anyReceiver.exec(code)?.[0] ?? null
+}
+
 const STALE: [string, RegExp][] = [
   ['@genkit-ai/googleai', /@genkit-ai\/googleai\b/],
   ['@genkit-ai/vertexai', /@genkit-ai\/vertexai\b/],
@@ -140,6 +204,9 @@ export function observeDocsWeb(c: AttemptContext): void {
   observeWeb(c)
   const commands = callsOf(c).filter((call) => isShell(call) && DOCS_COMMAND.test(call.command))
   c.observe('web-shell-docs-commands', commands.map((call) => call.command.slice(0, 200)).slice(0, 10))
+  const events = c.turns.flatMap((t) => t.transcript)
+  const fetched = events.some((e) => e.type === 'web-fetch' && /GENKIT\.js\.md/i.test(e.url))
+  c.observe('read-hosted-rules', fetched || callsOf(c).some((call) => isShell(call) && /\b(?:curl|wget|fetch)\b/.test(call.command) && /GENKIT\.js\.md/i.test(call.command)))
   c.observe('web-unreported', [...new Set(c.turns.flatMap((t) => t.unreported))])
 }
 
@@ -187,6 +254,15 @@ export const usesFallback = (ws: Workspace): boolean =>
 
 const typecheck = (c: AttemptContext) => expect(c.exec('node_modules/.bin/tsc --noEmit'), CHECK.typechecks).toSucceed()
 
+const WORDS = ['kestrel', 'lantern', 'marlin', 'quartz', 'saffron', 'tundra', 'velvet', 'willow', 'zephyr', 'cobalt', 'juniper', 'obsidian']
+const pickWord = () => WORDS[randomInt(WORDS.length)] ?? ''
+const randomCode = () => `${pickWord()}-${pickWord()}-${randomInt(1000, 10000)}`
+
+/** Exit 124 (a turn that never returns) becomes a result line with exit 0, so `retries` does not rerun a hang. */
+const turnCommand = (session: string, message: string) =>
+  `timeout 180 node_modules/.bin/tsx ~/.verify-chat.mts ${session} '${message.replaceAll("'", `'\\''`)}'; rc=$?; ` +
+  `if [ $rc -eq 124 ]; then echo 'PROBE_RESULT {"ok":false,"error":"turn did not return within 180s"}'; exit 0; fi; exit $rc`
+
 const RUNNERS: Record<string, (c: AttemptContext, ws: Workspace) => Promise<void>> = {
   'pkg-gemini-haiku': async (c, ws) => {
     expect(hasDep(ws, '@genkit-ai/google-genai'), CHECK.usesGoogleGenai).toBe(true)
@@ -230,6 +306,39 @@ const RUNNERS: Record<string, (c: AttemptContext, ws: Workspace) => Promise<void
     await typecheck(c)
     expect(await startErrors(c), CHECK.startPrints).toEqual([])
   },
+
+  'media-models': async (c, ws) => {
+    expect(exportsName(ws.code, 'speak') && exportsName(ws.code, 'drawImage'), CHECK.exportsMediaFlows).toBe(true)
+    c.observe('media-model-ids', mediaIds(ws.code))
+    expect(shutDownMedia(ws.code), CHECK.noShutDownMedia).toBe(null)
+    expect(deprecatedMedia(ws.code), CHECK.noDeprecatedMedia).toBe(null)
+    await typecheck(c)
+    const ids = unbannedMediaIds(ws.code)
+    if (ids.length === 0) return
+    await c.writeFile('~/.verify-models.mts', verifyScript('verify-models.mts'))
+    const run = await c.exec(`timeout 120 node_modules/.bin/tsx ~/.verify-models.mts ${ids.map((id) => `'${id.replaceAll("'", '')}'`).join(' ')}`, { retries: 2, interval: 3000 })
+    expect(resultErrors(run), CHECK.mediaModelsExist).toEqual([])
+  },
+
+  'chat-session': async (c, ws) => {
+    c.observe('used-define-agent', /\bdefineAgent\s*\(|\b\w*SessionStore\b/.test(ws.code))
+    expect(deprecatedChat(ws.code), CHECK.noDeprecatedChat).toBe(null)
+    await typecheck(c)
+    const mine = randomCode().toLowerCase()
+    const decoy = randomCode().toLowerCase()
+    await c.writeFile('~/.verify-chat.mts', verifyScript('verify-chat.mts'))
+    const first = parseResult(await c.exec(turnCommand('-', `Remember this: my locker code is ${mine}. The shed code is ${decoy}, which is not mine. Reply with OK.`), { retries: 2, interval: 3000 }))
+    if (typeof first === 'string' || first.ok !== true || typeof first.sessionId !== 'string') {
+      expect(typeof first === 'string' ? [first] : [JSON.stringify(first).slice(0, 600)], CHECK.secondProcessRecalls).toEqual([])
+      return
+    }
+    const run = await c.exec(turnCommand(`'${first.sessionId.replaceAll("'", '')}'`, 'What is my locker code? Reply with the code exactly as I wrote it, and nothing else.'), { retries: 2, interval: 3000 })
+    const second = parseResult(run)
+    const reply = typeof second === 'string' ? '' : String(second.reply ?? '')
+    c.observe('chat-recall', typeof second === 'string' ? second.slice(0, 400) : reply.slice(0, 400))
+    const errors = typeof second === 'string' ? [second] : second.ok !== true ? [JSON.stringify(second).slice(0, 600)] : reply.toLowerCase().includes(mine) && !reply.toLowerCase().includes(decoy) ? [] : [`the reply is ${JSON.stringify(reply.slice(0, 300))}, want the locker code ${mine} and not the shed code ${decoy}`]
+    expect(errors, CHECK.secondProcessRecalls).toEqual([])
+  },
 }
 
 /** Runs the deterministic checks of the probe `name` against the agent's project, and records what the turn did on the web and which stale identifiers the project holds. */
@@ -247,6 +356,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const ws = (deps: string[], code: string, prompts: Record<string, string> = {}) =>
     buildWorkspace(JSON.stringify({ dependencies: Object.fromEntries(deps.map((d) => [d, '1.0.0'])) }), { 'src/index.ts': code, ...prompts })
   const MW = '@genkit-ai/middleware'
+  const banned = (code: string) => shutDownMedia(code) ?? deprecatedMedia(code)
   const cases: [string, boolean, boolean][] = [
     ['fallback inline', usesFallback(ws([MW], `import { fallback } from '${MW}'\nai.generate({ use: [fallback({ models: [] })] })`)), true],
     ['fallback in a variable', usesFallback(ws([MW], `import { fallback } from '${MW}'\nconst mw = fallback({ models: [] })\nai.generate({ use: [mw] })`)), true],
@@ -290,6 +400,50 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     ['schema shorthand without a definition', asksForSchema(ws([], `const { output } = await ai.generate({ prompt })`)), false],
     ['schema only in a comment', asksForSchema(ws([], `// output: { schema: Contact }`)), false],
     ['schema yaml flow map', asksForSchema(ws([], 'x', { 'prompts/a.prompt': '---\nmodel: x\noutput: {format: json, schema: X}\n---\nhi' })), true],
+    ['retired imagen', banned(`googleAI.model('imagen-3.0-generate-002')`) !== null, true],
+    ['retired imagen 4', banned(`'imagen-4.0-fast-generate-001'`) !== null, true],
+    ['imagen constant is not a literal', banned(`import { imagen3 } from 'x'`) !== null, false],
+    ['retired veo', banned(`model('veo-3.0-generate-preview')`) !== null, true],
+    ['retired veo 3.1', banned(`model("veo-3.1-fast-generate-preview")`) !== null, true],
+    ['retired 2.5 tts', banned(`model('gemini-2.5-flash-preview-tts')`) !== null, true],
+    ['retired 2.5 pro tts', banned(`model('gemini-2.5-pro-preview-tts')`) !== null, true],
+    ['retired 3.1 tts preview', banned(`model('gemini-3.1-flash-tts-preview')`) !== null, true],
+    ['retired image preview', banned(`model('gemini-2.5-flash-image-preview')`) !== null, true],
+    ['retired 2.0 image generation', banned(`model('gemini-2.0-flash-preview-image-generation')`) !== null, true],
+    ['retired 2.0 exp image generation', banned(`model('gemini-2.0-flash-exp-image-generation')`) !== null, true],
+    ['retired 3 pro image preview', banned(`model('gemini-3-pro-image-preview')`) !== null, true],
+    ['current 3.8 tts', banned(`model('gemini-3.8-flash-tts')`) !== null, false],
+    ['current 3.8 lite tts', banned(`model('gemini-3.8-flash-lite-tts')`) !== null, false],
+    ['current nano banana', banned(`model('gemini-nano-banana-2.1')`) !== null, false],
+    ['current 3 pro image', banned(`model('gemini-3-pro-image')`) !== null, false],
+    ['current 2.5 flash image', banned(`model('gemini-2.5-flash-image')`) !== null, false],
+    ['current omni', banned(`model('gemini-omni-1.1-flash')`) !== null, false],
+    ['retired id in a comment', banned(ws([], `// imagen-3.0-generate-002 is gone\nmodel('gemini-nano-banana-2.1')`).code) !== null, false],
+    ['exports const', exportsName(`export const speak = ai.defineFlow({}, f)`, 'speak'), true],
+    ['exports function', exportsName(`export async function speak() {}`, 'speak'), true],
+    ['exports list', exportsName(`const speak = 1\nexport { drawImage, speak as talk }`, 'speak'), true],
+    ['exports a longer name', exportsName(`export const speakLoud = 1`, 'speak'), false],
+    ['declared not exported', exportsName(`const speak = 1`, 'speak'), false],
+    ['chat deprecated ai.chat', deprecatedChat(`const chat = ai.chat({})`) !== null, true],
+    ['chat deprecated createSession', deprecatedChat(`const s = ai.createSession({})`) !== null, true],
+    ['chat deprecated loadSession', deprecatedChat(`await ai.loadSession(id)`) !== null, true],
+    ['chat on an instance named app', deprecatedChat(`const app = genkit({ plugins: [] })\nconst c = app.chat({})`) !== null, true],
+    ['chat on another instance with ai absent', deprecatedChat(`const g = genkit({})\ng.loadSession(id)`) !== null, true],
+    ['session call on any receiver', deprecatedChat(`const s = await anything.createSession()`) !== null, true],
+    ['agent chat is fine', deprecatedChat(`const chat = assistant.chat({ sessionId })`) !== null, false],
+    ['helper function loadSession is fine', deprecatedChat(`function loadSession(id: string) { return id }\nloadSession('a')`) !== null, false],
+    ['helper method createSession is fine', deprecatedChat(`const store = {\n  async createSession() { return 1 },\n}`) !== null, false],
+    ['chat only in a comment', deprecatedChat(ws([], `// ai.chat({}) was removed\nconst x = 1`).code) !== null, false],
+    ['instance chat only in a block comment', deprecatedChat(ws([], `/* app.chat() */\nconst app = genkit({})`).code) !== null, false],
+    ['shut-down id in a template literal', shutDownMedia('model(`imagen-3.0-generate-002`)') !== null, true],
+    ['shut-down id with a provider prefix', shutDownMedia(`model('googleai/imagen-4.0-generate-001')`) !== null, true],
+    ['imagen in a variable name', banned(`const imagenPrompt = 'a cat'`) !== null, false],
+    ['imagen in prose', banned(`const prompt = 'draw it like imagen would'`) !== null, false],
+    ['deprecated tts is not shut down', shutDownMedia(`model('gemini-2.5-flash-preview-tts')`) !== null, false],
+    ['deprecated tts is deprecated', deprecatedMedia(`model('gemini-2.5-flash-preview-tts')`) !== null, true],
+    ['image preview is shut down', shutDownMedia(`model('gemini-2.5-flash-image-preview')`) !== null, true],
+    ['media ids: current ids listed', mediaIds(`model('gemini-3.8-flash-tts'); model('gemini-nano-banana-2.1'); model('gemini-flash-latest')`).join() === 'gemini-3.8-flash-tts,gemini-nano-banana-2.1', true],
+    ['media ids to verify skip banned ids', unbannedMediaIds(`model('imagen-3.0-generate-002'); model('gemini-2.5-flash-preview-tts'); model('gemini-3.8-flash-tts')`).join() === 'gemini-3.8-flash-tts', true],
     ['result ok', resultErrors({ exitCode: 0, stdout: 'x\nPROBE_RESULT {"ok":true}\n', stderr: '' }).length === 0, true],
     ['result not ok', resultErrors({ exitCode: 0, stdout: 'PROBE_RESULT {"ok":false}\n', stderr: '' }).length === 0, false],
     ['result malformed', resultErrors({ exitCode: 0, stdout: 'PROBE_RESULT {oops\n', stderr: '' }).length === 0, false],

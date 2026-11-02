@@ -2,6 +2,9 @@ import { readFileSync } from 'node:fs'
 import { PROVIDER_CHECK, type Probe } from '../probe.ts'
 import { CHECK } from './checks.ts'
 
+/** The probes whose project starts from `fixtures/js-seed` instead of an empty one. */
+export const SEEDED = ['chat-session']
+
 /** Versions the oracle and the canary install; an agent installs whatever the registry's `latest` is. */
 export const PINS = {
   genkit: '1.43.0',
@@ -178,6 +181,83 @@ try {
 console.log(text)
 `
 
+const MEDIA_ORACLE = `import { genkit, z } from 'genkit'
+import { googleAI } from '@genkit-ai/google-genai'
+
+const ai = genkit({ plugins: [googleAI()] })
+
+export const speak = ai.defineFlow(
+  { name: 'speak', inputSchema: z.string(), outputSchema: z.string() },
+  async (text) => {
+    const { media } = await ai.generate({
+      model: googleAI.model('gemini-3.8-flash-tts'),
+      prompt: text,
+      config: { speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } } } },
+    })
+    if (!media) throw new Error('The model returned no audio')
+    return media.url
+  },
+)
+
+export const drawImage = ai.defineFlow(
+  { name: 'drawImage', inputSchema: z.string(), outputSchema: z.string() },
+  async (description) => {
+    const { media } = await ai.generate({
+      model: googleAI.model('gemini-nano-banana-2.1'),
+      prompt: description,
+      config: { responseModalities: ['IMAGE'] },
+    })
+    if (!media) throw new Error('The model returned no image')
+    return media.url
+  },
+)
+`
+
+const MEDIA_CHEAT = MEDIA_ORACLE.replace('gemini-3.8-flash-tts', 'gemini-2.5-flash-preview-tts').replace(
+  /model: googleAI\.model\('gemini-nano-banana-2\.1'\),\n      prompt: description,\n      config: \{ responseModalities: \['IMAGE'\] \},/,
+  "model: googleAI.model('imagen-3.0-generate-002'),\n      prompt: description,",
+)
+
+const CHAT_ORACLE = `import { FileSessionStore, genkit } from 'genkit/beta'
+import { googleAI } from '@genkit-ai/google-genai'
+
+const ai = genkit({ plugins: [googleAI()], model: googleAI.model('gemini-flash-latest') })
+
+const assistant = ai.defineAgent({
+  name: 'assistant',
+  system: 'You are a helpful assistant. Answer briefly.',
+  store: new FileSessionStore('.genkit/sessions'),
+})
+
+export async function turn(sessionId: string | undefined, message: string): Promise<{ reply: string; sessionId: string }> {
+  const chat = assistant.chat(sessionId === undefined ? {} : { sessionId })
+  const res = await chat.send(message)
+  return { reply: res.text, sessionId: res.sessionId ?? '' }
+}
+`
+
+const CHAT_CHEAT = `import { randomUUID } from 'node:crypto'
+import { genkit } from 'genkit'
+import { googleAI } from '@genkit-ai/google-genai'
+import type { MessageData } from 'genkit'
+
+const ai = genkit({ plugins: [googleAI()], model: googleAI.model('gemini-flash-latest') })
+
+const sessions = new Map<string, MessageData[]>()
+
+export async function turn(sessionId: string | undefined, message: string): Promise<{ reply: string; sessionId: string }> {
+  const id = sessionId ?? randomUUID()
+  const history = sessions.get(id) ?? []
+  const { text, messages } = await ai.generate({
+    system: 'You are a helpful assistant. Answer briefly.',
+    messages: history,
+    prompt: message,
+  })
+  sessions.set(id, messages)
+  return { reply: text, sessionId: id }
+}
+`
+
 /** The docs suite's probes: from an empty JS project, does the docs channel get an agent to the current API? */
 export const PROBES: Probe[] = [
   {
@@ -239,5 +319,26 @@ export const PROBES: Probe[] = [
       exec: INSTALL,
     },
     cheat: { files: { 'package.json': packageJson(GEMINI), 'src/index.ts': FALLBACK_CHEAT }, exec: INSTALL, fails: [CHECK.usesFallback] },
+  },
+  {
+    name: 'media-models',
+    prompt:
+      'Using Genkit and Gemini, add two flows in `src/flows.ts`: a flow named `speak` that turns a text string into speech, ' +
+      'and a flow named `drawImage` that generates an image from a text description. Export both by those names.',
+    checks: [PROVIDER_CHECK, CHECK.exportsMediaFlows, CHECK.noShutDownMedia, CHECK.noDeprecatedMedia, CHECK.typechecks, CHECK.mediaModelsExist],
+    oracle: { files: { 'package.json': packageJson(GEMINI), 'src/flows.ts': MEDIA_ORACLE }, exec: INSTALL },
+    cheat: { files: { 'package.json': packageJson(GEMINI), 'src/flows.ts': MEDIA_CHEAT }, exec: INSTALL, fails: [CHECK.noShutDownMedia, CHECK.noDeprecatedMedia] },
+  },
+  {
+    name: 'chat-session',
+    prompt:
+      'This assistant in `src/index.ts` answers every message as if it were the first. Make it a chat that remembers the conversation, ' +
+      'including after the process restarts. Replace `reply` with this export:\n' +
+      '`export async function turn(sessionId: string | undefined, message: string): Promise<{ reply: string; sessionId: string }>`\n' +
+      'With `undefined` it starts a new conversation. An id that an earlier call returned continues that conversation, even from a new process. ' +
+      'The Gemini API key is in the `GEMINI_API_KEY` environment variable.',
+    checks: [PROVIDER_CHECK, CHECK.noDeprecatedChat, CHECK.typechecks, CHECK.secondProcessRecalls],
+    oracle: { files: { 'src/index.ts': CHAT_ORACLE } },
+    cheat: { files: { 'src/index.ts': CHAT_CHEAT }, fails: [CHECK.secondProcessRecalls] },
   },
 ]
