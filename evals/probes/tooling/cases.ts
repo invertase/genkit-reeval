@@ -185,6 +185,23 @@ The caller uses \`flow.stream(input)\`, iterates \`stream\` and awaits \`output\
     },
   },
   {
+    name: 'mcp-setup-claude',
+    prompt:
+      "Register the Genkit MCP server with Claude Code for this project, in the project's checked-in config so that my teammates get it too. Make sure it starts.",
+    checks: [
+      PROVIDER_CHECK,
+      'registers genkit mcp in .mcp.json',
+      'registration has no --cwd',
+      'project root is the workspace',
+      'registered server answers tools/list',
+    ],
+    oracle: { exec: 'claude mcp add --transport stdio genkit --scope project -- genkit mcp --project-root "$PWD"' },
+    cheat: {
+      exec: 'claude mcp add --transport stdio genkit genkit mcp --cwd . --scope project || true',
+      fails: ['registers genkit mcp in .mcp.json', 'registered server answers tools/list'],
+    },
+  },
+  {
     name: 'agent-two-turn',
     prompt:
       'Prove that the `triage` agent answers a two-turn conversation correctly. In the first turn the customer asks "Where is order A-1001?". In the second turn, in the same conversation, the customer asks "What is its tracking code?". Write `answer.json` as `{ "turn1": "<triage\'s reply>", "turn2": "<triage\'s reply>" }`.',

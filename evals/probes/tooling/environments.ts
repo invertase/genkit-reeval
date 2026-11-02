@@ -1,5 +1,5 @@
 import { defineEnvironment } from 'reeval'
-import { mcp as studyMcp } from '../../environments.ts'
+import { control, mcp as studyMcp, skill } from '../../environments.ts'
 import { geminiEnv } from '../environments.ts'
 
 const APP_KEY = 'SUPPORT_DESK_GEMINI_API_KEY'
@@ -33,6 +33,16 @@ export const mcpOffline = offline.extendEnvironment('mcp-offline', ({ file, mcp,
     }),
   },
 }))
+
+/** The image's PATH behind a directory the agent's user can write, which `~/.local/bin` is not: the `claude` stub goes there. */
+export const STUB_BIN = '/home/reeval/.claude-stub/bin'
+const STUB_PATH = `${STUB_BIN}:/home/reeval/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`
+
+/** `control` with `STUB_BIN` first on PATH. */
+export const controlClaudeStub = control.extendEnvironment('control-claude-stub', { env: { PATH: STUB_PATH } })
+
+/** `skill` with `STUB_BIN` first on PATH. */
+export const skillClaudeStub = skill.extendEnvironment('skill-claude-stub', { env: { PATH: STUB_PATH } })
 
 /** The `directed` arm (`GENKIT-directed.md` and the `genkit mcp` server) on `offline`. */
 export const directedOffline = mcpOffline.extendEnvironment('directed-offline', ({ file }) => ({
