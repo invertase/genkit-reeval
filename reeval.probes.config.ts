@@ -13,5 +13,7 @@ export default defineConfig({
   profiles: {
     probe: { defaults: { runs: 1 } },
     smoke: { defaults: { runs: 1 }, limit: { harness: ['claude-code:claude-sonnet-5'] } },
+    antigravity: { defaults: { runs: 1 }, limit: { harness: ['antigravity:gemini-3.8-flash-medium'] } },
+    cursor: { defaults: { runs: 1 }, limit: { harness: ['cursor:composer-2.5'] } },
   },
 })
