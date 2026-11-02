@@ -49,15 +49,16 @@ If the oracle fails a bug, the check is wrong, not the fix: read `failing_attemp
 
 ## Probes
 
-`evals/probes/` holds smoke probes outside the study. They have their own configs, so the study's plan does not change. There are three suites: `docs` (from an empty or seeded JS project, does the docs channel lead to the current API), `agents` (Go and Python) and `tooling` (CLI, MCP server and Dev UI plumbing on the fixture app). Each probe runs once per cell, and nothing is gated in a real run. The arms change from probe to probe; the docs suite adds `hosted`, which is `docsite` plus Go's develop-with-ai AGENTS.md block adapted to JS (the JS page prints no block), pointing at the hosted `GENKIT.js.md`; read the `read-hosted-rules` observation to see whether the agent followed it. `docsite` limits only the fetches that the sandbox makes: Claude Code's WebSearch runs on Anthropic's API, so read the `web-searches` observation.
+`evals/probes/` holds smoke probes outside the study. They have their own configs, so the study's plan does not change. There are four suites: `docs` (from an empty or seeded JS project, does the docs channel lead to the current API), `agents` (Go and Python), `tooling` (CLI, MCP server and Dev UI plumbing on the fixture app) and `inline-docs` (the study's `build-triage` task with stock or patched TSDoc on `agents()` in `@genkit-ai/middleware`; the headline check is `uses agents() delegation`). Each probe runs once per cell, and nothing is gated in a real run. The arms change from probe to probe; the docs suite adds `hosted`, which is `docsite` plus Go's develop-with-ai AGENTS.md block adapted to JS (the JS page prints no block), pointing at the hosted `GENKIT.js.md`; read the `read-hosted-rules` observation to see whether the agent followed it. `docsite` limits only the fetches that the sandbox makes: Claude Code's WebSearch runs on Anthropic's API, so read the `web-searches` observation.
 
 Each probe in `evals/probes/<suite>/cases.ts` has a correct solution (`oracle`) and a plausible wrong one (`cheat`, with the checks it must fail). Under `reeval.probes.oracle.config.ts` the eval places both solutions under `~/.probe`, and the fake agent applies one of them. A real agent's sandbox has no `~/.probe`.
 
 ```bash
-pnpm probe:oracle                            # expect 21 passed
-pnpm probe:canary                            # expect "canary-check: all 21 cells failed as they must"
-pnpm probe --profile smoke                   # Claude Code Sonnet only: 75 cells
-pnpm probe                                   # all five harnesses: 375 cells
+pnpm probe:oracle                            # expect 22 passed
+pnpm probe:canary                            # expect "canary-check: all 22 cells failed as they must"
+pnpm probe --profile smoke                   # Claude Code Sonnet only: 77 cells
+pnpm probe                                   # all five harnesses: 385 cells
+pnpm probe --profile agents-tsdoc            # inline-docs only, Claude Code Haiku, 12 attempts a side: 24 attempts
 pnpm probe evals/probes/docs/                # one suite, by path: a bare `docs` also matches `*-docsite` cells
 pnpm -s tsx scripts/docs-audit.ts            # rewrites DOCS-AUDIT.md; no agent, no Docker
 pnpm -s tsx scripts/llms-url-test.ts         # rewrites LLMS-URLS.md; exit 1 when a URL form llms.txt documents fails, 2 when only network errors remain
@@ -65,7 +66,7 @@ pnpm -s tsx scripts/fetch-recheck.ts [<run>]  # per arm and harness: fetches, 40
 pnpm reeval record --config reeval.probes.config.ts <run>  # copy a probe run into evals/probes/.history/, apart from the study's evals/.history/
 ```
 
-The Go and Python probes build `evals/probes/images/{go,python}.Dockerfile` the first time they run. Several hidden checks call real Gemini, so the oracle needs `GOOGLE_GENERATIVE_AI_API_KEY`. `pnpm -s tsx evals/probes/registry.ts`, `evals/probes/docs/checks.ts`, `evals/probes/tooling/gates.ts`, `evals/probes/agents/imports.ts`, `evals/probes/agents/skills-gate.ts` and `evals/probes/transcript.ts` are self-checks: each prints `OK` or a pass count.
+The Go and Python probes build `evals/probes/images/{go,python}.Dockerfile` the first time they run. Several hidden checks call real Gemini, so the oracle needs `GOOGLE_GENERATIVE_AI_API_KEY`. `pnpm -s tsx evals/probes/registry.ts`, `evals/probes/docs/checks.ts`, `evals/probes/tooling/gates.ts`, `evals/probes/agents/imports.ts`, `evals/probes/agents/skills-gate.ts`, `evals/probes/inline-docs/checks.ts`, `evals/probes/inline-docs/environments.ts` and `evals/probes/transcript.ts` are self-checks: each prints `OK` or a pass count.
 
 ## Smoke
 
