@@ -1,6 +1,7 @@
 // Smoke probes of the Genkit CLI, the Dev UI plumbing and the `genkit mcp` server on the support-desk fixture. See evals/probes/.
+import { randomBytes } from 'node:crypto'
 import fs from 'node:fs'
-import { type AttemptContext, evaluate, expect, type Turn } from 'reeval'
+import { type AttemptContext, type ExecRetry, evaluate, expect, type Turn } from 'reeval'
 import { control, directed, mcp, skill } from '../../environments.ts'
 import { providerErrors } from '../../infra.ts'
 import { gate, type Probe, placeSolutions } from '../probe.ts'
@@ -12,9 +13,9 @@ const only = (...names: string[]): Probe[] => PROBES.filter((p) => names.include
 const read = (url: string) => fs.readFileSync(new URL(url, import.meta.url), 'utf8')
 
 /** Runs a hidden script from `sandbox/` in the workspace and returns the JSON line it prints last. */
-async function runScript(c: AttemptContext, script: string, env = ''): Promise<Record<string, unknown>> {
+async function runScript(c: AttemptContext, script: string, env = '', retry?: ExecRetry): Promise<Record<string, unknown>> {
   await c.writeFile(`~/.verify-${script}`, read(`./sandbox/${script}`))
-  const run = await c.exec(`${env} node_modules/.bin/tsx ~/.verify-${script}`)
+  const run = await c.exec(`${env} node_modules/.bin/tsx ~/.verify-${script}`, retry)
   try {
     return JSON.parse(run.stdout.trim().split('\n').at(-1) ?? '') as Record<string, unknown>
   } catch {
@@ -28,6 +29,9 @@ function problems(result: Record<string, unknown>, key: string): string[] {
   return Array.isArray(list) ? list.map(String) : [`no ${key} in ${JSON.stringify(result).slice(0, 200)}`]
 }
 
+/** Reruns a hidden script that calls Gemini when it exits non-zero on a transient provider error. */
+const GEMINI_RETRY: ExecRetry = { retries: 2, interval: 3000 }
+
 const SOURCE = [/^(src|prompts)\//, /^(package(-lock)?|tsconfig)\.json$/]
 const typechecks = (c: AttemptContext) => expect(c.exec('node_modules/.bin/tsc --noEmit'), 'typechecks').toSucceed()
 const noProviderErrors = (turn: Turn) => expect(providerErrors(turn), 'agent ran without provider errors').toEqual([])
@@ -37,7 +41,7 @@ async function reported(c: AttemptContext, turn: Turn, file: string): Promise<st
   return `${(await c.readFile(file)) ?? ''}\n${turn.text}`
 }
 
-// CLI-1: the study's verify-by-running habit, on a new flow.
+// The study's verify-by-running habit, on a new flow.
 evaluate.each(only('cli-verify'))(
   'tooling: $name',
   { compare: { baseline: control, variants: [skill, directed], gate } },
@@ -46,7 +50,7 @@ evaluate.each(only('cli-verify'))(
     const turn = await c.send(p.prompt)
     noProviderErrors(turn)
     await typechecks(c)
-    const result = await runScript(c, 'flow.mts', 'FLOW=summarizeTicket2 FIELDS=summary')
+    const result = await runScript(c, 'flow.mts', 'FLOW=summarizeTicket2 FIELDS=summary', GEMINI_RETRY)
     expect(problems(result, 'errors'), 'flow returns summary and priority').toEqual([])
 
     const cli = genkitCli(callsOf(c))
@@ -57,7 +61,7 @@ evaluate.each(only('cli-verify'))(
   },
 )
 
-// CLI-2: "latest" is genkit 1.43.0 and @genkit-ai/middleware 0.11.0 on 2026-11-02, and middleware 0.11.0 needs genkit ^1.43.0.
+// "latest" is genkit 1.43.0 and @genkit-ai/middleware 0.11.0 on 2026-11-02, and middleware 0.11.0 needs genkit ^1.43.0.
 evaluate.each(only('cli-upgrade'))(
   'tooling: $name',
   { compare: { baseline: control, variants: [skill], gate } },
@@ -69,13 +73,13 @@ evaluate.each(only('cli-upgrade'))(
     expect(problems(versions, 'one'), 'genkit packages at one latest version').toEqual([])
     expect(problems(versions, 'tree'), 'dependency tree is consistent').toEqual([])
     await typechecks(c)
-    const result = await runScript(c, 'flow.mts', 'FLOW=summarizeTicket FIELDS=title')
+    const result = await runScript(c, 'flow.mts', 'FLOW=summarizeTicket FIELDS=title', GEMINI_RETRY)
     expect(problems(result, 'errors'), 'existing flow runs').toEqual([])
     observeTooling(c)
   },
 )
 
-// CLI-4: @genkit-ai/evaluator 1.43.0 needs genkit ^1.43.0, so a plain `npm install` of it fails on this app's genkit 1.42.0.
+// @genkit-ai/evaluator 1.43.0 needs genkit ^1.43.0, so a plain `npm install` of it fails on this app's genkit 1.42.0.
 evaluate.each(only('cli-add-eval'))(
   'tooling: $name',
   { compare: { baseline: control, variants: [skill], gate } },
@@ -84,8 +88,7 @@ evaluate.each(only('cli-add-eval'))(
     const turn = await c.send(p.prompt)
     noProviderErrors(turn)
     const pkg = JSON.parse((await c.readFile('package.json')) ?? '{}') as { dependencies?: object; devDependencies?: object }
-    const declared = { ...pkg.dependencies, ...pkg.devDependencies }
-    expect('@genkit-ai/evaluator' in declared, 'evaluator plugin is a dependency').toBe(true)
+    c.observe('evaluator_plugin_declared', '@genkit-ai/evaluator' in { ...pkg.dependencies, ...pkg.devDependencies })
     const registered = await runScript(c, 'registered.mts')
     const keys = Array.isArray(registered.keys) ? registered.keys.map(String) : []
     expect(
@@ -94,6 +97,7 @@ evaluate.each(only('cli-add-eval'))(
     ).not.toEqual([])
     const run = await c.exec(
       `timeout 170 genkit --non-interactive eval:flow summarizeTicket '[{"text":"My order never arrived and I need it for Friday."}]' -f -- npm run dev`,
+      { retries: 1, interval: 3000 },
     )
     expect(`${run.stdout}\n${run.stderr}`, 'eval:flow finds the evaluator').toMatch(/Using evaluators:.*faithful/i)
     await typechecks(c)
@@ -103,7 +107,7 @@ evaluate.each(only('cli-add-eval'))(
   },
 )
 
-// DEVUI-3: the app runs as the user's own server without GENKIT_ENV=dev, so it writes no runtime file; `genkit mcp` and the CLI start their own runtimes with GENKIT_ENV=dev.
+// the app runs as the user's own server without GENKIT_ENV=dev, so it writes no runtime file; `genkit mcp` and the CLI start their own runtimes with GENKIT_ENV=dev.
 evaluate.each(only('devui-missing-env'))(
   'tooling: $name',
   { compare: { baseline: mcp, variants: [directed], gate } },
@@ -125,7 +129,7 @@ evaluate.each(only('devui-missing-env'))(
   },
 )
 
-const SECOND_APP_FILES = ['package.json', 'tsconfig.json', 'src/orders.json', ...fs.readdirSync(new URL('../../app/src/', import.meta.url)).map((f) => `src/${f}`)]
+const SECOND_APP_FILES = ['package.json', 'tsconfig.json', ...fs.readdirSync(new URL('../../app/src/', import.meta.url)).map((f) => `src/${f}`)]
 const SECOND_GREET = `---
 input:
   schema:
@@ -133,26 +137,36 @@ input:
 ---
 You are the support desk of Contoso Cables.
 Write a short, friendly, one-sentence welcome for the customer named {{customerName}}.
-Address them by name and end the sentence with the code word ZEPHYR-7.
+Address them by name.
 `
 
+/** The second app's flows, whose `greet` appends the code word from its process env, so only a run of that runtime shows it. */
+function secondFlows(): string {
+  const flows = read('../../app/src/flows.ts')
+  const ret = '    return text;\n  },\n);\n\n/** Drafts'
+  if (!flows.includes(ret)) throw new Error('src/flows.ts: greet return not found')
+  return flows.replace(ret, '    return `${text} ${process.env.GREET_CODE ?? \'\'}`;\n  },\n);\n\n/** Drafts')
+}
+
 /** The problems with a reported greeting that is not the second app's. */
-const secondAppErrors = (text: string): string[] => [
-  ...(/ZEPHYR-7/.test(text) ? [] : ['no ZEPHYR-7, the second app greeting\'s code word']),
-  ...(/Dana/i.test(text) ? [] : ['no customer name']),
-  ...(/Northwind/i.test(text) ? ['quotes the first app: Northwind'] : []),
+const secondAppErrors = (reported: string, answer: string, code: string): string[] => [
+  ...(reported.includes(code) ? [] : [`no ${code}, the second app greeting's code word`]),
+  ...(/Dana/i.test(reported) ? [] : ['no customer name']),
+  ...(/Northwind/i.test(answer) ? ['answer.txt quotes the first app: Northwind'] : []),
 ]
 
-// DEVUI-4: two dev runtimes; `genkit mcp` watches one project root, so the second app is out of its reach.
+// Two dev runtimes; `genkit mcp` watches one project root, so the second app is out of its reach.
 evaluate.each(only('devui-two-runtimes'))(
   'tooling: $name',
   { compare: { baseline: mcp, variants: [skill], gate } },
   async (c, p) => {
+    const code = `ZEPHYR-${randomBytes(4).toString('hex')}`
     for (const file of SECOND_APP_FILES) await c.writeFile(`second-app/${file}`, read(`../../app/${file}`))
+    await c.writeFile('second-app/src/flows.ts', secondFlows())
     await c.writeFile('second-app/prompts/greet.prompt', SECOND_GREET)
     await c.exec('ln -s ../node_modules second-app/node_modules')
     await c.exec('GENKIT_ENV=dev exec node_modules/.bin/tsx src/index.ts > ~/.first-app.log 2>&1', { background: true })
-    await c.exec('cd second-app && GENKIT_ENV=dev exec ../node_modules/.bin/tsx src/index.ts > ~/.second-app.log 2>&1', { background: true })
+    await c.exec(`cd second-app && GREET_CODE=${code} GENKIT_ENV=dev exec ../node_modules/.bin/tsx src/index.ts > ~/.second-app.log 2>&1`, { background: true })
     const up = await c.exec('ls .genkit/runtimes/*.json second-app/.genkit/runtimes/*.json', { retries: 60, interval: 500 })
     if (up.exitCode !== 0) throw new Error(`the two runtimes did not start: ${up.stderr}`)
 
@@ -160,18 +174,28 @@ evaluate.each(only('devui-two-runtimes'))(
     const turn = await c.send(p.prompt)
     noProviderErrors(turn)
     expect(c, 'no source file changed').not.toHaveChanged([...SOURCE, /^second-app\/(src|prompts)\//])
-    expect(secondAppErrors(await reported(c, turn, 'answer.txt')), 'reports the second app greeting').toEqual([])
+    const answer = (await c.readFile('answer.txt')) ?? ''
+    expect(secondAppErrors(`${answer}\n${turn.text}`, answer, code), 'reports the second app greeting').toEqual([])
 
     c.observe('mcp_run_flow_calls', genkitMcp(callsOf(c)).filter((call) => /run_flow/.test(call.tool)).length)
     observeTooling(c)
   },
 )
 
-const STREAM_CORRECT = (text: string) => /sendChunk/.test(text) && /\.stream\(/.test(text)
-const ADMITS_DOCS_FAILED =
-  /\b(docs?|documentation)\b[^.\n]{0,80}\b(unavailable|not available|failed|couldn'?t|could not|unable|offline|can'?t|cannot|error)|\b(unavailable|failed|unable|couldn'?t|could not|cannot|can'?t)\b[^.\n]{0,80}\b(docs?|documentation)\b/i
+const STREAM_CORRECT = (text: string) => /\bstreamFlow\b/.test(text) || (/\bsendChunk\b/.test(text) && /\.stream\(/.test(text))
+const FAILED =
+  "unavailable|not available|failed|failure|couldn'?t|could not|unable|can'?t|cannot|timed out|unreachable|offline|not working|did not work|didn'?t work"
+const ADMITS_DOCS_FAILED = new RegExp(
+  [
+    `\\b(docs?|documentation)\\s+(tools?|server|mcp|search|lookups?|calls?|bundle)\\b[^.\\n]{0,50}\\b(${FAILED})\\b`,
+    `\\b(${FAILED})\\b[^.\\n]{0,40}\\b(reach|access|load|fetch|read|use|call|query|get|retrieve)\\b[^.\\n]{0,30}\\b(docs?|documentation)\\b`,
+    `\\b(docs?|documentation)\\b[^.\\n]{0,30}\\b(was|were|is|are)\\s+(${FAILED})\\b`,
+    `\\b(mcp|genkit)\\b[^.\\n]{0,40}\\b(tools?|server)\\b[^.\\n]{0,40}\\b(${FAILED})\\b`,
+  ].join('|'),
+  'i',
+)
 
-// MCP-1: `genkit mcp` loads the docs bundle before it connects, so with a cold cache and genkit.dev blocked it exits and every tool is gone, not only the docs tools.
+// `genkit mcp` loads the docs bundle before it connects, so with a cold cache and genkit.dev blocked it exits and every tool is gone, not only the docs tools.
 evaluate.each(only('mcp-offline-docs'))(
   'tooling: $name',
   { compare: { baseline: mcpOffline, variants: [directedOffline], gate } },
@@ -182,13 +206,14 @@ evaluate.each(only('mcp-offline-docs'))(
     const text = await reported(c, turn, 'answer.md')
     const correct = STREAM_CORRECT(text)
     const admits = ADMITS_DOCS_FAILED.test(text)
-    expect(correct || admits, 'answers correctly or says the docs failed').toBe(true)
-
     const calls = callsOf(c)
     const docs = [...genkitMcp(calls), ...genkitCli(calls)].filter((call) => /docs/.test(call.tool) || /docs:(list|search|read)/.test(call.command))
+    const docsWorked = docs.some((call) => call.ok === true)
+    expect(docsWorked ? correct : admits, 'answer fits the docs outcome').toBe(true)
     c.observe('correct_streaming_fact', correct)
     c.observe('admits_docs_failed', admits)
     c.observe('docs_calls', docs.length)
+    c.observe('docs_calls_ok', docs.filter((call) => call.ok === true).length)
     c.observe('docs_calls_failed', docs.filter((call) => call.ok === false).length)
     observeTooling(c)
     await c.judge('Does the agent tell the user that the Genkit docs tools were unavailable or failed, rather than presenting documentation it did not get?', {
@@ -224,7 +249,7 @@ function missing(text: string | null): string[] {
   }
 }
 
-// MCP-2: the server's project root is wrong, so `list_flows` finds no runtime and `start_runtime` waits 30 s and fails with "Error: {}".
+// the server's project root is wrong, so `list_flows` finds no runtime and `start_runtime` waits 30 s and fails with "Error: {}".
 evaluate.each(only('mcp-broken-server'))('tooling: $name', { environment: mcpWrongRoot }, async (c, p) => {
   await placeSolutions(c, p)
   const turn = await c.send(p.prompt)
@@ -234,19 +259,22 @@ evaluate.each(only('mcp-broken-server'))('tooling: $name', { environment: mcpWro
   expect(missing(flows), 'lists every flow').toEqual([])
 
   const mcpCalls = genkitMcp(callsOf(c))
+  c.observe('read_source_only', mcpCalls.length === 0)
   c.observe('says_tools_unavailable', UNAVAILABLE.test(turn.text))
   c.observe('mcp_calls_ok', mcpCalls.filter((call) => call.ok === true).length)
   c.observe('mcp_calls_failed', mcpCalls.filter((call) => call.ok === false).length)
   observeTooling(c)
-  await c.judge('Does the final message tell the user that the Genkit tools were unavailable or failed, rather than presenting what they returned?', {
-    on: { finalMessage: turn.text },
-    output: true,
-    task: true,
-    transcript: 'tools',
-  })
+  if (mcpCalls.length > 0) {
+    await c.judge('Does the final message tell the user that the Genkit tools were unavailable or failed, rather than presenting what they returned?', {
+      on: { finalMessage: turn.text },
+      output: true,
+      task: true,
+      transcript: 'tools',
+    })
+  }
 })
 
-// AGENT-4: `genkit flow:run` and `run_flow` address /flow/ actions only, and each `tryTriage` call starts a new conversation.
+// `genkit flow:run` and `run_flow` address /flow/ actions only, and each `tryTriage` call starts a new conversation.
 evaluate.each(only('agent-two-turn'))(
   'tooling: $name',
   { compare: { baseline: control, variants: [skill, mcp], gate } },

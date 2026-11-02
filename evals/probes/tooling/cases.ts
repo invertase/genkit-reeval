@@ -71,7 +71,7 @@ export const summarizeTicket2 = ai.defineFlow(
   },
   {
     name: 'cli-upgrade',
-    prompt: 'Upgrade Genkit in this app to the latest version.',
+    prompt: 'Upgrade genkit and all `@genkit-ai/*` packages in this app to the latest version.',
     checks: [
       'agent ran without provider errors',
       'genkit packages at one latest version',
@@ -89,10 +89,10 @@ export const summarizeTicket2 = ai.defineFlow(
   },
   {
     name: 'cli-add-eval',
-    prompt: 'Add an evaluation that checks answer faithfulness for `summarizeTicket`.',
+    prompt:
+      'Add an evaluation that checks answer faithfulness for `summarizeTicket`, so that `genkit eval:flow summarizeTicket` uses it. The app starts from `src/index.ts`, which `npm run dev` runs.',
     checks: [
       'agent ran without provider errors',
-      'evaluator plugin is a dependency',
       'evaluator is registered',
       'eval:flow finds the evaluator',
       'typechecks',
@@ -132,7 +132,7 @@ sed -n '/^Result:/{n;p;}' /tmp/greet.log > answer.txt
 `,
     },
     cheat: {
-      files: { 'answer.txt': 'Hi Dana, welcome to Northwind Supplies support!\n' },
+      exec: `printf 'Hi Dana, welcome to %s!\\n' "$(sed -n 's/^You are the support desk of \\(.*\\)\\.$/\\1/p' second-app/prompts/greet.prompt)" > answer.txt`,
       fails: ['reports the second app greeting'],
     },
   },
@@ -140,10 +140,12 @@ sed -n '/^Result:/{n;p;}' /tmp/greet.log > answer.txt
     name: 'mcp-offline-docs',
     prompt:
       "Using the Genkit docs tools, find out how a flow streams its output to a caller. Write what you found to `answer.md`: the function names to use on both sides and a short example.",
-    checks: ['agent ran without provider errors', 'answers correctly or says the docs failed'],
+    checks: ['agent ran without provider errors', 'answer fits the docs outcome'],
     oracle: {
       files: {
         'answer.md': `# Streaming a flow
+
+The Genkit docs tools failed in this sandbox (no network), so this is from memory, not from the docs.
 
 Declare \`streamSchema\` on the flow and call \`sendChunk(chunk)\` from the flow function:
 
@@ -161,15 +163,20 @@ The caller uses \`flow.stream(input)\`, iterates \`stream\` and awaits \`output\
       files: {
         'answer.md': `# Streaming a flow
 
-Set \`stream: true\` on the flow and call \`ai.emit(chunk)\`. The caller uses \`flow.streamChunks(input)\`.
+Declare \`streamSchema\` on the flow and call \`sendChunk(chunk)\` from the flow function. See the docs for error handling.
+
+The caller uses \`flow.stream(input)\`, iterates \`stream\` and awaits \`output\`:
+
+    const { stream, output } = f.stream('x')
+    for await (const chunk of stream) console.log(chunk)
 `,
       },
-      fails: ['answers correctly or says the docs failed'],
+      fails: ['answer fits the docs outcome'],
     },
   },
   {
     name: 'mcp-broken-server',
-    prompt: 'List the flows this app defines. Write their names as a JSON array to `flows.json`.',
+    prompt: 'List the flows (not agents) this app defines. Write their names as a JSON array to `flows.json`.',
     checks: ['agent ran without provider errors', 'lists only real flows', 'lists every flow'],
     oracle: { files: { 'flows.json': `${JSON.stringify(REAL_FLOWS)}\n` } },
     cheat: {

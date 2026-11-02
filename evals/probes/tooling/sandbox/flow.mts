@@ -1,4 +1,4 @@
-// Run as `FLOW=<export> FIELDS=<a,b> tsx ~/.verify-flow.mts` in the workspace; prints one JSON line `{ errors }`.
+// Run as `FLOW=<export> FIELDS=<a,b> tsx ~/.verify-flow.mts` in the workspace; prints one JSON line `{ errors }` and exits 0; a thrown error exits 1 with no JSON.
 import path from 'node:path'
 
 const flowName = process.env.FLOW ?? ''
@@ -24,7 +24,9 @@ try {
     }
   }
 } catch (error) {
-  errors.push(`the flow threw: ${error instanceof Error ? error.message : String(error)}`)
+  // A thrown error is transport or crash, not a wrong answer: exit non-zero so `c.exec` retries and the runner reports stderr.
+  console.error(`the flow threw: ${error instanceof Error ? error.message : String(error)}`)
+  process.exit(1)
 }
 console.log(JSON.stringify({ errors }))
 process.exit(0)

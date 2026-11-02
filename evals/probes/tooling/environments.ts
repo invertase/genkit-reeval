@@ -11,7 +11,7 @@ export const mcpWrongRoot = studyMcp.extendEnvironment('mcp-wrong-root', ({ mcp,
 }))
 
 /**
- * `control` without the docs warm-up, behind `deny-all` egress: genkit.dev is unreachable and the docs cache is cold.
+ * `control` without the docs warm-up, behind `deny-all` egress: npm and all web are unreachable, not only genkit.dev, and the docs cache is cold.
  * Gemini stays reachable because its secret's host is automatic. Not a child of `control`: that setup runs `docs:list`.
  */
 const offline = defineEnvironment('offline', ({ directory, secret }) => ({

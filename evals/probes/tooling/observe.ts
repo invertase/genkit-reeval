@@ -7,10 +7,8 @@ const show = (value: unknown): string => (typeof value === 'string' ? value : (J
 
 const commandOf = (input: unknown): string => {
   if (typeof input === 'object' && input !== null) {
-    const { command, cmd } = input as { command?: unknown; cmd?: unknown }
+    const { command } = input as { command?: unknown }
     if (typeof command === 'string') return command
-    if (typeof cmd === 'string') return cmd
-    if (Array.isArray(command)) return command.join(' ')
   }
   return show(input)
 }
@@ -23,10 +21,12 @@ export const callsOf = (c: AttemptContext): Call[] =>
     ),
   )
 
-const isShell = (call: Call) => /^(bash|shell|exec|run_?command|execute_?command)$/i.test(call.tool)
+const isShell = (call: Call) => call.tool === 'bash'
 
-/** The calls that ran a `genkit` CLI command. */
-export const genkitCli = (calls: Call[]) => calls.filter((call) => isShell(call) && /\bgenkit(-cli)?\b\s/.test(call.command))
+const GENKIT_COMMAND = /(?:^|[;&|(\n]|\$\()\s*(?:\w+=\S+\s+)*(?:(?:timeout\s+\S+|time|exec)\s+)*(?:(?:npx|pnpm exec|pnpm dlx|npm exec)\s+(?:-\S+\s+)*)?(?:\S*\/)?genkit(?:-cli)?(?=\s|$)/
+
+/** The calls that ran a `genkit` CLI command, not ones that merely mention the word. */
+export const genkitCli = (calls: Call[]) => calls.filter((call) => isShell(call) && GENKIT_COMMAND.test(call.command))
 
 /** The calls to the Genkit MCP server's tools, whatever the harness calls them. */
 export const genkitMcp = (calls: Call[]) => calls.filter((call) => /^mcp__genkit__|^genkit[_/.]/i.test(call.tool))
