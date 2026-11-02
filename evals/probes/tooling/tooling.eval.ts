@@ -3,11 +3,12 @@ import { randomBytes } from 'node:crypto'
 import fs from 'node:fs'
 import { type AttemptContext, type ExecRetry, evaluate, expect, type Turn } from 'reeval'
 import { control, directed, mcp, skill } from '../../environments.ts'
+import { verifyMcpServer } from '../mcp-client.ts'
 import { gate, noProviderErrors, type Probe, type ProbeResult, parseResult, placeSolutions } from '../probe.ts'
 import { callsOf, genkitCli } from '../transcript.ts'
 import { PROBES, REAL_FLOWS } from './cases.ts'
-import { controlClaudeStub, directedOffline, mcpOffline, mcpWrongRoot, skillClaudeStub, STUB_BIN } from './environments.ts'
-import { admitsDocsFailed, cwdErrors, registrationErrors, rootErrors, stubRuns } from './gates.ts'
+import { controlClaude, directedOffline, mcpOffline, mcpWrongRoot, skillClaude } from './environments.ts'
+import { admitsDocsFailed, cwdErrors, expandMcpJson, genkitServers, registrationErrors, rootErrors } from './gates.ts'
 import { genkitMcp, observeClaudeSetup, observeTooling } from './observe.ts'
 
 const only = (...names: string[]): Probe[] => PROBES.filter((p) => names.includes(p.name))
@@ -273,34 +274,27 @@ evaluate.each(only('mcp-broken-server'))('tooling: $name', { environment: mcpWro
   }
 })
 
-/** The MCP client the hidden `mcp-registered.mts` imports; installed after the turn, outside the workspace. */
-const MCP_CLIENT = '@modelcontextprotocol/sdk@1.32.2'
-
-// No harness image puts `claude` on PATH (reeval keeps its Claude Code binary in `~/.ai-sdk-harness`), so a stub that parses argv like the real CLI stands in and logs every call.
+// Claude Code expands `${VAR}` in `.mcp.json` when it starts a server, so the checks read the file expanded.
 evaluate.each(only('mcp-setup-claude'))(
   'tooling: $name',
-  { compare: { baseline: controlClaudeStub, variants: [skillClaudeStub], gate } },
+  { compare: { baseline: controlClaude, variants: [skillClaude], gate } },
   async (c, p) => {
-    await c.writeFile('~/.claude-stub/bin/claude', read('./sandbox/claude-stub.mjs'))
-    await c.exec(`chmod +x ${STUB_BIN}/claude`)
     await placeSolutions(c, p)
     const turn = await c.send(p.prompt)
     noProviderErrors(turn)
-    const mcpJson = await c.readFile('.mcp.json')
-    const log = await c.exec('cat ~/.claude-stub/log.jsonl')
-    observeClaudeSetup(c, stubRuns(log.exitCode === 0 ? log.stdout : null), mcpJson !== null)
+    observeClaudeSetup(c)
     observeTooling(c)
     const workspace = (await c.exec('pwd')).stdout.trim()
+    const sandboxEnv = Object.fromEntries((await c.exec('env')).stdout.split('\n').flatMap((line) => (line.includes('=') ? [[line.slice(0, line.indexOf('=')), line.slice(line.indexOf('=') + 1)]] : [])))
+    const mcpJson = expandMcpJson(await c.readFile('.mcp.json'), { ...sandboxEnv, PWD: workspace })
     expect(registrationErrors(mcpJson), 'registers genkit mcp in .mcp.json').toEqual([])
     expect(cwdErrors(mcpJson), 'registration has no --cwd').toEqual([])
     expect(rootErrors(mcpJson, workspace), 'project root is the workspace').toEqual([])
 
-    await c.writeFile('~/.verify-mcp/package.json', '{"name":"verify-mcp","private":true,"type":"module"}\n')
-    const install = await c.exec(`npm --prefix ~/.verify-mcp install --no-audit --no-fund ${MCP_CLIENT}`, { retries: 2, interval: 3000 })
-    if (install.exitCode !== 0) throw new Error(`could not install the MCP client: ${install.stderr.slice(-400)}`)
-    await c.writeFile('~/.verify-mcp/verify.mts', read('./sandbox/mcp-registered.mts'))
-    const result = parseResult(await c.exec('timeout 150 node_modules/.bin/tsx ~/.verify-mcp/verify.mts', { retries: 1, interval: 3000 }))
-    const started = typeof result === 'string' ? [result] : result.ok === true ? [] : [String(result.error ?? 'the server did not answer')]
+    const [server] = genkitServers(mcpJson)
+    const started = server
+      ? await verifyMcpServer(c, { command: server.command, args: server.args, env: server.env, expectTool: 'list_flows' })
+      : ['no registered server to start']
     expect(started, 'registered server answers tools/list').toEqual([])
   },
 )

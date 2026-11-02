@@ -195,7 +195,7 @@ The caller uses \`flow.stream(input)\`, iterates \`stream\` and awaits \`output\
       'project root is the workspace',
       'registered server answers tools/list',
     ],
-    oracle: { exec: 'claude mcp add --transport stdio genkit --scope project -- genkit mcp --project-root "$PWD"' },
+    oracle: { exec: 'claude mcp add --transport stdio genkit --scope project -- genkit mcp --project-root .' },
     cheat: {
       exec: 'claude mcp add --transport stdio genkit genkit mcp --cwd . --scope project || true',
       fails: ['registers genkit mcp in .mcp.json', 'registered server answers tools/list'],
