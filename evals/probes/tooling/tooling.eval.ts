@@ -7,6 +7,7 @@ import { providerErrors } from '../../infra.ts'
 import { gate, type Probe, placeSolutions } from '../probe.ts'
 import { PROBES, REAL_FLOWS } from './cases.ts'
 import { directedOffline, mcpOffline, mcpWrongRoot } from './environments.ts'
+import { admitsDocsFailed } from './gates.ts'
 import { callsOf, genkitCli, genkitMcp, observeTooling } from './observe.ts'
 
 const only = (...names: string[]): Probe[] => PROBES.filter((p) => names.includes(p.name))
@@ -140,17 +141,33 @@ Write a short, friendly, one-sentence welcome for the customer named {{customerN
 Address them by name.
 `
 
-/** The second app's flows, whose `greet` appends the code word from its process env, so only a run of that runtime shows it. */
+/** The second app's flows, whose `greet` appends a code word it reads once from `~/.greet-code` and deletes at load, so only that running process holds it. */
 function secondFlows(): string {
   const flows = read('../../app/src/flows.ts')
   const ret = '    return text;\n  },\n);\n\n/** Drafts'
   if (!flows.includes(ret)) throw new Error('src/flows.ts: greet return not found')
-  return flows.replace(ret, '    return `${text} ${process.env.GREET_CODE ?? \'\'}`;\n  },\n);\n\n/** Drafts')
+  const load = [
+    "import { readFileSync, unlinkSync } from 'node:fs';",
+    'const GREET_CODE = (() => {',
+    '  const file = `${process.env.HOME}/.greet-code`;',
+    "  try {",
+    "    return readFileSync(file, 'utf8').trim();",
+    '  } catch {',
+    "    return '';",
+    '  } finally {',
+    '    try {',
+    '      unlinkSync(file);',
+    '    } catch {}',
+    '  }',
+    '})();',
+    '',
+  ].join('\n')
+  return load + flows.replace(ret, '    return `${text} ${GREET_CODE}`;\n  },\n);\n\n/** Drafts')
 }
 
 /** The problems with a reported greeting that is not the second app's. */
 const secondAppErrors = (reported: string, answer: string, code: string): string[] => [
-  ...(reported.includes(code) ? [] : [`no ${code}, the second app greeting's code word`]),
+  ...(reported.includes(code) ? [] : [`no ${code}, the code word only the running second app holds`]),
   ...(/Dana/i.test(reported) ? [] : ['no customer name']),
   ...(/Northwind/i.test(answer) ? ['answer.txt quotes the first app: Northwind'] : []),
 ]
@@ -166,16 +183,19 @@ evaluate.each(only('devui-two-runtimes'))(
     await c.writeFile('second-app/prompts/greet.prompt', SECOND_GREET)
     await c.exec('ln -s ../node_modules second-app/node_modules')
     await c.exec('GENKIT_ENV=dev exec node_modules/.bin/tsx src/index.ts > ~/.first-app.log 2>&1', { background: true })
-    await c.exec(`cd second-app && GREET_CODE=${code} GENKIT_ENV=dev exec ../node_modules/.bin/tsx src/index.ts > ~/.second-app.log 2>&1`, { background: true })
+    await c.writeFile('~/.greet-code', code)
+    await c.exec('cd second-app && GENKIT_ENV=dev exec ../node_modules/.bin/tsx src/index.ts > ~/.second-app.log 2>&1', { background: true })
     const up = await c.exec('ls .genkit/runtimes/*.json second-app/.genkit/runtimes/*.json', { retries: 60, interval: 500 })
     if (up.exitCode !== 0) throw new Error(`the two runtimes did not start: ${up.stderr}`)
+    const gone = await c.exec('test ! -e ~/.greet-code', { retries: 20, interval: 250 })
+    if (gone.exitCode !== 0) throw new Error('the second app did not consume ~/.greet-code')
 
     await placeSolutions(c, p)
     const turn = await c.send(p.prompt)
     noProviderErrors(turn)
     expect(c, 'no source file changed').not.toHaveChanged([...SOURCE, /^second-app\/(src|prompts)\//])
     const answer = (await c.readFile('answer.txt')) ?? ''
-    expect(secondAppErrors(`${answer}\n${turn.text}`, answer, code), 'reports the second app greeting').toEqual([])
+    expect(secondAppErrors(`${answer}\n${turn.text}`, answer, code), 'reports the greeting from the running second app').toEqual([])
 
     c.observe('mcp_run_flow_calls', genkitMcp(callsOf(c)).filter((call) => /run_flow/.test(call.tool)).length)
     observeTooling(c)
@@ -183,17 +203,6 @@ evaluate.each(only('devui-two-runtimes'))(
 )
 
 const STREAM_CORRECT = (text: string) => /\bstreamFlow\b/.test(text) || (/\bsendChunk\b/.test(text) && /\.stream\(/.test(text))
-const FAILED =
-  "unavailable|not available|failed|failure|couldn'?t|could not|unable|can'?t|cannot|timed out|unreachable|offline|not working|did not work|didn'?t work"
-const ADMITS_DOCS_FAILED = new RegExp(
-  [
-    `\\b(docs?|documentation)\\s+(tools?|server|mcp|search|lookups?|calls?|bundle)\\b[^.\\n]{0,50}\\b(${FAILED})\\b`,
-    `\\b(${FAILED})\\b[^.\\n]{0,40}\\b(reach|access|load|fetch|read|use|call|query|get|retrieve)\\b[^.\\n]{0,30}\\b(docs?|documentation)\\b`,
-    `\\b(docs?|documentation)\\b[^.\\n]{0,30}\\b(was|were|is|are)\\s+(${FAILED})\\b`,
-    `\\b(mcp|genkit)\\b[^.\\n]{0,40}\\b(tools?|server)\\b[^.\\n]{0,40}\\b(${FAILED})\\b`,
-  ].join('|'),
-  'i',
-)
 
 // `genkit mcp` loads the docs bundle before it connects, so with a cold cache and genkit.dev blocked it exits and every tool is gone, not only the docs tools.
 evaluate.each(only('mcp-offline-docs'))(
@@ -204,14 +213,10 @@ evaluate.each(only('mcp-offline-docs'))(
     const turn = await c.send(p.prompt)
     noProviderErrors(turn)
     const text = await reported(c, turn, 'answer.md')
-    const correct = STREAM_CORRECT(text)
-    const admits = ADMITS_DOCS_FAILED.test(text)
     const calls = callsOf(c)
     const docs = [...genkitMcp(calls), ...genkitCli(calls)].filter((call) => /docs/.test(call.tool) || /docs:(list|search|read)/.test(call.command))
-    const docsWorked = docs.some((call) => call.ok === true)
-    expect(docsWorked ? correct : admits, 'answer fits the docs outcome').toBe(true)
-    c.observe('correct_streaming_fact', correct)
-    c.observe('admits_docs_failed', admits)
+    expect(admitsDocsFailed(text), 'answer says the docs failed').toBe(true)
+    c.observe('correct_streaming_fact', STREAM_CORRECT(text))
     c.observe('docs_calls', docs.length)
     c.observe('docs_calls_ok', docs.filter((call) => call.ok === true).length)
     c.observe('docs_calls_failed', docs.filter((call) => call.ok === false).length)

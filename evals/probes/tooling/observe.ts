@@ -23,7 +23,7 @@ export const callsOf = (c: AttemptContext): Call[] =>
 
 const isShell = (call: Call) => call.tool === 'bash'
 
-const GENKIT_COMMAND = /(?:^|[;&|(\n]|\$\()\s*(?:\w+=\S+\s+)*(?:(?:timeout\s+\S+|time|exec)\s+)*(?:(?:npx|pnpm exec|pnpm dlx|npm exec)\s+(?:-\S+\s+)*)?(?:\S*\/)?genkit(?:-cli)?(?=\s|$)/
+const GENKIT_COMMAND = /(?:^|[;&|('"\n]|\$\()\s*(?:\w+=\S+\s+)*(?:(?:timeout\s+\S+|time|exec)\s+)*(?:(?:npx|pnpm exec|pnpm dlx|npm exec)\s+(?:-\S+\s+)*)?(?:\S*\/)?genkit(?:-cli)?(?=\s|$)/
 
 /** The calls that ran a `genkit` CLI command, not ones that merely mention the word. */
 export const genkitCli = (calls: Call[]) => calls.filter((call) => isShell(call) && GENKIT_COMMAND.test(call.command))

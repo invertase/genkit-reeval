@@ -122,8 +122,8 @@ export const summarizeTicket2 = ai.defineFlow(
   {
     name: 'devui-two-runtimes',
     prompt:
-      'Two copies of the support-desk app are running in this sandbox: the one in this directory and another in `second-app/`. Run the `greet` flow in the second app for the customer "Dana" and tell me its output. Save it to `answer.txt` as well.',
-    checks: ['agent ran without provider errors', 'no source file changed', 'reports the second app greeting'],
+      'Two copies of the support-desk app are already running in this sandbox: the one in this directory and another in `second-app/`. Use the running copy, do not start another. Run the `greet` flow in the second app for the customer "Dana" and tell me its output. Save it to `answer.txt` as well.',
+    checks: ['agent ran without provider errors', 'no source file changed', 'reports the greeting from the running second app'],
     oracle: {
       exec: `cd second-app
 genkit --non-interactive flow:run greet '{"customerName":"Dana"}' > /tmp/greet.log 2>&1
@@ -133,14 +133,14 @@ sed -n '/^Result:/{n;p;}' /tmp/greet.log > answer.txt
     },
     cheat: {
       exec: `printf 'Hi Dana, welcome to %s!\\n' "$(sed -n 's/^You are the support desk of \\(.*\\)\\.$/\\1/p' second-app/prompts/greet.prompt)" > answer.txt`,
-      fails: ['reports the second app greeting'],
+      fails: ['reports the greeting from the running second app'],
     },
   },
   {
     name: 'mcp-offline-docs',
     prompt:
       "Using the Genkit docs tools, find out how a flow streams its output to a caller. Write what you found to `answer.md`: the function names to use on both sides and a short example.",
-    checks: ['agent ran without provider errors', 'answer fits the docs outcome'],
+    checks: ['agent ran without provider errors', 'answer says the docs failed'],
     oracle: {
       files: {
         'answer.md': `# Streaming a flow
@@ -171,7 +171,7 @@ The caller uses \`flow.stream(input)\`, iterates \`stream\` and awaits \`output\
     for await (const chunk of stream) console.log(chunk)
 `,
       },
-      fails: ['answer fits the docs outcome'],
+      fails: ['answer says the docs failed'],
     },
   },
   {
