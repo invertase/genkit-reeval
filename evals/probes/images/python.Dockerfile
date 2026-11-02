@@ -5,8 +5,13 @@ RUN npm i -g genkit-cli@1.44.1
 
 # uv and CPython are pinned; the package index is frozen at the date after the genkit 0.12.0 release.
 RUN set -e; u="uv-$(uname -m)-unknown-linux-gnu.tar.gz"; b=https://github.com/astral-sh/uv/releases/download/0.11.2; cd /tmp \
-    && curl -fsSLO "$b/$u" && curl -fsSLO "$b/$u.sha256" && sha256sum -c "$u.sha256" \
-    && tar -xz --strip-components=1 -C /usr/local/bin -f "$u" && rm -f "$u" "$u.sha256"
+    && case "$(uname -m)" in \
+        x86_64) sha=7ac2ca0449c8d68dae9b99e635cd3bc9b22a4cb1de64b7c43716398447d42981 ;; \
+        aarch64) sha=04792cac761c4a6ba78267f36f2af541b7f92196d42ac55d21d3ff6b0f5ab6a5 ;; \
+        *) echo "no uv checksum for $(uname -m)"; exit 1 ;; \
+    esac \
+    && curl -fsSLO "$b/$u" && echo "$sha  $u" | sha256sum -c - \
+    && tar -xz --strip-components=1 -C /usr/local/bin -f "$u" && rm -f "$u"
 ENV UV_PYTHON_INSTALL_DIR=/opt/python \
     UV_CACHE_DIR=/opt/uv-cache \
     PIP_CACHE_DIR=/opt/pip-cache \

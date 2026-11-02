@@ -17,7 +17,7 @@ const PY_INSTALL = 'uv venv --quiet && uv pip install --quiet genkit genkit-goog
 const FIXED = 'agent ran without provider errors'
 
 const APP_KEY = 'The Gemini API key is in the GEMINI_API_KEY environment variable.'
-const ORDERS = '`orders.json` in this directory maps each order id to its `status` and `eta`; its contents change between calls, so read it on every lookup.'
+const ORDERS = '`orders.json` in this directory maps each order id to its `status` and `eta`.'
 
 const goNewApp: Probe = {
   name: 'go-new-app',

@@ -63,8 +63,12 @@ func probeSquash(s string) string {
 	return regexp.MustCompile(`[^a-z0-9]`).ReplaceAllString(strings.ToLower(s), "")
 }
 
-// TestProbeTwoProcesses reads the one order the probe wrote to orders.json, asks about it in one process and asks for its id in another.
+// TestProbeTwoProcesses asks about the order in PROBE_ORDER_ID in one process and asks for its id in another.
 func TestProbeTwoProcesses(t *testing.T) {
+	id := os.Getenv("PROBE_ORDER_ID")
+	if id == "" {
+		t.Skip("run by the probe with PROBE_ORDER_ID")
+	}
 	raw, err := os.ReadFile("orders.json")
 	if err != nil {
 		t.Fatal(err)
@@ -72,22 +76,24 @@ func TestProbeTwoProcesses(t *testing.T) {
 	var orders map[string]struct {
 		Status string `json:"status"`
 	}
-	if err := json.Unmarshal(raw, &orders); err != nil || len(orders) != 1 {
-		t.Fatalf("orders.json must hold one order: %v", err)
+	if err := json.Unmarshal(raw, &orders); err != nil {
+		t.Fatal(err)
 	}
-	for id, order := range orders {
-		first := runProbeTurn(t, "", "My order id is "+id+". What is its status?")
-		if first.Session == "" {
-			t.Fatal("the first turn returned no session id")
+	order, ok := orders[id]
+	if !ok {
+		t.Fatalf("orders.json has no order %s", id)
+	}
+	first := runProbeTurn(t, "", "My order id is "+id+". What is its status?")
+	if first.Session == "" {
+		t.Fatal("the first turn returned no session id")
+	}
+	for _, mark := range regexp.MustCompile(`[A-Z][a-z]+`).FindAllString(order.Status, -1) {
+		if !regexp.MustCompile(`(?i)\b` + mark + `\b`).MatchString(first.Reply) {
+			t.Fatalf("the first turn does not give the status %q of %s: %q", order.Status, id, first.Reply)
 		}
-		for _, mark := range regexp.MustCompile(`[A-Z][a-z]+`).FindAllString(order.Status, -1) {
-			if !strings.Contains(probeSquash(first.Reply), probeSquash(mark)) {
-				t.Fatalf("the first turn does not give the status %q of %s: %q", order.Status, id, first.Reply)
-			}
-		}
-		second := runProbeTurn(t, first.Session, "What order id did I give you earlier? Reply with only the id.")
-		if !strings.Contains(probeSquash(second.Reply), probeSquash(id)) {
-			t.Fatalf("the second process does not recall %s: %q", id, second.Reply)
-		}
+	}
+	second := runProbeTurn(t, first.Session, "What order id did I give you earlier? Reply with only the id.")
+	if !strings.Contains(probeSquash(second.Reply), probeSquash(id)) {
+		t.Fatalf("the second process does not recall %s: %q", id, second.Reply)
 	}
 }

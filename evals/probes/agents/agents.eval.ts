@@ -1,4 +1,4 @@
-import { randomBytes, randomInt } from 'node:crypto'
+import { randomInt } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { type AttemptContext, type ExecResult, evaluate, expect, type Turn } from 'reeval'
 import { providerErrors } from '../../infra.ts'
@@ -36,22 +36,32 @@ function result(run: ExecResult): { reply: string; session: string } | string {
 }
 
 const VERBS = ['held', 'waiting', 'queued', 'stored', 'parked']
-const FIRST = ['Juniper', 'Marlowe', 'Cobalt', 'Harbor', 'Willow', 'Ember', 'Tamarack', 'Quarry', 'Sable', 'Alder', 'Fennel', 'Granite']
+const FIRST = ['Juniper', 'Marlowe', 'Cobalt', 'Harbor', 'Willow', 'Tamarack', 'Quarry', 'Sable', 'Alder', 'Fennel', 'Granite']
 const SECOND = ['Northgate', 'Millbrook', 'Ridgeway', 'Stonebridge', 'Larkspur', 'Foxglove', 'Ashford', 'Bramley', 'Corvin', 'Dunmore', 'Elmwood', 'Fairhaven']
 const pick = (words: string[]) => words[randomInt(words.length)] ?? ''
 
-/** A one-order table with a random id and a status that holds two random capitalised words, so a hard-coded or guessed answer cannot match; the model keeps real words where it drops codes. */
-function freshOrder() {
+const randomStatus = () => {
   const marks = [pick(FIRST), pick(SECOND)]
-  return { id: `A-${randomInt(1000, 10000)}`, status: `${pick(VERBS)} at the ${marks.join(' ')} depot`, eta: '2026-12-04', marks }
+  return { status: `${pick(VERBS)} at the ${marks.join(' ')} depot`, marks }
 }
 
-/** Replaces the workspace's `orders.json` with a fresh order and returns it; the app must read the file when the tool runs. */
+/** Replaces the workspace's `orders.json` with a target order and four decoys, all with random ids and statuses, and returns the target; the app must read the file when the tool runs. */
 async function placeOrder(c: AttemptContext) {
-  const order = freshOrder()
-  await c.writeFile('orders.json', `${JSON.stringify({ [order.id]: { status: order.status, eta: order.eta } }, null, 2)}\n`)
+  const ids = new Set<string>()
+  while (ids.size < 5) ids.add(`A-${randomInt(1000, 10000)}`)
+  const [target = '', ...decoys] = [...ids]
+  const order = { id: target, eta: '2026-12-04', ...randomStatus() }
+  const table: Record<string, { status: string; eta: string }> = { [target]: { status: order.status, eta: order.eta } }
+  for (const id of decoys) table[id] = { status: randomStatus().status, eta: '2026-12-04' }
+  await c.writeFile('orders.json', `${JSON.stringify(table, null, 2)}\n`)
   return order
 }
+
+const squash = (text: string) => text.toLowerCase().replace(/[^a-z0-9]/g, '')
+const shellQuote = (text: string) => `'${text.replaceAll("'", `'\\''`)}'`
+
+/** Whether `reply` names both random words of `order`'s status, as whole words. */
+const givesStatus = (reply: string, order: { marks: string[] }) => order.marks.every((mark) => new RegExp(`\\b${mark}\\b`, 'i').test(reply))
 
 /** The lines a unified `patch` adds, per file whose path matches `paths`; environment-placed files are not in a turn's diff. */
 function addedGuidance(patch: string, paths: RegExp): Record<string, string> {
@@ -65,12 +75,6 @@ function addedGuidance(patch: string, paths: RegExp): Record<string, string> {
   }
   return Object.fromEntries(Object.entries(added).map(([path, lines]) => [path, lines.join('\n')]))
 }
-
-/** Whether `reply` names both random words of `order`'s status. */
-const givesStatus = (reply: string, order: { marks: string[] }) => order.marks.every((mark) => squash(reply).includes(squash(mark)))
-
-const squash = (text: string) => text.toLowerCase().replace(/[^a-z0-9]/g, '')
-const shellQuote = (text: string) => `'${text.replaceAll("'", `'\\''`)}'`
 
 /** Which Genkit CLI subcommands the agent ran, what it fetched and how often it searched, recorded and never gated. */
 function observeContext(c: AttemptContext, turn: Turn): void {
@@ -160,9 +164,9 @@ const goAgentSession = probe('go-agent-session')
       const version = await c.exec(`go list -m -f '{{.Version}}' ${GO_MODULE}`)
       c.observe('genkit-go-version', version.stdout.trim() || null)
 
-      await placeOrder(c)
+      const order = await placeOrder(c)
       await c.writeFile('zz_probe_test.go', hidden('go-agent-session.go'))
-      const test = await c.exec("go test -count=1 -timeout 300s -run '^TestProbeTwoProcesses$' .")
+      const test = await c.exec(`PROBE_ORDER_ID=${order.id} go test -count=1 -timeout 300s -run '^TestProbeTwoProcesses$' .`)
       await expect(test, 'second process knows the order').toSucceed()
       c.observe('go-test-tail', `${test.stdout}\n${test.stderr}`.trim().slice(-600))
 
