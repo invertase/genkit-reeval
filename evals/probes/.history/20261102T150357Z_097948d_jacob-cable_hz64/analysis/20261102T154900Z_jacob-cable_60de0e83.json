@@ -65,11 +65,7 @@
           "F20",
           "F21"
         ],
-        "confidence": "high",
-        "unverifiedNumbers": [
-          "60",
-          "75"
-        ]
+        "confidence": "high"
       },
       {
         "text": "Thirteen evals were completely saturated with a 100% pass rate across all evaluated arms: agents-4, agents-5, docs-1, docs-2, docs-3, docs-6, docs-7, tooling-1, tooling-2, tooling-3, tooling-6, tooling-7, and tooling-8.",
@@ -95,7 +91,7 @@
         "confidence": "high"
       },
       {
-        "text": "In agents-1, pass@1 lifts against go-new-control (1/1) were within noise for go-new-skill (+0 pts, 95% CI −79 to +79), go-new-open (−100 pts, 95% CI −100 to +12), go-new-docsite (−100 pts, 95% CI −100 to +12), go-new-llms (+0 pts, 95% CI −79 to +79), and go-new-index (+0 pts, 95% CI −79 to +79).",
+        "text": "In agents-1, pass@1 lifts against go-new-control (1/1) were within noise for go-new-skill (+0 pts, 95% CI −79 to +79), go-new-open (−100 pts, 95% CI −100 to +12), go-new-docsite (−100 pts, 95% CI −100 to +12), go-new-llms (+0 pts, 95% CI −79 to +79), and go-new-index (+0 pts, 95% CI −79 to +79). [Reviewed 2026-11-02: the go-new-open and go-new-docsite failures came from a check that read only the workspace root while those agents built a correct app in a subdirectory; after commit d174cb9 all six arms pass in run 20261102T152738Z_d174cb9_jacob-cable_4sbs.]",
         "cites": [
           "F1"
         ],
@@ -132,7 +128,7 @@
         "confidence": "high"
       },
       {
-        "text": "In docs-4, js-empty-docsite failed because it installed the deprecated 'genkitx-anthropic' package rather than '@genkit-ai/anthropic', failing both dependency and plugin registration checks.",
+        "text": "In docs-4, js-empty-docsite failed because it installed the third-party 'genkitx-anthropic' 0.30.0 (with its claude45Opus constant) rather than '@genkit-ai/anthropic', failing both dependency and plugin registration checks. [Reviewed 2026-11-02: the model called the package deprecated; npm shows no deprecation for genkitx-anthropic 0.30.0.]",
         "cites": [
           "F55",
           "F74",
@@ -154,7 +150,7 @@
         "confidence": "high"
       },
       {
-        "text": "In docs-5, all five arms failed to meet the 'uses the fallback middleware' check despite typechecking cleanly, pointing to a missing or unreachable requirement in the eval prompt or check implementation.",
+        "text": "In docs-5, all five arms failed 'uses the fallback middleware': each diff hand-writes a try/catch that retries a second Gemini model, and none adds @genkit-ai/middleware, so no agent found Genkit's fallback middleware. [Reviewed 2026-11-02: the model read this as a missing or unreachable requirement; the five diffs show the check is right.]",
         "cites": [
           "F10",
           "F56",
@@ -166,8 +162,8 @@
     ],
     "anomalies": [
       {
-        "text": "Eval docs-5 failed on 100% of arms (0/5 passed) because the 'uses the fallback middleware' assertion was never met by any configuration.",
-        "kind": "eval-design",
+        "text": "Eval docs-5 failed on 100% of arms (0/5 passed): no configuration used Genkit's fallback middleware; every arm hand-wrote a try/catch. [Reviewed 2026-11-02: the model filed this as eval design; it is an agent and docs outcome, not a check that rejects valid code.]",
+        "kind": "other",
         "cites": [
           "F10",
           "F46",
@@ -177,7 +173,7 @@
         ]
       },
       {
-        "text": "In agents-3, py-tool-index failed 'answers from the tool' despite correctly installing genkit 0.12.0, producing an empty tool response.",
+        "text": "In agents-3, py-tool-index failed 'answers from the tool' despite correctly installing genkit 0.12.0: the app answered the hidden question with an empty reply (\"\"). [Reviewed 2026-11-02: the model said \"an empty tool response\"; the check log shows the app's reply was empty, not that the tool returned nothing.]",
         "kind": "other",
         "cites": [
           "F49",
@@ -189,12 +185,12 @@
     ],
     "actions": [
       {
-        "title": "Investigate fallback-middleware eval design",
+        "title": "Confirm that agents miss Genkit's fallback middleware",
         "target": "evals/probes/docs/docs.eval.ts › docs: fallback-middleware",
         "kind": "eval",
-        "change": "Inspect the assertion for 'uses the fallback middleware' to determine whether the prompt or the assertion code expects an exact API signature that models currently miss.",
-        "expectedEffect": "At least one arm should satisfy 'uses the fallback middleware' and pass.",
-        "verify": "reeval run \"evals/probes/docs/docs.eval.ts › docs: fallback-middleware\"",
+        "change": "Run 4 attempts a side to confirm that agents hand-write a try/catch instead of using fallback() from @genkit-ai/middleware. [Reviewed 2026-11-02: the model proposed inspecting the assertion; it already accepts aliased, namespace and nested-use forms, and all five diffs hand-write the fallback.]",
+        "expectedEffect": "A stable 0 of 4 per arm confirms the docs do not lead agents to the middleware; any arm above 0 shows which channel does.",
+        "verify": "reeval run --config reeval.probes.config.ts \"evals/probes/docs/docs.eval.ts › docs: fallback-middleware\"",
         "impact": "high",
         "effort": "low",
         "cites": [
@@ -209,7 +205,7 @@
         "kind": "eval",
         "change": "Increase runs to at least 4 a side to confirm the directional 100 pt pass@1 lift and 2.4× reduction in tool calls.",
         "expectedEffect": "Statistical separation with confidence interval excluding 0.",
-        "verify": "reeval run \"evals/probes/agents/agents.eval.ts › agents: go-agent-session\" --runs 4",
+        "verify": "reeval run --config reeval.probes.config.ts \"evals/probes/agents/agents.eval.ts › agents: go-agent-session\" --runs 4",
         "impact": "high",
         "effort": "low",
         "cites": [
@@ -222,9 +218,9 @@
         "title": "Clarify Anthropic package naming in docsite references",
         "target": "evals/probes/docs/docs.eval.ts › docs: anthropic-plugin",
         "kind": "docs",
-        "change": "Update documentation sources crawled by js-empty-docsite to point to '@genkit-ai/anthropic' instead of legacy 'genkitx-anthropic'.",
-        "expectedEffect": "js-empty-docsite passes 'depends on @genkit-ai/anthropic' and achieves 100% pass@1.",
-        "verify": "reeval run \"evals/probes/docs/docs.eval.ts › docs: anthropic-plugin\"",
+        "change": "The js-empty-docsite agent fetched no docs and chose genkitx-anthropic from memory; nothing on npm marks that package as superseded. Run 4 attempts a side to see how often agents pick the third-party package, by arm. [Reviewed 2026-11-02: the model said the docsite arm crawled docs that named genkitx-anthropic; it made 0 fetches.]",
+        "expectedEffect": "A rate per arm for picking genkitx-anthropic over @genkit-ai/anthropic.",
+        "verify": "reeval run --config reeval.probes.config.ts \"evals/probes/docs/docs.eval.ts › docs: anthropic-plugin\"",
         "impact": "medium",
         "effort": "low",
         "cites": [
@@ -240,7 +236,7 @@
         "kind": "eval",
         "change": "Run at least 4 attempts per cell to verify whether the JS skill consistently produces valid two-turn replies over the unassisted baseline.",
         "expectedEffect": "Narrow confidence interval around the pass rate difference on 'replies come from one two-turn session'.",
-        "verify": "reeval run \"evals/probes/tooling/tooling.eval.ts › tooling: agent-two-turn\" --runs 4",
+        "verify": "reeval run --config reeval.probes.config.ts \"evals/probes/tooling/tooling.eval.ts › tooling: agent-two-turn\" --runs 4",
         "impact": "medium",
         "effort": "low",
         "cites": [
@@ -683,5 +679,10 @@
     "F24": "{\"kind\":\"effort\",\"run\":\"r1\",\"eval\":\"agents-2\",\"cells\":[{\"cell\":\"go-session-control (control)\",\"n\":1,\"medianToolCalls\":36,\"medianAgentS\":169.1,\"medianTokens\":2349769,\"medianCallsByClass\":{\"dependency\":7,\"verify\":3,\"workspace\":26}},{\"cell\":\"go-session-skill\",\"n\":1,\"medianToolCalls\":15,\"medianAgentS\":84.9,\"medianTokens\":881105,\"medianCallsByClass\":{\"context\":3,\"verify\":3,\"workspace\":9},\"vsControl\":{…",
     "F43": "{\"kind\":\"effort\",\"run\":\"r1\",\"eval\":\"tooling-9\",\"cells\":[{\"cell\":\"control (control)\",\"n\":1,\"medianToolCalls\":12,\"medianAgentS\":28.7,\"medianTokens\":269661,\"medianCallsByClass\":{\"workspace\":12}},{\"cell\":\"skill\",\"n\":1,\"medianToolCalls\":17,\"medianAgentS\":53.7,\"medianTokens\":596630,\"medianCallsByClass\":{\"context\":2,\"verify\":1,\"workspace\":14},\"vsControl\":{\"n\":\"1 vs 1\",\"toolCalls\":\"17 vs 12…",
     "F997": "{\"kind\":\"contrast\",\"run\":\"r1\",\"eval\":\"tooling-9\",\"a\":\"skill\",\"b\":\"control (control)\",\"passRate\":\"1/1 vs 0/1\",\"lift\":\"+100 pts (95% −12…+100)\",\"liftVerdict\":\"within noise\",\"smallSample\":true,\"measures\":[\"leans: 42% more tool calls, but 1 run a side can't confirm it; 4 is the least that can\",\"leans: 1.9× slower, but 1 run a side can't confirm it; 4 is the least that can\",\"leans: 2.2× more tokens,…"
+  },
+  "review": {
+    "at": "2026-11-02",
+    "by": "jacob-cable",
+    "note": "Reviewed by hand against the run's diffs, check logs and npm. Statements containing \"[Reviewed 2026-11-02: ...]\" differ from the model output and say why. The docs-5 anomaly kind changed from eval-design to other. 60 and 75 were checked against the record. Verify commands now pass --config reeval.probes.config.ts."
   }
 }
