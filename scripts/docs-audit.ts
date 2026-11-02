@@ -1,5 +1,6 @@
 import { execFile } from 'node:child_process'
 import { readFileSync, writeFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
 
@@ -16,11 +17,14 @@ type Finding = { rank: number; text: string }
 
 const OUT = fileURLToPath(new URL('../DOCS-AUDIT.md', import.meta.url))
 const VENDORED_RULES = fileURLToPath(new URL('../evals/rules/GENKIT.md', import.meta.url))
+const PACKAGE_JSON = fileURLToPath(new URL('../package.json', import.meta.url))
 const LANGS = ['js', 'go', 'python', 'dart'] as const
+type Lang = (typeof LANGS)[number]
 
 const SITE = 'https://genkit.dev'
 const DEVELOP_HTML = `${SITE}/docs/js/develop-with-ai/`
 const DEVELOP_MD = `${SITE}/docs/js/develop-with-ai.md`
+const developMdFor = (l: Lang): string => `${SITE}/docs/${l}/develop-with-ai.md`
 const DEVELOP_NEUTRAL = `${SITE}/docs/develop-with-ai`
 
 const errMsg = (err: unknown): string =>
@@ -36,12 +40,16 @@ const code = (s: string): string => `\`${s.replace(/`/g, "'")}\``
 
 const count = (text: string, needle: string): number => (needle ? text.split(needle).length - 1 : 0)
 
-/** Short quote around the first occurrence of `needle`, or an empty string. */
+/** Short quote around the first occurrence of `needle`, cut at word boundaries, or an empty string. */
 function excerpt(text: string, needle: string | RegExp, radius = 60): string {
   const m = typeof needle === 'string' ? (text.indexOf(needle) < 0 ? null : { index: text.indexOf(needle), len: needle.length }) : regexHit(text, needle)
   if (!m) return ''
-  const from = Math.max(0, m.index - radius)
-  return text.slice(from, m.index + m.len + radius).replace(/\s+/g, ' ').trim()
+  const hitEnd = m.index + m.len
+  let from = Math.max(0, m.index - radius)
+  let to = Math.min(text.length, hitEnd + radius)
+  while (from > 0 && from < m.index && !/\s/.test(text[from - 1] ?? ' ')) from++
+  while (to < text.length && to > hitEnd && !/\s/.test(text[to] ?? ' ')) to--
+  return text.slice(from, to).replace(/\s+/g, ' ').trim()
 }
 
 function regexHit(text: string, re: RegExp): { index: number; len: number } | null {
@@ -100,11 +108,45 @@ async function snapshot(repo: string): Promise<Repo> {
   return { repo, sha, paths }
 }
 
-const ghFile = async (r: Repo, path: string): Promise<string> =>
-  r.sha ? (await gh(`repos/${r.repo}/contents/${path}?ref=${r.sha}`, true)).out : ''
-
 const ghReadme = async (r: Repo): Promise<string> =>
   r.sha ? (await gh(`repos/${r.repo}/readme?ref=${r.sha}`, true)).out : ''
+
+/** `ai.chat(` calls inside fenced code, per page, skipping pages whose first block is `:::danger[Deprecated]`. */
+function liveChatExamples(text: string): { total: number; pages: Map<string, number> } {
+  const pages = new Map<string, number>()
+  let total = 0
+  let fenced = false
+  let title = ''
+  let deprecated = false
+  let awaitingFirstLine = false
+  for (const line of text.split('\n')) {
+    if (/^\s*(```|~~~)/.test(line)) fenced = !fenced
+    if (!fenced && /^# \S/.test(line)) {
+      title = line.slice(2).trim()
+      deprecated = false
+      awaitingFirstLine = true
+      continue
+    }
+    if (awaitingFirstLine && line.trim()) {
+      deprecated = line.trim().startsWith(':::danger[Deprecated]')
+      awaitingFirstLine = false
+    }
+    if (fenced && !deprecated) {
+      const n = line.match(/\bai\.chat\(/g)?.length ?? 0
+      if (n > 0) {
+        pages.set(title, (pages.get(title) ?? 0) + n)
+        total += n
+      }
+    }
+  }
+  return { total, pages }
+}
+
+const FRAMED_AS_OLD = /\b(previous|replacement|replaces|formerly|migrat\w*)\b/i
+
+/** Lines mentioning `needle` that do not frame it as the previous package or as being replaced. */
+const liveMentions = (text: string, needle: string): string[] =>
+  text.split('\n').filter((l) => l.includes(needle) && !FRAMED_AS_OLD.test(l))
 
 const skillNames = (text: string): string[] => [...new Set(text.match(/developing-genkit-[a-z]+/g) ?? [])].sort()
 
@@ -122,8 +164,10 @@ function tallyText(tally: Map<string, number>, limit = 12): string {
   return shown.join(', ') + (sorted.length > limit ? `, +${sorted.length - limit} more` : '')
 }
 
-const sumPrefix = (tally: Map<string, number>, prefix: string): number =>
-  [...tally].filter(([k]) => k.startsWith(prefix)).reduce((n, [, v]) => n + v, 0)
+const sumKeys = (tally: Map<string, number>, match: (key: string) => boolean): number =>
+  [...tally].filter(([k]) => match(k)).reduce((n, [, v]) => n + v, 0)
+
+const sumPrefix = (tally: Map<string, number>, prefix: string): number => sumKeys(tally, (k) => k.startsWith(prefix))
 
 /** Number of lines only in `a` and only in `b`, from the longest common subsequence. */
 function lineDiff(a: string[], b: string[]): { removed: number; added: number } {
@@ -151,20 +195,24 @@ const verdictOf = (f: Fetched, hit: boolean): Verdict => (f.ok ? (hit ? 'confirm
 const findings: Finding[] = []
 const addFinding = (rank: number, text: string) => findings.push({ rank, text })
 
-// ---------------------------------------------------------------- fetch
-
 const fetchedAt = new Date().toISOString()
 
-const [develop, developMd, developNeutral, rulesJs, rulesGo, index, ...bundles] = await Promise.all([
+const cliVersion = (JSON.parse(readFileSync(PACKAGE_JSON, 'utf8')) as { devDependencies?: Record<string, string> }).devDependencies?.['genkit-cli'] ?? 'unknown'
+const npmGenkit = await cmd('npm', ['view', 'genkit', 'version'])
+const genkitVersion = npmGenkit.ok ? npmGenkit.out.trim() : ''
+
+const [develop, developNeutral, rulesJs, rulesGo, index, ...rest] = await Promise.all([
   fetchText(DEVELOP_HTML),
-  fetchText(DEVELOP_MD),
   fetchText(DEVELOP_NEUTRAL),
   fetchText(`${SITE}/GENKIT.js.md`),
   fetchText(`${SITE}/GENKIT.go.md`),
   fetchText(`${SITE}/llms.txt`),
   ...LANGS.map((l) => fetchText(`${SITE}/llms-${l}.txt`)),
+  ...LANGS.map((l) => fetchText(developMdFor(l))),
 ])
-const bundle = Object.fromEntries(LANGS.map((l, i) => [l, bundles[i] as Fetched])) as Record<(typeof LANGS)[number], Fetched>
+const bundle = Object.fromEntries(LANGS.map((l, i) => [l, rest[i] as Fetched])) as Record<Lang, Fetched>
+const developByLang = Object.fromEntries(LANGS.map((l, i) => [l, rest[LANGS.length + i] as Fetched])) as Record<Lang, Fetched>
+const developMd = developByLang.js
 
 const [genkitRepo, skillsRepo, googleSkills] = await Promise.all([
   snapshot('genkit-ai/genkit'),
@@ -175,8 +223,6 @@ const [genkitReadme, skillsReadme] = await Promise.all([ghReadme(genkitRepo), gh
 
 const sections: string[] = []
 
-// ---------------------------------------------------------------- 1 skills
-
 {
   const treeSkills = skillsRepo.paths
     .map((p) => /^skills\/([^/]+)\/SKILL\.md$/.exec(p)?.[1])
@@ -185,6 +231,8 @@ const sections: string[] = []
   const googleGenkit = googleSkills.paths.filter((p) => /genkit[^/]*\/SKILL\.md$/.test(p))
   const pyPath = 'skills/cloud/developing-genkit-python/SKILL.md'
   const googlePy = googleSkills.paths.includes(pyPath)
+  const installCmd = 'npx skills add genkit-ai/skills'
+  const installsAll = skillsReadme.includes(installCmd) && treeSkills.length > 0
 
   const verdictFor = (names: string[], ok: boolean): Verdict => {
     if (!ok || treeSkills.length === 0) return 'unverified'
@@ -192,12 +240,20 @@ const sections: string[] = []
     return have === treeSkills.length ? 'refuted' : have > 0 ? 'partly' : 'confirmed'
   }
 
-  const sources: { src: string; names: string[]; ok: boolean; note: string }[] = [
-    { src: DEVELOP_HTML, names: skillNames(develop.text), ok: develop.ok, note: fetchNote(develop) },
-    { src: DEVELOP_MD, names: skillNames(developMd.text), ok: developMd.ok, note: fetchNote(developMd) },
+  const pageRows = LANGS.map((l) => {
+    const f = developByLang[l]
+    const own = `developing-genkit-${l}`
+    const names = skillNames(f.text)
+    const hasOwn = names.includes(own)
+    const hasInstall = f.text.includes(installCmd)
+    const verdict: Verdict = !f.ok ? 'unverified' : hasOwn || hasInstall ? 'refuted' : 'confirmed'
+    return { l, f, own, names, hasOwn, hasInstall, verdict }
+  })
+
+  const sources: { src: string; names: string[]; ok: boolean; note: string; reference?: true }[] = [
     { src: `https://github.com/genkit-ai/genkit README @ ${genkitRepo.sha.slice(0, 10)}`, names: skillNames(genkitReadme), ok: genkitReadme !== '', note: genkitRepo.error ?? 'ok' },
     { src: `https://github.com/genkit-ai/skills README @ ${skillsRepo.sha.slice(0, 10)}`, names: skillNames(skillsReadme), ok: skillsReadme !== '', note: skillsRepo.error ?? 'ok' },
-    { src: `https://github.com/genkit-ai/skills tree @ ${skillsRepo.sha.slice(0, 10)}`, names: treeSkills, ok: treeSkills.length > 0, note: skillsRepo.error ?? 'ok' },
+    { src: `https://github.com/genkit-ai/skills tree @ ${skillsRepo.sha.slice(0, 10)}`, names: treeSkills, ok: treeSkills.length > 0, note: skillsRepo.error ?? 'ok', reference: true },
     { src: `https://github.com/google/skills tree @ ${googleSkills.sha.slice(0, 10)}`, names: googleGenkit.map((p) => /([^/]+)\/SKILL\.md$/.exec(p)?.[1] ?? p), ok: googleSkills.paths.length > 0, note: googleSkills.error ?? 'ok' },
   ]
 
@@ -205,14 +261,27 @@ const sections: string[] = []
     s.src,
     s.names.length ? s.names.map(code).join(', ') : 'none',
     s.note,
-    s.src.includes('skills tree @ ' + skillsRepo.sha.slice(0, 10)) && s.src.includes('genkit-ai') ? '-' : verdictFor(s.names, s.ok),
+    s.reference ? '-' : verdictFor(s.names, s.ok),
   ])
 
-  const docSkillCount = skillNames(developMd.text).length
   sections.push(
     '## 1. Which skills exist, per source',
     '',
-    `Claim: the docs and READMEs disagree about which \`developing-genkit-*\` skills exist. Verdict column: \`confirmed\` if the source names none of the skills in the genkit-ai/skills tree, \`partly\` if it names some, \`refuted\` if it names all. The genkit-ai/skills tree is the reference (from source, pinned sha ${code(skillsRepo.sha || 'unavailable')}).`,
+    `Claim: an agent that starts from a language's ${code('develop-with-ai')} page cannot find that language's skill. Verdict per page: \`refuted\` if the page names the skill for its own language or shows ${code(installCmd)}, \`confirmed\` if it does neither, \`unverified\` if the fetch failed. The genkit-ai/skills tree is the reference (from source, pinned sha ${code(skillsRepo.sha || 'unavailable')}); ${code(installCmd)} ${installsAll ? 'appears in the skills README and the tree holds ' + treeSkills.length + ' skills' : 'could not be matched against the skills README'}.`,
+    '',
+    table(
+      ['Docs page', 'Fetch', 'Skills named', 'Own-language skill', `Shows ${installCmd}`, 'Verdict'],
+      pageRows.map((r) => [
+        developMdFor(r.l),
+        fetchNote(r.f),
+        r.names.length ? r.names.map(code).join(', ') : 'none',
+        r.f.ok ? `${code(r.own)} ${r.hasOwn ? 'named' : 'not named'}` : '-',
+        r.f.ok ? (r.hasInstall ? 'yes' : 'no') : '-',
+        r.verdict,
+      ]),
+    ),
+    '',
+    'Other sources. Verdict: `confirmed` if the source names none of the skills in the reference tree, `partly` if it names some, `refuted` if it names all.',
     '',
     table(['Source', 'Skills named', 'Fetch', 'Verdict'], rows),
     '',
@@ -224,21 +293,15 @@ const sections: string[] = []
           googleSkills.error ? `FETCH FAILED: ${googleSkills.error}` : `${code(pyPath)} ${googlePy ? 'present' : 'absent'}; genkit paths found: ${googleGenkit.length ? googleGenkit.map(code).join(', ') : 'none'} (sha ${code(googleSkills.sha)})`,
           googleSkills.error ? 'unverified' : googlePy ? 'confirmed' : 'refuted',
         ],
-        [
-          'The docs page lists fewer skills than exist',
-          `docs .md names ${docSkillCount} of ${treeSkills.length}`,
-          develop.ok || developMd.ok ? (docSkillCount < treeSkills.length ? 'confirmed' : 'refuted') : 'unverified',
-        ],
       ],
     ),
     '',
   )
-  if (developMd.ok && treeSkills.length > docSkillCount) {
-    addFinding(2, `The docs page ${DEVELOP_MD} names ${docSkillCount} skill(s) (${skillNames(developMd.text).map(code).join(', ') || 'none'}); the genkit-ai/skills tree has ${treeSkills.length} (${treeSkills.map(code).join(', ')}). The genkit-ai/genkit README and the skills README name all of them. Go, Python and Dart agents that start from the docs page never learn their skill exists.`)
+  const blind = pageRows.filter((r) => r.verdict === 'confirmed')
+  if (blind.length) {
+    addFinding(2, `${blind.map((r) => `${developMdFor(r.l)} (names ${r.names.map(code).join(', ') || 'no skill'}, no ${code(installCmd)})`).join('; ')} give an agent no way to find the skill for that language. The genkit-ai/skills tree has ${treeSkills.map(code).join(', ')}.`)
   }
 }
-
-// ---------------------------------------------------------------- 2 stale docs page
 
 {
   const needles = ['init:ai-tools', 'Genkit Node.js API Rules', 'v1.20.0', 'GENKIT.md']
@@ -268,8 +331,6 @@ const sections: string[] = []
   if (hit) addFinding(5, `${DEVELOP_NEUTRAL} still mentions ${code('init:ai-tools')}.`)
 }
 
-// ---------------------------------------------------------------- 3 rules files
-
 {
   const needles = ['ai.chat(', '@genkit-ai/googleai', '@genkit-ai/vertexai', 'genkitx-mcp', 'init:ai-tools', 'github.com/firebase/genkit/go', 'github.com/genkit-ai/genkit/go']
   const files: [string, Fetched][] = [
@@ -290,6 +351,10 @@ const sections: string[] = []
   })
 
   let diffRows: string[][] = []
+  let cliTemplate = ''
+  try {
+    cliTemplate = (createRequire(import.meta.url)('genkit-cli/dist/commands/init-ai-tools/context/nodejs.js') as { GENKIT_CONTEXT: string }).GENKIT_CONTEXT
+  } catch {}
   try {
     const vendored = readFileSync(VENDORED_RULES, 'utf8')
     if (rulesJs.ok) {
@@ -297,13 +362,20 @@ const sections: string[] = []
       const vTitle = vendored.split('\n').find((l) => l.trim()) ?? ''
       diffRows = [
         [
-          'GENKIT.js.md vs evals/rules/GENKIT.md (CLI 1.44.1 copy)',
+          `GENKIT.js.md vs evals/rules/GENKIT.md (${cliTemplate.trim() === vendored.trim() ? `identical to the template in the installed genkit-cli ${cliVersion}` : 'not matched against the installed genkit-cli template'})`,
           `${d.removed} lines only in vendored, ${d.added} lines only on website (vendored ${vendored.split('\n').length} lines, website ${rulesJs.text.split('\n').length})`,
           `vendored title ${code(vTitle)}`,
           modelTally(vendored).size ? `vendored models: ${tallyText(modelTally(vendored))}` : '-',
         ],
       ]
-      if (d.removed + d.added > 0) addFinding(4, `The website rules file ${SITE}/GENKIT.js.md and the file ${code('genkit init:ai-tools')} writes (CLI 1.44.1) differ by ${d.removed} + ${d.added} lines, yet carry the same title ${code(vTitle)}. An agent cannot tell which one is current.`)
+      const webTitle = rulesJs.text.split('\n').find((l) => l.trim()) ?? ''
+      const webVersion = /\(v?(\d+\.\d+\.\d+)\)/.exec(webTitle)?.[1]
+      const sameTitle = webTitle.trim() === vTitle.trim()
+      const parts = [
+        webVersion ? `The website rules file ${SITE}/GENKIT.js.md is titled ${code(webTitle)}${genkitVersion ? `, while ${code('npm view genkit version')} is ${genkitVersion} (repo CLI pin ${code(`genkit-cli ${cliVersion}`)})` : ''}.` : '',
+        d.removed + d.added > 0 ? `It differs by ${d.removed} + ${d.added} lines from ${code('evals/rules/GENKIT.md')}${cliTemplate.trim() === vendored.trim() ? `, the template ${code('genkit init:ai-tools')} writes in genkit-cli ${cliVersion}` : ''}${sameTitle ? ', yet both carry the same title, so an agent cannot tell which is current' : ''}.` : '',
+      ].filter(Boolean)
+      if (parts.length) addFinding(3, parts.join(' '))
     }
   } catch (err) {
     diffRows = [['GENKIT.js.md vs vendored copy', `COMPARE FAILED: ${errMsg(err)}`, '-', '-']]
@@ -320,14 +392,11 @@ const sections: string[] = []
 
   for (const [url, f] of files) {
     if (!f.ok) continue
-    const bad = needles.slice(0, 5).filter((n) => count(f.text, n) > 0)
-    const version = /\((v?\d+\.\d+\.\d+)\)/.exec(f.text.split('\n').find((l) => l.trim()) ?? '')?.[1]
-    if (version) addFinding(3, `${url} is titled with version ${code(version)}; the pinned CLI is 1.44.1.`)
+    const bad = ['ai.chat(', 'genkitx-mcp'].filter((n) => count(f.text, n) > 0)
+    if (liveMentions(f.text, '@genkit-ai/googleai').length) bad.push('@genkit-ai/googleai')
     if (bad.length) addFinding(3, `${url} contains ${bad.map(code).join(', ')}.`)
   }
 }
-
-// ---------------------------------------------------------------- 4 llms bundles
 
 {
   const sources: [string, Fetched][] = [['index', index], ...LANGS.map((l): [string, Fetched] => [l, bundle[l]])]
@@ -340,14 +409,14 @@ const sections: string[] = []
       `${SITE}/${name === 'index' ? 'llms.txt' : `llms-${name}.txt`}`,
       f.ok ? `${f.text.length} bytes` : fetchNote(f),
       f.ok ? tallyText(t) : '-',
-      f.ok ? `1.5: ${sumPrefix(t, 'gemini-1.5')}, 2.0: ${sumPrefix(t, 'gemini-2.0')}, 2.5: ${sumPrefix(t, 'gemini-2.5')}, 3: ${sumPrefix(t, 'gemini-3')}, latest aliases: ${sumPrefix(t, 'gemini-flash-latest') + sumPrefix(t, 'gemini-pro-latest')}` : '-',
+      f.ok ? `1.5: ${sumPrefix(t, 'gemini-1.5')}, 2.0: ${sumPrefix(t, 'gemini-2.0')}, 2.5: ${sumPrefix(t, 'gemini-2.5')}, 3: ${sumPrefix(t, 'gemini-3')}, latest aliases: ${sumKeys(t, (k) => k.endsWith('-latest'))}` : '-',
     ]
   })
 
   const pkgRows = sources.map(([name, f]) => [
     name,
     ...pkgNeedles.map((n) => (f.ok ? String(count(f.text, n)) : 'n/a')),
-    f.ok ? code(excerpt(f.text, '@genkit-ai/googleai', 50)) || '-' : '-',
+    f.ok ? String(liveMentions(f.text, '@genkit-ai/googleai').length) : 'n/a',
   ])
 
   const goRows = sources.map(([name, f]) => [
@@ -378,9 +447,11 @@ const sections: string[] = []
     '',
     table(['URL', 'Size', 'Models by count', 'Families'], modelRows),
     '',
-    '### 4b. Deprecated packages and removed APIs (occurrence counts)',
+    '### 4b. Watched package names and commands (occurrence counts)',
     '',
-    table(['Bundle', ...pkgNeedles.map(code), 'First `@genkit-ai/googleai` excerpt'], pkgRows),
+    'Raw substring counts. Candidate findings count `ai.chat(` only in fenced code on pages not marked deprecated.',
+    '',
+    table(['Bundle', ...pkgNeedles.map(code), '`@genkit-ai/googleai` lines not framed as previous or replacement'], pkgRows),
     '',
     '### 4c. Go module path (occurrence counts)',
     '',
@@ -398,10 +469,13 @@ const sections: string[] = []
     const t = modelTally(f.text)
     const old = sumPrefix(t, 'gemini-1.5') + sumPrefix(t, 'gemini-2.0')
     if (old > 0) addFinding(1, `${SITE}/llms-${l}.txt uses retired or retiring models: ${sumPrefix(t, 'gemini-1.5')} x ${code('gemini-1.5*')}, ${sumPrefix(t, 'gemini-2.0')} x ${code('gemini-2.0*')} (top: ${tallyText(t, 4)}).`)
-    const chat = count(f.text, 'ai.chat(')
-    if (chat > 0) addFinding(1, `${SITE}/llms-${l}.txt has ${chat} x ${code('ai.chat(')} in examples${count(f.text, 'API is deprecated. Use [Agents]') > 0 ? `, although the same bundle says ${code(excerpt(f.text, 'API is deprecated. Use [Agents]', 25))}` : ''}.`)
-    const goog = count(f.text, '@genkit-ai/googleai')
-    if (goog > 0) addFinding(5, `${SITE}/llms-${l}.txt names the deprecated ${code('@genkit-ai/googleai')} ${goog} x: ${code(excerpt(f.text, '@genkit-ai/googleai', 50))}.`)
+    const chat = liveChatExamples(f.text)
+    if (chat.total > 0) {
+      const notice = /The `ai\.chat\(\)` API is deprecated\./.exec(f.text)?.[0]
+      addFinding(1, `${SITE}/llms-${l}.txt has ${chat.total} x ${code('ai.chat(')} in fenced code on pages not marked deprecated: ${[...chat.pages].map(([t, n]) => `"${t}" (${n})`).join(', ')}${notice ? `, although the same bundle says ${code(notice)}` : ''}.`)
+    }
+    const goog = liveMentions(f.text, '@genkit-ai/googleai')
+    if (goog.length > 0) addFinding(5, `${SITE}/llms-${l}.txt names ${code('@genkit-ai/googleai')} ${goog.length} x outside previous/replacement framing: ${code(excerpt(f.text, goog[0] ?? '', 50))}.`)
     const mcp = count(f.text, 'genkitx-mcp')
     if (mcp > 0) addFinding(3, `${SITE}/llms-${l}.txt names ${code('genkitx-mcp')} ${mcp} x.`)
   }
@@ -412,11 +486,9 @@ const sections: string[] = []
   }
   const labelsByLang = LANGS.map((l) => [...bundle[l].text.matchAll(labelRe)].map((m) => (m[1] ?? '').toLowerCase()))
   const distinct = new Set(labelsByLang.flat())
-  const withoutLabel = LANGS.filter((_, i) => bundle[LANGS[i] as (typeof LANGS)[number]].ok && (labelsByLang[i] ?? []).length === 0)
+  const withoutLabel = LANGS.filter((_, i) => bundle[LANGS[i] as Lang].ok && (labelsByLang[i] ?? []).length === 0)
   if (distinct.size > 1 || withoutLabel.length) addFinding(3, `The Agents API stability label differs by language: ${LANGS.map((l, i) => `${l}: ${[...new Set(labelsByLang[i])].join('/') || 'no label sentence'}`).join('; ')}.`)
 }
-
-// ---------------------------------------------------------------- 5 legacy pages
 
 {
   const legacy = 'https://firebase.google.com/docs/genkit'
@@ -442,8 +514,6 @@ const sections: string[] = []
   )
   if (f.ok && needles.some((n) => count(f.text, n) > 0)) addFinding(3, `${legacy} still shows legacy identifiers.`)
 }
-
-// ---------------------------------------------------------------- 6 npm
 
 {
   const pkgs = ['@genkit-ai/googleai', '@genkit-ai/google-genai', '@genkit-ai/vertexai', 'genkitx-mcp', '@genkit-ai/mcp', 'genkit-cli']
@@ -478,8 +548,6 @@ const sections: string[] = []
   }
 }
 
-// ---------------------------------------------------------------- 7 go proxy
-
 {
   const mods = ['github.com/firebase/genkit/go', 'github.com/genkit-ai/genkit/go']
   const results = await Promise.all(mods.map((m) => fetchText(`https://proxy.golang.org/${m}/@latest`)))
@@ -504,15 +572,14 @@ const sections: string[] = []
     '',
   )
   const mismatch = mods.filter((m, i) => results[i]?.ok && declared(goMods[i]) !== 'n/a' && declared(goMods[i]) !== m)
-  for (const m of mismatch) addFinding(2, `${code(m)} resolves on proxy.golang.org but its go.mod declares ${code(declared(goMods[mods.indexOf(m)]))}, so ${code(`go get ${m}`)} fails with a module path mismatch.`)
+  const usedInDocs = (m: string): number => LANGS.reduce((n, l) => n + count(bundle[l].text, m), 0) + count(index.text, m)
+  for (const m of mismatch) addFinding(3, `${code(m)} (the path an agent would guess from the repo URL github.com/genkit-ai/genkit) resolves on proxy.golang.org but its go.mod declares ${code(declared(goMods[mods.indexOf(m)]))}, so ${code(`go get ${m}`)} fails with a module path mismatch. The fetched llms bundles use it ${usedInDocs(m)} x.`)
   const ok = mods.filter((_, i) => (results[i] as Fetched).ok)
   if (ok.length === 1 && bundle.go.ok) {
     const bad = mods.find((m) => !ok.includes(m)) ?? ''
     if (count(bundle.go.text, bad) > 0) addFinding(1, `${code(bad)} does not resolve on proxy.golang.org, yet ${SITE}/llms-go.txt uses it ${count(bundle.go.text, bad)} times.`)
   }
 }
-
-// ---------------------------------------------------------------- write
 
 const ranked = [...findings].sort((a, b) => a.rank - b.rank)
 const head = [
