@@ -49,15 +49,15 @@ If the oracle fails a bug, the check is wrong, not the fix: read `failing_attemp
 
 ## Probes
 
-`evals/probes/` holds smoke probes outside the study. They have their own configs, so the study's plan does not change. There are three suites: `docs` (from an empty JS project, does the docs channel lead to the current API), `agents` (Go and Python) and `tooling` (CLI, MCP server and Dev UI plumbing on the fixture app). Each probe runs once per cell, and nothing is gated in a real run. The arms change from probe to probe. `docsite` limits only the fetches that the sandbox makes: Claude Code's WebSearch runs on Anthropic's API, so read the `web-searches` observation.
+`evals/probes/` holds smoke probes outside the study. They have their own configs, so the study's plan does not change. There are three suites: `docs` (from an empty or seeded JS project, does the docs channel lead to the current API), `agents` (Go and Python) and `tooling` (CLI, MCP server and Dev UI plumbing on the fixture app). Each probe runs once per cell, and nothing is gated in a real run. The arms change from probe to probe; the docs suite adds `hosted`, which is `docsite` plus the AGENTS.md block of genkit.dev's develop-with-ai page, pointing at the hosted `GENKIT.js.md`. `docsite` limits only the fetches that the sandbox makes: Claude Code's WebSearch runs on Anthropic's API, so read the `web-searches` observation.
 
 Each probe in `evals/probes/<suite>/cases.ts` has a correct solution (`oracle`) and a plausible wrong one (`cheat`, with the checks it must fail). Under `reeval.probes.oracle.config.ts` the eval places both solutions under `~/.probe`, and the fake agent applies one of them. A real agent's sandbox has no `~/.probe`.
 
 ```bash
-pnpm probe:oracle                            # expect 18 passed
-pnpm probe:canary                            # expect "canary-check: all 18 cells failed as they must"
-pnpm probe --profile smoke                   # Claude Code Sonnet only: 58 cells
-pnpm probe                                   # all five harnesses: 290 cells
+pnpm probe:oracle                            # expect 20 passed
+pnpm probe:canary                            # expect "canary-check: all 20 cells failed as they must"
+pnpm probe --profile smoke                   # Claude Code Sonnet only: 73 cells
+pnpm probe                                   # all five harnesses: 365 cells
 pnpm probe evals/probes/docs/                # one suite, by path: a bare `docs` also matches `*-docsite` cells
 pnpm -s tsx scripts/docs-audit.ts            # rewrites DOCS-AUDIT.md; no agent, no Docker
 ```
