@@ -215,9 +215,10 @@ const chat = triage.chat();
 const turn1 = (await chat.send('Where is order A-1001?')).text;
 const turn2 = (await chat.send('What is its tracking code?')).text;
 writeFileSync('answer.json', JSON.stringify({ turn1, turn2 }, null, 2));
+console.log(JSON.stringify({ turn1, turn2 }, null, 2));
 `,
       },
-      exec: 'node_modules/.bin/tsx two-turn.ts && cat answer.json',
+      exec: 'node_modules/.bin/tsx two-turn.ts',
     },
     cheat: {
       files: {

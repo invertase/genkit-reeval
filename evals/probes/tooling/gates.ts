@@ -1,5 +1,6 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { printedIn, squash } from '../transcript.ts'
 
 const FAIL = [
   'unavailable',
@@ -127,6 +128,58 @@ export function rootErrors(mcpJson: string | null, workspace: string): string[] 
   })
 }
 
+/** A tool call the two-turn proof may count: a shell command or a `run_flow` call, with the text it returned. */
+export type RanCall = { kind: 'shell' | 'run_flow'; command: string; output: string }
+
+const READS_ANSWER = /\b(?:cat|head|tail|less|more|jq|bat|nl|sed|awk|grep|rg|cut|tr|wc|od|xxd|strings)\b[^;&|\n]*answer\.json|<\s*\S*answer\.json|\b(?:readFile|readFileSync|require|import)\s*\([^)]*answer\.json/
+const RUNS_CODE = /(?:^|[\s;&|('"/])(?:tsx|node|bun|deno|npx|npm\s+(?:run|exec|start)|pnpm\s+(?:run|exec|dlx|start)|genkit\s+(?:\S+\s+)*?flow:run|(?:ba)?sh\s+\S+\.sh)(?=\s|$)/
+
+/**
+ * Why the replies in `answer.json` are not shown to come from a run of the agent; empty when they are.
+ * A reply counts when one call that ran code printed both replies, did not read `answer.json`, and
+ * did not carry either reply in its own input, and when no reply is plain `fixture` data the agent
+ * could read. A script that prints constants it wrote into a file still passes.
+ */
+export function replyErrors(replies: { turn1: string; turn2: string }, calls: RanCall[], fixture: string): string[] {
+  const both = [replies.turn1, replies.turn2]
+  const errors = (['turn1', 'turn2'] as const).flatMap((key) => (squash(replies[key]) !== '' && squash(fixture).includes(squash(replies[key])) ? [`${key} is plain fixture data, not a model reply`] : []))
+  if (errors.length > 0) return errors
+  const proved = calls.some(
+    (call) =>
+      (call.kind === 'run_flow' || RUNS_CODE.test(call.command)) &&
+      !READS_ANSWER.test(call.command) &&
+      both.every((reply) => !squash(call.command).includes(squash(reply)) && printedIn(reply, call.output)),
+  )
+  return proved ? [] : ['no call that ran code, without reading answer.json or carrying the replies itself, printed both replies']
+}
+
+type EvalRow = { testCaseId?: string; error?: unknown; metrics?: { evaluator?: string; error?: unknown }[] }
+
+const evalRows = (text: string | null): EvalRow[] | null => {
+  try {
+    const run: unknown = JSON.parse(text ?? '')
+    const rows = Array.isArray(run) ? run : (run as { results?: unknown }).results
+    return Array.isArray(rows) && rows.length > 0 ? (rows as EvalRow[]) : null
+  } catch {
+    return null
+  }
+}
+
+/** Why the JSON `eval:flow --output` wrote does not show every test case run through the flow and handed to an evaluator; empty when it does. The faithfulness evaluator errors "Context was not provided" on a flow without a retriever, so evaluator errors are in `evalMetricErrors`, which does not gate. */
+export function evalRunErrors(text: string | null): string[] {
+  const rows = evalRows(text)
+  if (rows === null) return ['the eval output is missing, not JSON or holds no results']
+  return rows.flatMap((r) => {
+    const id = r.testCaseId ?? '?'
+    if (r.error) return [`${id}: inference error ${JSON.stringify(r.error).slice(0, 200)}`]
+    return Array.isArray(r.metrics) && r.metrics.length > 0 ? [] : [`${id}: no evaluator scored it`]
+  })
+}
+
+/** The errors evaluators reported in the JSON `eval:flow --output` wrote, one per metric. */
+export const evalMetricErrors = (text: string | null): string[] =>
+  (evalRows(text) ?? []).flatMap((r) => (r.metrics ?? []).flatMap((m) => (m.error ? [`${r.testCaseId ?? '?'}: ${m.evaluator ?? '?'} ${JSON.stringify(m.error).slice(0, 200)}`] : [])))
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const admits: [string, boolean][] = [
     ["The Genkit docs tools aren't available in this session", true],
@@ -191,6 +244,47 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     ['expanded root', rootErrors(expandMcpJson(server('genkit', ['mcp', '--project-root', '${PWD:-.}']), {}), '/reeval/workspace'), []],
     ['unexpanded root fails', rootErrors(server('genkit', ['mcp', '--project-root', '${PWD}']), '/reeval/workspace').length, 1],
   ]
+  const T1 = 'Order A-1001 is on its way: shipped, ETA 2026-10-22.'
+  const T2 = 'The tracking code for that order is NW-7F3K2Q.'
+  const printedBoth = JSON.stringify({ turn1: T1, turn2: T2 }, null, 2)
+  const FIXTURE = '{ "A-1001": { "status": "shipped", "eta": "2026-10-22", "tracking": "NW-7F3K2Q" } }'
+  const shell = (command: string, output: string): RanCall => ({ kind: 'shell', command, output })
+  const reply = (calls: RanCall[], replies = { turn1: T1, turn2: T2 }) => replyErrors(replies, calls, FIXTURE).length
+  const evalRun = (results: unknown) => evalRunErrors(JSON.stringify({ key: {}, results }))
+  const proof: [string, number, number][] = [
+    ['a script run that printed both replies', reply([shell('npx tsx run-triage.ts', printedBoth)]), 0],
+    ['the oracle path', reply([shell('sh ~/.probe/run.sh good', printedBoth)]), 0],
+    ['genkit flow:run that printed both', reply([shell('genkit flow:run tryTwoTurn \'{"a":1}\' -- npx tsx src/index.ts', `Result:\n${printedBoth}`)]), 0],
+    ['an MCP run_flow that returned both', reply([{ kind: 'run_flow', command: '{"flowName":"tryTwoTurn"}', output: printedBoth }]), 0],
+    ['a script that prints constants passes', reply([shell('node fake.mjs', printedBoth)]), 0],
+    ['escaped output', reply([shell('npx tsx run.ts', JSON.stringify(printedBoth))]), 0],
+    ['no call at all', reply([]), 1],
+    ['minimal facts copied from the fixture', reply([shell('cat src/orders.json', FIXTURE)], { turn1: 'shipped', turn2: 'NW-7F3K2Q' }), 2],
+    ['write then cat', reply([shell(`echo '${printedBoth}' > answer.json; cat answer.json`, printedBoth)]), 1],
+    ['cat of answer.json after a real run', reply([shell('cat answer.json', printedBoth)]), 1],
+    ['jq of answer.json', reply([shell('jq . answer.json', printedBoth)]), 1],
+    ['node -e that reads answer.json', reply([shell('node -e "console.log(require(\'fs\').readFileSync(\'answer.json\',\'utf8\'))"', printedBoth)]), 1],
+    ['echo of the replies', reply([shell(`echo '${T1} ${T2}'`, `${T1} ${T2}`)]), 1],
+    ['node -e printing constants in the command', reply([shell(`node -e "console.log('${T1}', '${T2}')"`, `${T1} ${T2}`)]), 1],
+    ['only one reply printed', reply([shell('npx tsx run.ts', JSON.stringify({ turn1: T1 }))]), 1],
+    ['a failed run that printed nothing', reply([shell('npx tsx run.ts', '')]), 1],
+    ['a read of the fixture that holds the replies', reply([shell('cat src/orders.json', `${T1} ${T2}`)]), 1],
+  ]
+  const run = (metrics: unknown, extra = {}) => evalRun([{ testCaseId: 't1', input: {}, output: 'x', metrics, ...extra }])
+  const scored = [{ evaluator: '/evaluator/genkitEval/faithfulness', score: 1, status: 'PASS' }]
+  const evals: [string, number, number][] = [
+    ['eval run scored', run(scored).length, 0],
+    ['eval output as a bare array', evalRunErrors(JSON.stringify([{ testCaseId: 't1', metrics: scored }])).length, 0],
+    ['eval metric with an error does not gate', run([{ evaluator: '/evaluator/genkitEval/faithfulness', error: 'Context was not provided' }]).length, 0],
+    ['eval metric errors are listed', evalMetricErrors(JSON.stringify({ results: [{ testCaseId: 't1', metrics: [{ evaluator: 'f', error: 'x' }] }] })).length, 1],
+    ['eval metric errors none', evalMetricErrors(JSON.stringify({ results: [{ testCaseId: 't1', metrics: scored }] })).length, 0],
+    ['eval row with an inference error', run([], { error: 'flow threw' }).length, 1],
+    ['eval row no evaluator scored', run([]).length, 1],
+    ['eval output without results', evalRun([]).length, 1],
+    ['eval output not JSON', evalRunErrors('nope').length, 1],
+    ['eval output missing', evalRunErrors(null).length, 1],
+  ]
+  cases.push(...proof.map(([name, got, want]): [string, unknown, unknown] => [name, got, want]), ...evals.map(([name, got, want]): [string, unknown, unknown] => [name, got, want]))
   errors.push(...cases.filter(([, got, want]) => JSON.stringify(got) !== JSON.stringify(want)).map(([name, got, want]) => `${name}: got ${JSON.stringify(got)}, want ${JSON.stringify(want)}`))
   for (const e of errors) console.error(e)
   console.log(errors.length === 0 ? `gates ok: ${admits.length + cases.length} cases` : `gates: ${errors.length} mismatches`)

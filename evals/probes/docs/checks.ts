@@ -217,11 +217,17 @@ const ANTHROPIC_PLACEHOLDER = 'unused-by-the-checks'
 /** Prefix for every run of the agent's app: the harness's own key is not in the checks' shell, and an app that builds the Anthropic plugin needs some value to construct while Gemini serves the call. */
 const ANTHROPIC_ENV = `ANTHROPIC_API_KEY=${ANTHROPIC_PLACEHOLDER}`
 
-/** `errors` is empty when `npm start` exits 0 within two minutes and prints at least five words. */
+const ERROR_OUTPUT = /\b(?:unauthori[sz]ed|401|403|invalid x-api-key|api key|authentication_error)\b|^\s*\w*Error\b[:\s]/im
+
+/** Whether `stdout` is an error report an app caught and printed: an auth failure, or a line that opens with `Error:` or `SomethingError`. */
+export const printsErrorText = (stdout: string): boolean => ERROR_OUTPUT.test(stdout)
+
+/** `errors` is empty when `npm start` exits 0 within two minutes and prints at least five words that are not an error report. */
 async function startErrors(c: AttemptContext): Promise<string[]> {
   const run = await c.exec(`${ANTHROPIC_ENV} timeout 120 npm start --silent`, { retries: 1, interval: 3000 })
   if (run.exitCode !== 0) return [`npm start exited ${run.exitCode}: ${run.stderr.trim().slice(-400)}`]
   const words = run.stdout.trim().split(/\s+/).filter(Boolean).length
+  if (printsErrorText(run.stdout)) return [`npm start printed an error report: ${JSON.stringify(run.stdout.slice(0, 200))}`]
   return words >= 5 ? [] : [`npm start printed ${words} words: ${JSON.stringify(run.stdout.slice(0, 200))}`]
 }
 
@@ -255,6 +261,10 @@ export const registersAnthropic = (ws: Workspace): boolean =>
 /** True when the project depends on `@genkit-ai/middleware`, imports `fallback` from it (any alias or `* as X`) and calls it. */
 export const usesFallback = (ws: Workspace): boolean =>
   hasDep(ws, '@genkit-ai/middleware') && callsExport(ws.code, '@genkit-ai/middleware', 'fallback')
+
+/** True when the project calls `defineAgent(` or imports a session store from a Genkit package; a session store class it writes itself does not count. */
+export const usesDefineAgent = (ws: Workspace): boolean =>
+  /\bdefineAgent\s*\(/.test(ws.code) || namedImports(ws.code, (n) => n === 'genkit' || n.startsWith('genkit/') || n.startsWith('@genkit-ai/')).some((b) => /SessionStore$/.test(b.imported))
 
 const typecheck = (c: AttemptContext) => expect(c.exec('node_modules/.bin/tsc --noEmit'), CHECK.typechecks).toSucceed()
 
@@ -321,7 +331,7 @@ const RUNNERS: Record<string, (c: AttemptContext, ws: Workspace) => Promise<void
   },
 
   'chat-session': async (c, ws) => {
-    c.observe('used-define-agent', /\bdefineAgent\s*\(|\b\w*SessionStore\b/.test(ws.code))
+    c.observe('used-define-agent', usesDefineAgent(ws))
     expect(deprecatedChat(ws.code), CHECK.noDeprecatedChat).toBe(null)
     await typecheck(c)
     const mine = randomCode().toLowerCase()
@@ -444,6 +454,18 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     ['image preview is shut down', shutDownMedia(`model('gemini-2.5-flash-image-preview')`) !== null, true],
     ['media ids: current ids listed', mediaIds(`model('gemini-3.8-flash-tts'); model('gemini-nano-banana-2.1'); model('gemini-flash-latest')`).join() === 'gemini-3.8-flash-tts,gemini-nano-banana-2.1', true],
     ['media ids to verify skip banned ids', unbannedMediaIds(`model('imagen-3.0-generate-002'); model('gemini-2.5-flash-preview-tts'); model('gemini-3.8-flash-tts')`).join() === 'gemini-3.8-flash-tts', true],
+    ['define agent called', usesDefineAgent(ws([], `const a = ai.defineAgent({ name: 'a' })`)), true],
+    ['file session store imported from genkit/beta', usesDefineAgent(ws([], `import { FileSessionStore } from 'genkit/beta'\nconst s = new FileSessionStore('x')`)), true],
+    ['session store from a genkit-ai package', usesDefineAgent(ws([], `import { InMemorySessionStore as S } from '@genkit-ai/middleware'`)), true],
+    ['hand-rolled session store class', usesDefineAgent(ws([], `class MySessionStore { get() {} }\nconst s = new MySessionStore()`)), false],
+    ['session store from a local module', usesDefineAgent(ws([], `import { FileSessionStore } from './store'`)), false],
+    ['define agent only in a comment', usesDefineAgent(ws([], `// ai.defineAgent({})`)), false],
+    ['start prints a caught 401', printsErrorText('Error: 401 invalid x-api-key'), true],
+    ['start prints an auth error name', printsErrorText('AuthenticationError: bad key\nsomething'), true],
+    ['start prints unauthorized', printsErrorText('Request failed: Unauthorized'), true],
+    ['start prints a missing api key', printsErrorText('Please set your API key first'), true],
+    ['start prints a joke', printsErrorText('Why do programmers prefer dark mode? Because light attracts bugs and every error.'), false],
+    ['start prints a haiku', printsErrorText('Waves fold into foam\nsalt wind carries gull voices\nthe tide keeps its time'), false],
     ['result ok', resultErrors({ exitCode: 0, stdout: 'x\nPROBE_RESULT {"ok":true}\n', stderr: '' }).length === 0, true],
     ['result not ok', resultErrors({ exitCode: 0, stdout: 'PROBE_RESULT {"ok":false}\n', stderr: '' }).length === 0, false],
     ['result malformed', resultErrors({ exitCode: 0, stdout: 'PROBE_RESULT {oops\n', stderr: '' }).length === 0, false],

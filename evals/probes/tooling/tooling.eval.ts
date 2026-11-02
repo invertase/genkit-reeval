@@ -5,10 +5,10 @@ import { type AttemptContext, type ExecRetry, evaluate, expect, type Turn } from
 import { control, directed, mcp, skill } from '../../environments.ts'
 import { verifyMcpServer } from '../mcp-client.ts'
 import { gate, noProviderErrors, type Probe, type ProbeResult, parseResult, placeSolutions } from '../probe.ts'
-import { callsOf, genkitCli, printedIn, toolOutputs } from '../transcript.ts'
+import { callOutputs, callsOf, genkitCli } from '../transcript.ts'
 import { PROBES, REAL_FLOWS } from './cases.ts'
 import { controlClaude, directedOffline, mcpOffline, mcpWrongRoot, skillClaude } from './environments.ts'
-import { admitsDocsFailed, cwdErrors, expandMcpJson, genkitServers, registrationErrors, rootErrors } from './gates.ts'
+import { admitsDocsFailed, cwdErrors, evalMetricErrors, evalRunErrors, expandMcpJson, genkitServers, type RanCall, registrationErrors, replyErrors, rootErrors } from './gates.ts'
 import { genkitMcp, observeClaudeSetup, observeTooling } from './observe.ts'
 
 const only = (...names: string[]): Probe[] => PROBES.filter((p) => names.includes(p.name))
@@ -92,11 +92,14 @@ evaluate.each(only('cli-add-eval'))(
       'evaluator is registered',
     ).not.toEqual([])
     const run = await c.exec(
-      `timeout 170 genkit --non-interactive eval:flow summarizeTicket '[{"testCaseId":"late-order","input":{"text":"My order never arrived and I need it for Friday."}}]' -f -- npm run dev`,
+      `rm -f ~/.eval-out.json; timeout 170 genkit --non-interactive eval:flow summarizeTicket '[{"testCaseId":"late-order","input":{"text":"My order never arrived and I need it for Friday."}}]' -f -o ~/.eval-out.json -- npm run dev`,
       { retries: 1, interval: 3000 },
     )
     const listed = /Using evaluators:.*faithful/i.test(`${run.stdout}\n${run.stderr}`)
-    expect(run.exitCode === 0 && listed ? [] : [`exit ${run.exitCode}, faithfulness evaluator ${listed ? 'listed' : 'not listed'}`], 'eval:flow runs with the evaluator').toEqual([])
+    const out = await c.readFile('~/.eval-out.json')
+    const errors = run.exitCode === 0 && listed ? evalRunErrors(out) : [`exit ${run.exitCode}, faithfulness evaluator ${listed ? 'listed' : 'not listed'}`]
+    c.observe('eval-flow-evaluator-errors', evalMetricErrors(out).slice(0, 4))
+    expect(errors, 'eval:flow runs with the evaluator').toEqual([])
     await typechecks(c)
     c.observe('eval-flow-exit', run.exitCode)
     c.observe('evaluator-keys', keys.slice(0, 6))
@@ -300,11 +303,16 @@ evaluate.each(only('mcp-setup-claude'))(
   },
 )
 
-/** The replies in `answer.json` that no tool call of the attempt returned; a printed run or a read of the file shows a reply, and session files may be gone by now. */
-function unprinted(text: string | null, outputs: string[]): string[] {
+const FIXTURE = SECOND_APP_FILES.map((file) => read(`../../app/${file}`)).join('\n')
+
+/** Why the replies in `answer.json` are not shown to come from a run of the agent; the calls counted are shell commands and `run_flow` calls. */
+function unrun(c: AttemptContext, text: string | null): string[] {
   try {
     const parsed = JSON.parse(text ?? '') as Record<string, unknown>
-    return ['turn1', 'turn2'].filter((key) => !printedIn(String(parsed[key] ?? ''), outputs)).map((key) => `${key} was never returned by any tool call, so no run of the agent shows it`)
+    const calls = callOutputs(c).flatMap(({ call, output }): RanCall[] =>
+      /^(?:bash|shell)$/i.test(call.tool) ? [{ kind: 'shell', command: call.command, output }] : genkitMcp([call]).length > 0 && /run_flow/.test(call.tool) ? [{ kind: 'run_flow', command: call.command, output }] : [],
+    )
+    return replyErrors({ turn1: String(parsed.turn1 ?? ''), turn2: String(parsed.turn2 ?? '') }, calls, FIXTURE)
   } catch {
     return ['answer.json is not JSON']
   }
@@ -320,7 +328,7 @@ evaluate.each(only('agent-two-turn'))(
     noProviderErrors(turn)
     const result = await runScript(c, 'answers.mts', 'ANSWER=answer.json')
     expect(problems(result, 'answers'), 'replies answer both questions').toEqual([])
-    expect(unprinted(await c.readFile('answer.json'), toolOutputs(c)), 'replies come from a real two-turn run').toEqual([])
+    expect(unrun(c, await c.readFile('answer.json')), 'replies come from a real two-turn run').toEqual([])
 
     const calls = callsOf(c)
     const onAgent = /\b(triage|orderAgent|refundAgent)\b/
