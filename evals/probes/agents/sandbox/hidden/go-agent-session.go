@@ -67,7 +67,7 @@ func probeSquash(s string) string {
 func TestProbeTwoProcesses(t *testing.T) {
 	id := os.Getenv("PROBE_ORDER_ID")
 	if id == "" {
-		t.Skip("run by the probe with PROBE_ORDER_ID")
+		t.Fatal("PROBE_ORDER_ID is unset")
 	}
 	raw, err := os.ReadFile("orders.json")
 	if err != nil {
