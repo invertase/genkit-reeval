@@ -1,0 +1,16 @@
+{
+  "runId": "20261102T000000Z_fixture_x",
+  "evals": [
+    {
+      "name": "docs: fixture",
+      "cells": [
+        { "key": "c1", "harness": "claude-code", "environment": "js-llms" },
+        { "key": "c2", "harness": "codex", "environment": "js-docsite" }
+      ],
+      "attempts": [
+        { "cell": "c1", "files": { "transcript": { "path": "a1.jsonl" } } },
+        { "cell": "c2", "files": { "transcript": { "path": "a2.jsonl" } } }
+      ]
+    }
+  ]
+}

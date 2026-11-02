@@ -1,0 +1,2 @@
+{"turn":0,"type":"web-fetch","toolCallId":"1","url":"https://genkit.dev/docs/js/flows/.md","ok":false,"durationMs":10}
+{"turn":0,"type":"web-fetch","toolCallId":"2","url":"https://genkit.dev/docs/js/flows/","ok":true,"durationMs":10}
