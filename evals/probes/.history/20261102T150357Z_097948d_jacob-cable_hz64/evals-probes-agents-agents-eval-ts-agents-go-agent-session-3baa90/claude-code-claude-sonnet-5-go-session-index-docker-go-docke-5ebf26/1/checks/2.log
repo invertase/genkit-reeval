@@ -1,0 +1,4 @@
+$ grep -rEq --include=*.go --exclude=*_test.go --exclude-dir=.git 'WithExperimental\(' .
+exit 1
+--- stdout
+--- stderr

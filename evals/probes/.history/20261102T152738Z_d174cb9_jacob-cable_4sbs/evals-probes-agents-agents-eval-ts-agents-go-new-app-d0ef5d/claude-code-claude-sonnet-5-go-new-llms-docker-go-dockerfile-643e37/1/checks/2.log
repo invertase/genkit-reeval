@@ -1,0 +1,4 @@
+$ cd './genkit-gemini-app' && go build ./...
+exit 0
+--- stdout
+--- stderr

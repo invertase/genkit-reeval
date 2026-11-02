@@ -1,0 +1,3 @@
+$ genkit --non-interactive config set analyticsOptOut true
+exit 0 after 294ms
+Set "analyticsOptOut" to "true".

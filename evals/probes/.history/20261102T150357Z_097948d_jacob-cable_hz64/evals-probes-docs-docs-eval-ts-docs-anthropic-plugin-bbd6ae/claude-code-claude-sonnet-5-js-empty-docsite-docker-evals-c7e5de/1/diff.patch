@@ -1,0 +1,43 @@
+[reeval: dropped package-lock.json: lockfile, 7103 changed lines]
+diff --git a/package.json b/package.json
+index e41aac9..0329d26 100644
+--- a/package.json
++++ b/package.json
+@@ -10,5 +10,10 @@
+     "@types/node": "22.20.5",
+     "tsx": "4.23.15",
+     "typescript": "5.9.3"
++  },
++  "dependencies": {
++    "genkit": "^1.43.0",
++    "genkitx-anthropic": "^0.30.0",
++    "zod": "^4.6.7"
+   }
+ }
+diff --git a/src/flows.ts b/src/flows.ts
+new file mode 100644
+index 0000000..012d633
+--- /dev/null
++++ b/src/flows.ts
+@@ -0,0 +1,21 @@
++import { genkit, z } from "genkit";
++import { anthropic, claude45Opus } from "genkitx-anthropic";
++
++const ai = genkit({
++  plugins: [anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })],
++});
++
++export const askClaude = ai.defineFlow(
++  {
++    name: "askClaude",
++    inputSchema: z.string(),
++    outputSchema: z.string(),
++  },
++  async (question) => {
++    const { text } = await ai.generate({
++      model: claude45Opus,
++      prompt: question,
++    });
++    return text;
++  },
++);

@@ -1,0 +1,5 @@
+$ PROBE_ORDER_ID=A-3395 go test -count=1 -timeout 300s -run '^TestProbeTwoProcesses$' .
+exit 0
+--- stdout
+ok  	support-agent	6.252s
+--- stderr

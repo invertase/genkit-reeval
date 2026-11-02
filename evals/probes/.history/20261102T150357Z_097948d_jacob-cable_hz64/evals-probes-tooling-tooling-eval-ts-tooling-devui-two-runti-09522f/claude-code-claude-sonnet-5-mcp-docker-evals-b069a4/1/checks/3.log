@@ -1,0 +1,6 @@
+$ test ! -e ~/.greet-code
+exit 0, passed on try 1 of 21
+
+try 1 of 21: exit 0 after 58ms
+--- stdout
+--- stderr

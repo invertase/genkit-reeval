@@ -1,0 +1,6 @@
+$ cp -r /opt/support-desk/node_modules .
+exit 0 after 2269ms
+
+$ genkit --non-interactive config set analyticsOptOut true
+exit 0 after 515ms
+Set "analyticsOptOut" to "true".

@@ -1,0 +1,30 @@
+diff --git a/src/index.ts b/src/index.ts
+index 24bb2d8..5b35a13 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1,10 +1,20 @@
+-import { genkit } from 'genkit'
++import { genkit, FileSessionStore } from 'genkit/beta'
+ import { googleAI } from '@genkit-ai/google-genai'
+ 
+ const ai = genkit({ plugins: [googleAI()], model: googleAI.model('gemini-flash-latest') })
+ 
+-/** Answers one message. Each call starts from nothing: the assistant remembers no earlier message. */
+-export async function reply(message: string): Promise<string> {
+-  const { text } = await ai.generate({ system: 'You are a helpful assistant. Answer briefly.', prompt: message })
+-  return text
++const store = new FileSessionStore('./.genkit/sessions')
++
++const assistant = ai.defineAgent({
++  name: 'assistant',
++  description: 'A helpful assistant.',
++  system: 'You are a helpful assistant. Answer briefly.',
++  store,
++})
++
++/** Continues the conversation identified by sessionId, or starts a new one when sessionId is undefined. */
++export async function turn(sessionId: string | undefined, message: string): Promise<{ reply: string; sessionId: string }> {
++  const chat = assistant.chat(sessionId ? { sessionId } : {})
++  const { text } = await chat.send(message)
++  return { reply: text, sessionId: chat.sessionId! }
+ }

@@ -1,0 +1,5 @@
+$ go list -m -f '{{.Version}}' github.com/firebase/genkit/go
+exit 1
+--- stdout
+--- stderr
+go: cannot match "github.com/firebase/genkit/go" without -versions or an explicit version: go.mod file not found in current directory or any parent directory; see 'go help modules'

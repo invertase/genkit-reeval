@@ -1,0 +1,5 @@
+$ find . -name go.mod -not -path './.git/*' -not -path '*/vendor/*' | awk '{ print gsub("/", "/"), $0 }' | sort -n | head -1 | cut -d' ' -f2-
+exit 0
+--- stdout
+./genkit-gemini-app/go.mod
+--- stderr

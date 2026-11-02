@@ -1,0 +1,57 @@
+[reeval: dropped package-lock.json: lockfile, 7011 changed lines]
+diff --git a/package.json b/package.json
+index e41aac9..fafa975 100644
+--- a/package.json
++++ b/package.json
+@@ -10,5 +10,10 @@
+     "@types/node": "22.20.5",
+     "tsx": "4.23.15",
+     "typescript": "5.9.3"
++  },
++  "dependencies": {
++    "@genkit-ai/google-genai": "^1.43.0",
++    "genkit": "^1.43.0",
++    "zod": "^4.6.7"
+   }
+ }
+diff --git a/src/flows.ts b/src/flows.ts
+new file mode 100644
+index 0000000..c2e274b
+--- /dev/null
++++ b/src/flows.ts
+@@ -0,0 +1,35 @@
++import { genkit, z } from "genkit";
++import { googleAI } from "@genkit-ai/google-genai";
++
++const ai = genkit({
++  plugins: [googleAI()],
++  model: googleAI.model("gemini-2.5-flash"),
++});
++
++export const extractContact = ai.defineFlow(
++  {
++    name: "extractContact",
++    inputSchema: z.string(),
++    outputSchema: z.object({
++      name: z.string(),
++      email: z.string(),
++    }),
++  },
++  async (message) => {
++    const { output } = await ai.generate({
++      prompt: `Extract the sender's name and email address from this message:\n\n${message}`,
++      output: {
++        schema: z.object({
++          name: z.string(),
++          email: z.string(),
++        }),
++      },
++    });
++
++    if (!output) {
++      throw new Error("Failed to extract contact information");
++    }
++
++    return output;
++  }
++);

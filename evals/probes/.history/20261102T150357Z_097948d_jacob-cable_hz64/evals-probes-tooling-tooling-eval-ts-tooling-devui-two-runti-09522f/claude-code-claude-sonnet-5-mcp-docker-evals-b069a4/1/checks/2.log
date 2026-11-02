@@ -1,0 +1,20 @@
+$ ls .genkit/runtimes/*.json second-app/.genkit/runtimes/*.json
+exit 0, passed on try 3 of 61
+
+try 1 of 61: exit 2 after 77ms
+--- stdout
+--- stderr
+ls: cannot access '.genkit/runtimes/*.json': No such file or directory
+ls: cannot access 'second-app/.genkit/runtimes/*.json': No such file or directory
+
+try 2 of 61: exit 2 after 92ms
+--- stdout
+--- stderr
+ls: cannot access '.genkit/runtimes/*.json': No such file or directory
+ls: cannot access 'second-app/.genkit/runtimes/*.json': No such file or directory
+
+try 3 of 61: exit 0 after 73ms
+--- stdout
+.genkit/runtimes/1631-3100-1793632955090.json
+second-app/.genkit/runtimes/1676-3101-1793632955257.json
+--- stderr

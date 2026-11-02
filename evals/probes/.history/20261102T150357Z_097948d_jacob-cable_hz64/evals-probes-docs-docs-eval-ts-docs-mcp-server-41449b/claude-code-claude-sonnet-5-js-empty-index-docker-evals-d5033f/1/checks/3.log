@@ -1,0 +1,8 @@
+$ npm --prefix ~/.verify-mcp install --no-audit --no-fund @modelcontextprotocol/sdk@1.32.2
+exit 0, passed on try 1 of 3
+
+try 1 of 3: exit 0 after 1s
+--- stdout
+
+added 95 packages in 1s
+--- stderr

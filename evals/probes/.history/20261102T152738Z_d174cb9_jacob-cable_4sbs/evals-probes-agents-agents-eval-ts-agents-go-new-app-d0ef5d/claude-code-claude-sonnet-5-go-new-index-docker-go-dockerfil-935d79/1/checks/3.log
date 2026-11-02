@@ -1,0 +1,5 @@
+$ cd '.' && go list -m -f '{{.Version}}' github.com/firebase/genkit/go
+exit 0
+--- stdout
+v1.14.0
+--- stderr

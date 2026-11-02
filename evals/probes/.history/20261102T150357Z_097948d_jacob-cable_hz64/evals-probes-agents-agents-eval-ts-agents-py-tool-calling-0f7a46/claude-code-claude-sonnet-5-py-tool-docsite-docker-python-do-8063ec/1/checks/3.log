@@ -1,0 +1,5 @@
+$ PY=$([ -x .venv/bin/python ] && echo .venv/bin/python || echo python3); timeout 300 "$PY" -c "import importlib.metadata as m; print(m.version('genkit'))"
+exit 0
+--- stdout
+0.12.0
+--- stderr

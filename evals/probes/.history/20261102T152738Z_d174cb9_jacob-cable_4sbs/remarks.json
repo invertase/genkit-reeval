@@ -1,0 +1,25 @@
+{
+  "kind": "reeval-remarks",
+  "schemaVersion": 1,
+  "runId": "20261102T152738Z_d174cb9_jacob-cable_4sbs",
+  "createdAt": "2026-11-02T15:29:09.857Z",
+  "remarks": [
+    {
+      "id": "36679b42015cb97dbaf2caf5f116b4595a8f534b6ed8ededf1b5c3d186e4307c",
+      "evalId": "evals%2Fprobes%2Fagents%2Fagents.eval.ts › agents: go-new-app",
+      "kind": "too-few-tries",
+      "severity": "concern",
+      "text": "The go-new-skill variant passed 1 of 1 run and the baseline 1 of 1: the same, but 1 run a side can't rule out a difference of up to 79 points. It looks 15% fewer tool calls, but 1 run a side can't confirm it; 4 is the least that can. 4 more variants are too.",
+      "evidence": [
+        "evals%2Fprobes%2Fagents%2Fagents.eval.ts › agents: go-new-app/claude-code:claude-sonnet-5+go-new-skill+docker:go.Dockerfile",
+        "evals%2Fprobes%2Fagents%2Fagents.eval.ts › agents: go-new-app/claude-code:claude-sonnet-5+go-new-control+docker:go.Dockerfile"
+      ],
+      "fix": {
+        "at": "source:evals/probes/agents/agents.eval.ts",
+        "edit": "set runs: 16, where the same rates would rule out 20 points either way"
+      },
+      "firstSeenRun": "20261102T152738Z_d174cb9_jacob-cable_4sbs",
+      "printed": true
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+[reeval: dropped package-lock.json: lockfile, 7011 changed lines]
+diff --git a/package.json b/package.json
+index e41aac9..fafa975 100644
+--- a/package.json
++++ b/package.json
+@@ -10,5 +10,10 @@
+     "@types/node": "22.20.5",
+     "tsx": "4.23.15",
+     "typescript": "5.9.3"
++  },
++  "dependencies": {
++    "@genkit-ai/google-genai": "^1.43.0",
++    "genkit": "^1.43.0",
++    "zod": "^4.6.7"
+   }
+ }
+diff --git a/src/index.ts b/src/index.ts
+index 336ce12..98a0077 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1 +1,31 @@
+-export {}
++import { googleAI } from '@genkit-ai/google-genai';
++import { genkit } from 'genkit';
++
++const ai = genkit({
++  plugins: [googleAI()],
++});
++
++const PRIMARY_MODEL = googleAI.model('gemini-flash-latest');
++const FALLBACK_MODEL = googleAI.model('gemini-pro-latest');
++
++const JOKE_PROMPT = 'Tell me a short, original joke. Reply with only the joke.';
++
++const jokeFlow = ai.defineFlow({ name: 'jokeFlow' }, async () => {
++  try {
++    const { text } = await ai.generate({
++      model: PRIMARY_MODEL,
++      prompt: JOKE_PROMPT,
++    });
++    return text;
++  } catch (err) {
++    console.error('Primary model failed, falling back:', err);
++    const { text } = await ai.generate({
++      model: FALLBACK_MODEL,
++      prompt: JOKE_PROMPT,
++    });
++    return text;
++  }
++});
++
++const joke = await jokeFlow();
++console.log(joke);

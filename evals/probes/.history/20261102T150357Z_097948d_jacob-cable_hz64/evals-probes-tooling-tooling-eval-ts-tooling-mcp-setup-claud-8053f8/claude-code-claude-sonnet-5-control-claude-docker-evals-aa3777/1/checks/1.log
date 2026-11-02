@@ -1,0 +1,5 @@
+$ pwd
+exit 0
+--- stdout
+/reeval/workspace
+--- stderr

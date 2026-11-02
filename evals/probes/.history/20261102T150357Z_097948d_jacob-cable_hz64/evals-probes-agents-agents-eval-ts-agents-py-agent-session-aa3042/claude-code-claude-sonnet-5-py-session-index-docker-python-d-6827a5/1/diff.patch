@@ -1,0 +1,60 @@
+diff --git a/.gitignore b/.gitignore
+index a230a78..c729855 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,2 +1,3 @@
+ .venv/
+ __pycache__/
++.sessions/
+diff --git a/app.py b/app.py
+new file mode 100644
+index 0000000..e2ab6c3
+--- /dev/null
++++ b/app.py
+@@ -0,0 +1,46 @@
++import json
++from pathlib import Path
++
++from pydantic import BaseModel
++
++from genkit.exp import Genkit, FileSessionStore
++from genkit_google_genai import GoogleAI
++
++ORDERS_PATH = Path(__file__).parent / 'orders.json'
++SESSIONS_DIR = Path(__file__).parent / '.sessions'
++
++ai = Genkit(plugins=[GoogleAI()])
++
++
++class LookupOrderInput(BaseModel):
++    order_id: str
++
++
++@ai.tool()
++async def lookup_order(input: LookupOrderInput) -> str:
++    """Looks up an order by its id and returns its status and eta."""
++    orders = json.loads(ORDERS_PATH.read_text())
++    order = orders.get(input.order_id)
++    if order is None:
++        return f"No order found with id '{input.order_id}'."
++    return f"Order {input.order_id}: status={order['status']}, eta={order['eta']}"
++
++
++support_agent = ai.define_agent(
++    name='supportAgent',
++    description='Answers customer questions about their orders.',
++    model=GoogleAI.gemini_model('gemini-flash-latest'),
++    system=(
++        'You are a customer support agent. Answer customer questions about '
++        'their orders using the lookup_order tool when they mention an order id. '
++        'Be concise and friendly.'
++    ),
++    tools=[lookup_order],
++    store=FileSessionStore(str(SESSIONS_DIR)),
++)
++
++
++async def ask(session_id: str | None, message: str) -> tuple[str, str]:
++    chat = support_agent.chat(session_id=session_id)
++    response = await chat.send(message)
++    return response.text, response.session_id

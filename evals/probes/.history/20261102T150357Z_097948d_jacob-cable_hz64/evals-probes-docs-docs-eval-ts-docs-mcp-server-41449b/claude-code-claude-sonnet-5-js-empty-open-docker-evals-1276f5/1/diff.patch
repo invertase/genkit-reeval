@@ -1,0 +1,54 @@
+[reeval: dropped package-lock.json: lockfile, 7441 changed lines]
+diff --git a/package.json b/package.json
+index e41aac9..8a0cd4c 100644
+--- a/package.json
++++ b/package.json
+@@ -4,11 +4,17 @@
+   "private": true,
+   "type": "module",
+   "scripts": {
+-    "start": "tsx src/index.ts"
++    "start": "tsx src/index.ts",
++    "mcp": "tsx src/index.ts"
+   },
+   "devDependencies": {
+     "@types/node": "22.20.5",
+     "tsx": "4.23.15",
+     "typescript": "5.9.3"
++  },
++  "dependencies": {
++    "@genkit-ai/mcp": "^1.43.0",
++    "genkit": "^1.43.0",
++    "zod": "^4.6.7"
+   }
+ }
+diff --git a/src/index.ts b/src/index.ts
+index 336ce12..d598b91 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1 +1,24 @@
+-export {}
++import { genkit, z } from 'genkit';
++import { createMcpServer } from '@genkit-ai/mcp';
++
++const ai = genkit({});
++
++ai.defineTool(
++  {
++    name: 'add',
++    description: 'Adds two numbers together.',
++    inputSchema: z.object({
++      a: z.number().describe('The first number to add.'),
++      b: z.number().describe('The second number to add.'),
++    }),
++    outputSchema: z.number(),
++  },
++  async ({ a, b }) => a + b
++);
++
++const mcpServer = createMcpServer(ai, {
++  name: 'add-mcp-server',
++  version: '1.0.0',
++});
++
++mcpServer.start();

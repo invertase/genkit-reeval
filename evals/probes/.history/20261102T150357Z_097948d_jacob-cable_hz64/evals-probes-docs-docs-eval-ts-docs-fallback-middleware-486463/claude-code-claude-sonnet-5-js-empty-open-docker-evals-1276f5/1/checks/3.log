@@ -1,0 +1,7 @@
+$ timeout 120 npm start --silent
+exit 0, passed on try 1 of 2
+
+try 1 of 2: exit 0 after 3s
+--- stdout
+I tried to start a club for introverts, but nobody showed up.
+--- stderr

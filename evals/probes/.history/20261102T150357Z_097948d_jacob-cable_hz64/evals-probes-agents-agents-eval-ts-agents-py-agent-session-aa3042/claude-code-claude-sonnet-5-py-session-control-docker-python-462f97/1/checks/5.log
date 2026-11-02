@@ -1,0 +1,5 @@
+$ PY=$([ -x .venv/bin/python ] && echo .venv/bin/python || echo python3); timeout 300 "$PY" ~/.verify-py-turn.py '' 'My order id is A-2032. What is its status?'
+exit 0
+--- stdout
+PROBE_RESULT {"reply": "Your order **A-2032** is currently stored at the Cobalt Dunmore depot. It has an estimated delivery date of **December 4, 2026**. \n\nPlease let me know if you have any other questions or need further assistance!", "session": "23f1995e-75e7-4912-9d5f-4bce48c9f7c0"}
+--- stderr

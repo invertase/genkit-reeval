@@ -1,0 +1,4 @@
+$ ln -s ../node_modules second-app/node_modules
+exit 0
+--- stdout
+--- stderr

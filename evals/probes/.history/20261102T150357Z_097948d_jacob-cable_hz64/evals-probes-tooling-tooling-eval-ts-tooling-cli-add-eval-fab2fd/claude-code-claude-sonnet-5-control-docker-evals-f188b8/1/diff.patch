@@ -1,0 +1,71 @@
+diff --git a/src/evals.ts b/src/evals.ts
+new file mode 100644
+index 0000000..d7955a7
+--- /dev/null
++++ b/src/evals.ts
+@@ -0,0 +1,57 @@
++import { z } from 'genkit/beta';
++import { ai } from './ai.js';
++
++const TicketSummarySchema = z.object({
++  title: z.string(),
++  priority: z.enum(['low', 'medium', 'high']),
++  tags: z.array(z.string()),
++});
++
++const FaithfulnessJudgementSchema = z.object({
++  unsupportedClaims: z
++    .array(z.string())
++    .describe('Claims in the summary that are not supported by the ticket text, empty if none'),
++  faithful: z.boolean().describe('True only if every claim in the summary is supported by the ticket text'),
++  reasoning: z.string().describe('One or two sentences explaining the verdict'),
++});
++
++/**
++ * Checks that a summarizeTicket output only makes claims supported by the original ticket text,
++ * so `genkit eval:flow summarizeTicket` catches hallucinated titles, tags or priorities.
++ */
++export const ticketSummaryFaithfulness = ai.defineEvaluator(
++  {
++    name: 'ticketSummaryFaithfulness',
++    displayName: 'Ticket summary faithfulness',
++    definition: "Checks that a ticket summary's title, tags and priority are all grounded in the ticket text.",
++  },
++  async (datapoint) => {
++    const { text } = z.object({ text: z.string() }).parse(datapoint.input);
++    const summary = TicketSummarySchema.parse(datapoint.output);
++
++    const { output } = await ai.generate({
++      system:
++        'You are a meticulous fact-checker. Given a support ticket and a summary generated from it, ' +
++        'decide whether every claim in the summary (its title, tags and priority) is actually supported ' +
++        'by the ticket text. A summary is unfaithful if it introduces facts, details or assumptions that ' +
++        'are not stated or clearly implied by the ticket.',
++      prompt:
++        `Ticket text:\n"""\n${text}\n"""\n\n` +
++        `Summary:\n` +
++        `- title: ${summary.title}\n` +
++        `- priority: ${summary.priority}\n` +
++        `- tags: ${summary.tags.join(', ')}\n`,
++      output: { schema: FaithfulnessJudgementSchema },
++    });
++    if (!output) throw new Error('ticketSummaryFaithfulness: judge model returned no structured output');
++
++    return {
++      testCaseId: datapoint.testCaseId,
++      evaluation: {
++        score: output.faithful,
++        status: output.faithful ? 'PASS' : 'FAIL',
++        details: { reasoning: output.reasoning, unsupportedClaims: output.unsupportedClaims },
++      },
++    };
++  },
++);
+diff --git a/src/index.ts b/src/index.ts
+index 712c374..a1dd16d 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1,2 +1,3 @@
+ export { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';
+ export { orderAgent, refundAgent, triage, tryRefundDesk, tryTriage } from './agents.js';
++export { ticketSummaryFaithfulness } from './evals.js';

@@ -1,0 +1,7 @@
+$ cd './genkit-gemini-app' && GEMINI_API_KEY=invalid timeout 120 go run .
+exit 1
+--- stdout
+--- stderr
+2026/11/02 15:29:06 INFO Genkit initialized env=prod plugins=[googleai] duration=4ms
+generate failed: Error 400, Message: API key not valid. Please pass a valid API key., Status: INVALID_ARGUMENT, Details: [map[@type:type.googleapis.com/google.rpc.ErrorInfo domain:googleapis.com metadata:map[service:generativelanguage.googleapis.com] reason:API_KEY_INVALID] map[@type:type.googleapis.com/google.rpc.LocalizedMessage locale:en-US message:API key not valid. Please pass a valid API key.]]
+exit status 1

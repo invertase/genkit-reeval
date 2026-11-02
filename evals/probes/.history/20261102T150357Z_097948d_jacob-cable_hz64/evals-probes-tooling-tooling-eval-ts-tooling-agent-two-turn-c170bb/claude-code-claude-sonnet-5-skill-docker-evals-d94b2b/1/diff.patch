@@ -1,0 +1,44 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..da8e564
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,4 @@
++{
++  "turn1": "Order A-1001 is **shipped**. The ETA is **2026-10-22**. The tracking code is **NW-7F3K2Q**.",
++  "turn2": "The tracking code for order A-1001 is NW-7F3K2Q."
++}
+diff --git a/src/agents.ts b/src/agents.ts
+index f915c9e..61d9c7a 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -71,6 +71,21 @@ export const tryTriage = ai.defineFlow(
+   async (message) => (await triage.chat().send(message)).text,
+ );
+ 
++/** Lets the CLI exercise a two-turn triage conversation in one shot. */
++export const tryTriageTwoTurn = ai.defineFlow(
++  {
++    name: 'tryTriageTwoTurn',
++    inputSchema: z.object({ turn1: z.string(), turn2: z.string() }),
++    outputSchema: z.object({ turn1: z.string(), turn2: z.string() }),
++  },
++  async ({ turn1, turn2 }) => {
++    const chat = triage.chat();
++    const res1 = await chat.send(turn1);
++    const res2 = await chat.send(turn2);
++    return { turn1: res1.text, turn2: res2.text };
++  },
++);
++
+ /** Lets the CLI exercise the refund desk: `genkit flow:run` runs flows, not agents. */
+ export const tryRefundDesk = ai.defineFlow(
+   { name: 'tryRefundDesk', inputSchema: z.string(), outputSchema: z.string() },
+diff --git a/src/index.ts b/src/index.ts
+index 712c374..d4ee371 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1,2 +1,2 @@
+ export { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';
+-export { orderAgent, refundAgent, triage, tryRefundDesk, tryTriage } from './agents.js';
++export { orderAgent, refundAgent, triage, tryRefundDesk, tryTriage, tryTriageTwoTurn } from './agents.js';

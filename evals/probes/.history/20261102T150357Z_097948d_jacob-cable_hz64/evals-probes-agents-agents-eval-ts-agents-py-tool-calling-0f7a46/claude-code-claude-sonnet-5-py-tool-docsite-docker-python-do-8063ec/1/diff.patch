@@ -1,0 +1,53 @@
+diff --git a/app.py b/app.py
+new file mode 100644
+index 0000000..4637213
+--- /dev/null
++++ b/app.py
+@@ -0,0 +1,33 @@
++import json
++from pathlib import Path
++
++from genkit import Genkit
++from genkit_google_genai import GoogleAI
++from pydantic import BaseModel
++
++ORDERS_PATH = Path(__file__).parent / "orders.json"
++
++ai = Genkit(plugins=[GoogleAI()])
++
++
++class OrderLookupInput(BaseModel):
++    order_id: str
++
++
++@ai.tool()
++async def lookup_order_status(input: OrderLookupInput) -> str:
++    """Look up the status and ETA of an order by its id."""
++    orders = json.loads(ORDERS_PATH.read_text())
++    order = orders.get(input.order_id)
++    if order is None:
++        return f"No order found with id {input.order_id}."
++    return json.dumps({"order_id": input.order_id, **order})
++
++
++async def ask(question: str) -> str:
++    res = await ai.generate(
++        model=GoogleAI.gemini_model("gemini-flash-latest"),
++        prompt=question,
++        tools=["lookup_order_status"],
++    )
++    return res.text
+diff --git a/orders.json b/orders.json
+index f712ea4..58444ce 100644
+--- a/orders.json
++++ b/orders.json
+@@ -1,5 +1,6 @@
+ {
+-  "A-7731": { "status": "backordered", "eta": "2026-12-04" },
+-  "A-7732": { "status": "shipped", "eta": "2026-11-09" },
+-  "A-7733": { "status": "delivered", "eta": "2026-10-30" }
++  "1001": { "status": "shipped", "eta": "2026-11-05" },
++  "1002": { "status": "processing", "eta": "2026-11-09" },
++  "1003": { "status": "delivered", "eta": "2026-10-30" },
++  "1004": { "status": "cancelled", "eta": null }
+ }

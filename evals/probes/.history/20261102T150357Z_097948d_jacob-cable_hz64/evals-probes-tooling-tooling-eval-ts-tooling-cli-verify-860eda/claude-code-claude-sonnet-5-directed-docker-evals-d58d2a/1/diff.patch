@@ -1,0 +1,40 @@
+diff --git a/src/flows.ts b/src/flows.ts
+index 1fb1efb..1746f14 100644
+--- a/src/flows.ts
++++ b/src/flows.ts
+@@ -24,6 +24,27 @@ export const summarizeTicket = ai.defineFlow(
+   },
+ );
+ 
++const TicketSummary2Schema = z.object({
++  summary: z.string().describe('A concise one or two sentence summary of the ticket'),
++  priority: z.enum(['low', 'medium', 'high']).describe('How urgent the ticket is'),
++});
++
++/** Summarizes a raw support ticket and rates its priority. */
++export const summarizeTicket2 = ai.defineFlow(
++  { name: 'summarizeTicket2', inputSchema: z.object({ text: z.string() }), outputSchema: TicketSummary2Schema },
++  async ({ text }) => {
++    const { output } = await ai.generate({
++      system:
++        'You triage support tickets for Northwind Supplies, an office supplies retailer. ' +
++        'Set priority to low, medium or high, where high means the customer is blocked.',
++      prompt: text,
++      output: { schema: TicketSummary2Schema },
++    });
++    if (!output) throw new Error('summarizeTicket2: model returned no structured output');
++    return output;
++  },
++);
++
+ /** Answers a customer's question about an order using the orders database. */
+ export const orderStatus = ai.defineFlow(
+   { name: 'orderStatus', inputSchema: z.object({ question: z.string() }), outputSchema: z.string() },
+diff --git a/src/index.ts b/src/index.ts
+index 712c374..b3a6da7 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1,2 +1,2 @@
+-export { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';
++export { chat, draftReply, greet, orderStatus, summarizeTicket, summarizeTicket2 } from './flows.js';
+ export { orderAgent, refundAgent, triage, tryRefundDesk, tryTriage } from './agents.js';

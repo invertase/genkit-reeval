@@ -1,0 +1,36 @@
+$ timeout 120 npm start --silent
+exit 1, failed all 2 tries
+
+try 1 of 2: exit 1 after 733ms
+--- stdout
+--- stderr
+/reeval/workspace/node_modules/@genkit-ai/anthropic/src/index.ts:75
+    throw new Error(
+          ^
+
+Error: Please pass in the API key or set the ANTHROPIC_API_KEY environment variable
+    at validateApiKey (/reeval/workspace/node_modules/@genkit-ai/anthropic/src/index.ts:75:11)
+    at anthropicPlugin (/reeval/workspace/node_modules/@genkit-ai/anthropic/src/index.ts:112:3)
+    at <anonymous> (/reeval/workspace/src/index.ts:6:25)
+    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+    at async node:internal/modules/esm/loader:650:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:105:5)
+
+Node.js v26.13.0
+
+try 2 of 2: exit 1 after 648ms
+--- stdout
+--- stderr
+/reeval/workspace/node_modules/@genkit-ai/anthropic/src/index.ts:75
+    throw new Error(
+          ^
+
+Error: Please pass in the API key or set the ANTHROPIC_API_KEY environment variable
+    at validateApiKey (/reeval/workspace/node_modules/@genkit-ai/anthropic/src/index.ts:75:11)
+    at anthropicPlugin (/reeval/workspace/node_modules/@genkit-ai/anthropic/src/index.ts:112:3)
+    at <anonymous> (/reeval/workspace/src/index.ts:6:25)
+    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+    at async node:internal/modules/esm/loader:650:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:105:5)
+
+Node.js v26.13.0

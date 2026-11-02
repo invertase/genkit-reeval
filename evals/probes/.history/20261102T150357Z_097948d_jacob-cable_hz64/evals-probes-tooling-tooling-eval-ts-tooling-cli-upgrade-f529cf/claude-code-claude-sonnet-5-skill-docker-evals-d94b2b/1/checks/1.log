@@ -1,0 +1,5 @@
+$  node_modules/.bin/tsx ~/.verify-versions.mts
+exit 0
+--- stdout
+PROBE_RESULT {"one":[],"tree":[]}
+--- stderr

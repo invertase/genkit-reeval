@@ -1,0 +1,4 @@
+$ grep -rEq --include=*.py --exclude-dir=.venv '@ai\.tool|\.tool\(|@tool' .
+exit 0
+--- stdout
+--- stderr

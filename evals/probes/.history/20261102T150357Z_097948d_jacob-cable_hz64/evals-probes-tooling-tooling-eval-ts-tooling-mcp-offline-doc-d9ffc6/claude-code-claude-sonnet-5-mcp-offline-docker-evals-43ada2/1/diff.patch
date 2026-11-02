@@ -1,0 +1,90 @@
+diff --git a/answer.md b/answer.md
+new file mode 100644
+index 0000000..9d8588f
+--- /dev/null
++++ b/answer.md
+@@ -0,0 +1,84 @@
++# How a Genkit flow streams output to a caller
++
++Source: inspected locally installed packages (`@genkit-ai/core`, `genkit`) in
++`node_modules` — the Genkit MCP docs server was unavailable (connection closed).
++
++## Defining a streaming flow (producer side)
++
++Use `ai.defineFlow()` with a `streamSchema` in the config. The flow function
++receives a second argument — the streaming callback (also called a "side
++channel") — and calls it with each chunk as it's produced.
++
++- Config option: `streamSchema` (in addition to `inputSchema`/`outputSchema`)
++- Callback argument to the flow function: `(input, streamingCallback) => ...`
++  (also exposed as `sendChunk` when destructured from the context arg)
++
++```ts
++export const flowStreamExample = ai.defineFlow(
++  {
++    name: 'flowStreamExample',
++    inputSchema: z.string(),
++    streamSchema: z.string(),
++    outputSchema: z.string(),
++  },
++  async (prompt, { sendChunk }) => {
++    const { response, stream } = ai.generateStream({
++      model: googleAI.model('gemini-2.5-flash'),
++      prompt,
++    });
++
++    for await (const chunk of stream) {
++      // forward each chunk to the caller
++      sendChunk(chunk.text);
++    }
++
++    return (await response).text;
++  }
++);
++```
++
++## Consuming a streaming flow (caller side)
++
++### In-process (same Node process)
++
++Every defined flow is an `Action`, which exposes a `.stream()` method:
++
++```ts
++const { stream, output } = flowStreamExample.stream('tell me a joke');
++
++for await (const chunk of stream) {
++  console.log(chunk);
++}
++
++console.log(await output); // final, full output
++```
++
++`.stream()` returns `{ stream: AsyncGenerator<Chunk>, output: Promise<Output> }`.
++
++### Over HTTP (deployed flow, e.g. via `genkit/beta/client`)
++
++Use `streamFlow()`:
++
++```ts
++import { streamFlow } from 'genkit/beta/client';
++
++const response = streamFlow({
++  url: 'https://my-flow-deployed-url',
++  input: 'foo',
++});
++
++for await (const chunk of response.stream) {
++  console.log(chunk);
++}
++
++console.log(await response.output);
++```
++
++(The non-streaming HTTP equivalent is `runFlow()`.)
++
++## Summary of function names
++
++| Side | In-process | Deployed/HTTP |
++|---|---|---|
++| Define | `ai.defineFlow({ streamSchema, ... }, (input, { sendChunk }) => ...)` | same |
++| Call | `flow.stream(input)` → `{ stream, output }` | `streamFlow({ url, input })` → `{ stream, output, streamId }` |

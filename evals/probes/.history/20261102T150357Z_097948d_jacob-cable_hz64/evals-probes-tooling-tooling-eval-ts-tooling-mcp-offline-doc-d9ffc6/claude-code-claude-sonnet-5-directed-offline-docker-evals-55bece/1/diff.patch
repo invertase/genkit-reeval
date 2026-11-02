@@ -1,0 +1,84 @@
+diff --git a/answer.md b/answer.md
+new file mode 100644
+index 0000000..9bb0f0c
+--- /dev/null
++++ b/answer.md
+@@ -0,0 +1,78 @@
++# How a Genkit flow streams output
++
++> Note: the Genkit MCP server and `genkit --non-interactive docs:*` CLI commands
++> both failed to connect/fetch in this environment, so this was derived from
++> reading the type declarations shipped in `node_modules/genkit` and
++> `node_modules/@genkit-ai/core` (`flow.d.ts`, `action-DlkZMCP7.d.ts`,
++> `client/client.d.ts`) rather than the hosted docs.
++
++## Defining side
++
++Give the flow a `streamSchema` and accept a second argument — an
++`ActionFnArg`/`FlowSideChannel` — whose `sendChunk` function pushes one chunk
++at a time to the caller. The flow still returns/resolves its normal
++`outputSchema` value at the end.
++
++```ts
++export const myStreamingFlow = ai.defineFlow(
++  {
++    name: 'myStreamingFlow',
++    inputSchema: z.string(),
++    outputSchema: z.string(),
++    streamSchema: z.string(), // schema of each streamed chunk
++  },
++  async (input, { sendChunk }) => {
++    const { stream, response } = ai.generateStream({
++      prompt: input,
++    });
++
++    let full = '';
++    for await (const chunk of stream) {
++      full += chunk.text;
++      sendChunk(chunk.text); // push a chunk to the caller
++    }
++
++    await response;
++    return full; // final output, resolved once streaming is done
++  }
++);
++```
++
++## Calling side (in-process, e.g. from another flow or server code)
++
++Call `.stream()` on the flow/action instead of invoking it directly. It
++returns `{ stream, output }`: `stream` is an `AsyncGenerator` of chunks
++(matching `streamSchema`), and `output` is a `Promise` that resolves to the
++final return value (matching `outputSchema`).
++
++```ts
++const { stream, output } = myStreamingFlow.stream('tell me a story');
++
++for await (const chunk of stream) {
++  console.log('chunk:', chunk);
++}
++
++console.log('final output:', await output);
++```
++
++## Calling side (remote, over HTTP — deployed flow)
++
++Use `streamFlow` from `genkit/beta/client`. Same shape: `stream` to iterate
++chunks, `output` to await the final result.
++
++```ts
++import { streamFlow } from 'genkit/beta/client';
++
++const response = streamFlow({
++  url: 'https://my-flow-deployed-url',
++  input: 'foo',
++});
++
++for await (const chunk of response.stream) {
++  console.log(chunk);
++}
++console.log(await response.output);
++```
++
++(There is also a non-streaming `runFlow` with the same `url`/`input` shape
++for plain request/response calls.)

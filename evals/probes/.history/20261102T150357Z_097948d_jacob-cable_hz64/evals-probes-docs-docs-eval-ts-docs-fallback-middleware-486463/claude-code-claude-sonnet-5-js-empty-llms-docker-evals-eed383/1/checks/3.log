@@ -1,0 +1,9 @@
+$ timeout 120 npm start --silent
+exit 0, passed on try 1 of 2
+
+try 1 of 2: exit 0 after 4s
+--- stdout
+What do you call a fake noodle? 
+
+An impasta.
+--- stderr

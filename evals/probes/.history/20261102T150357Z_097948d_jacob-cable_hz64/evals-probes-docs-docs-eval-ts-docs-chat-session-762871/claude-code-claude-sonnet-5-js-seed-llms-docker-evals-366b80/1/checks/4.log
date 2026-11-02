@@ -1,0 +1,7 @@
+$ timeout 180 node_modules/.bin/tsx ~/.verify-chat.mts '0a0aa1c0-f3a7-4d25-9d70-a87d1ef9b7f6' 'What is my locker code? Reply with the code exactly as I wrote it, and nothing else.'; rc=$?; if [ $rc -eq 124 ]; then echo 'PROBE_RESULT {"ok":false,"error":"turn did not return within 180s"}'; exit 0; fi; exit $rc
+exit 0, passed on try 1 of 3
+
+try 1 of 3: exit 0 after 4s
+--- stdout
+PROBE_RESULT {"ok":true,"reply":"juniper-saffron-3383","sessionId":"0a0aa1c0-f3a7-4d25-9d70-a87d1ef9b7f6"}
+--- stderr

@@ -1,0 +1,4 @@
+$ PY=$([ -x .venv/bin/python ] && echo .venv/bin/python || echo python3); timeout 300 "$PY" -c "import app"
+exit 0
+--- stdout
+--- stderr

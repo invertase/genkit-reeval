@@ -1,0 +1,6 @@
+$ cd './genkit-gemini-app' && timeout 120 go run .
+exit 0
+--- stdout
+Genkit is an open-source framework developed by Google for building, testing, and deploying generative AI-powered applications.
+--- stderr
+2026/11/02 15:29:01 INFO Genkit initialized env=prod plugins=[googleai] duration=2ms

@@ -1,0 +1,3338 @@
+{
+  "kind": "reeval-run",
+  "schemaVersion": 1,
+  "runId": "20261102T152738Z_d174cb9_jacob-cable_4sbs",
+  "status": "complete",
+  "startedAt": "2026-11-02T15:27:38.244Z",
+  "endedAt": "2026-11-02T15:29:09.164Z",
+  "durationMs": 90920,
+  "author": "jacob-cable",
+  "git": {
+    "sha": "d174cb9995f346152104260495d68bd19b755a68",
+    "branch": "probes",
+    "dirty": true,
+    "diffHash": "00ba45a20d47b5b9a186332a3f20a9929e3a203422121ecdaebd1aebea575584",
+    "worktreePatch": {
+      "path": "worktree.patch",
+      "sha256": "00ba45a20d47b5b9a186332a3f20a9929e3a203422121ecdaebd1aebea575584",
+      "bytes": 4305
+    },
+    "worktreePatchNote": null,
+    "commitTime": "2026-11-02T15:27:37Z",
+    "shallow": false,
+    "remote": "git@github.com:invertase/genkit-reeval.git"
+  },
+  "runner": {
+    "kind": "local",
+    "hostHash": "8fac40511768"
+  },
+  "dependencies": {
+    "lockfiles": [
+      {
+        "path": "pnpm-lock.yaml",
+        "sha256": "05fa0f8d4891d14bf14382256a2548b0152b21048719d89a7ef9ae786d4c8a41"
+      }
+    ]
+  },
+  "stack": {
+    "reeval": "0.18.0",
+    "node": "24.9.0",
+    "runtime": {
+      "name": "node",
+      "version": "24.9.0"
+    },
+    "language": {
+      "name": "typescript"
+    },
+    "os": "darwin",
+    "arch": "arm64",
+    "images": [
+      {
+        "ref": "reeval-dockerfile:go-dockerfile-9f2dfaf8369e333d",
+        "id": "sha256:a2f13de18218fa4472492ce09966d12017f127d8d7b8bf2123093a2b074c78b8",
+        "agentCli": "2.1.290 (Claude Code)",
+        "base": "reeval-dockerfile:go-dockerfile-9f2dfaf8369e333d",
+        "install": [],
+        "dockerfile": {
+          "path": "evals/probes/images/go.Dockerfile",
+          "sha256": "9f2dfaf8369e333d0c66a657d848553ac431b1eb2e846d6324186cdfbdcc0b25"
+        },
+        "repoDigests": []
+      }
+    ],
+    "packages": {
+      "@vitest/expect": "5.0.5",
+      "jiti": "2.7.0",
+      "@reeval/harness-antigravity": "0.1.13",
+      "@reeval/harness-opencode": "0.2.13",
+      "@reeval/harness-goose": "0.1.10",
+      "@reeval/harness-pi": "0.2.9",
+      "@reeval/harness-cursor-sdk": "0.1.8",
+      "@ai-sdk/harness-claude-code": "1.0.171-patch.8cc1b324",
+      "@reeval/harness-codex": "0.1.10",
+      "@reeval/harness-fx": "0.1.5",
+      "@reeval/harness-grok-build": "0.1.8",
+      "ai": "7.0.156",
+      "@ai-sdk/harness": "1.0.167",
+      "@ai-sdk/anthropic": "4.0.91",
+      "@ai-sdk/google": "4.0.107",
+      "@ai-sdk/openai": "4.0.104",
+      "@ai-sdk/typesafe-ai": "3.0.29"
+    },
+    "harnesses": [
+      {
+        "id": "claude-code:claude-sonnet-5",
+        "kind": "claude-code",
+        "model": "claude-sonnet-5",
+        "effort": "medium",
+        "resolvedModels": [
+          "claude-sonnet-5"
+        ],
+        "resolvedEffort": []
+      }
+    ],
+    "judge": {
+      "model": "google/gemini-3.8-flash",
+      "resolvedModels": [],
+      "threshold": 0.7,
+      "version": "7e709207a5e6"
+    },
+    "context": [
+      {
+        "path": "CLAUDE.md",
+        "sha256": "f694a18b48735eb7d045cc44593f28ee8376408666bdc7e5edaba8904cec106a"
+      },
+      {
+        "path": "CLAUDE.md",
+        "sha256": "cc965e91371a139ba2b44ada74ab7ea6ec6920a13fce209aff96161c147ac473"
+      },
+      {
+        "path": "~/.claude/skills/.ai-sdk-harness-skills.json",
+        "sha256": "5ddf48ce4d7015c17873d3c8b1c02e421c433763e17d96c4ef377bbddabb44fe"
+      },
+      {
+        "path": "~/.claude/skills/.ai-sdk-harness-skills.json",
+        "sha256": "e829901dc17a1eec3ecccb754089288e8afdfee8fefddb2c75274ae7e6840c44"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-go/SKILL.md",
+        "sha256": "937157143a90d1c7e12efce3f6ac06b2394e9bbc5c98bbc6494e47db8b9a80e5"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-go/references/a2ui.md",
+        "sha256": "e1c34d1a46c910684982caffd01d1fc9ab14d03942ddd5e937aaee06588c74d7"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-go/references/agents-artifacts.md",
+        "sha256": "8115b75ee5d20fbc8918e9b108b79633415839ff54bca594520c4be4178d00ed"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-go/references/agents-background.md",
+        "sha256": "c74afd63d776762788afd70deb27e3c7c63164e407494f92464c668ad3b2a547"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-go/references/agents-branching.md",
+        "sha256": "c843681072af3dc4269681f2e2275d591338eb3e807c7ae1836ba0e1f7d12cfc"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-go/references/agents-custom.md",
+        "sha256": "6f34058e3b74ec41553acb14877bbed9f4daddff9ffb3663aa785feaadf9c34b"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-go/references/agents-deployment.md",
+        "sha256": "e541d12e0a6a81263904bb729cc1dd5ad6d5bb74b7c5b163d73eca246b2ba9e8"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-go/references/agents-human-in-the-loop.md",
+        "sha256": "95dfdc6f21dc6853296fa8370b2ad20be91f634eacf8dc1d9bb4e5211a1cd694"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-go/references/agents-multi-agent.md",
+        "sha256": "ce7f81b101b6cd5e52bec13a7fe9610284fcde71b923a996cb75e6583dfc2e89"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-go/references/agents-sessions.md",
+        "sha256": "24ada9ca2e976cbf9aee384be3e19d61778adab8a73e410437965ef551e8822b"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-go/references/agents-state.md",
+        "sha256": "8acd077ec703a4fce86903c8e1832b3473f240a7928acc024ccb6a34bfc3d32e"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-go/references/agents.md",
+        "sha256": "27e11c2a758d28066e09b64da5629faf8f2e71ef4f609af9e7f9442b881cdcff"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-go/references/flows-and-http.md",
+        "sha256": "9abd4fee7e2d4dc3842a2d4feb6fa8e1731e02a309430a3e971a3f9d0acec1bd"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-go/references/generation.md",
+        "sha256": "6bc15e234544be70118f15fbc25a45cae1f69bf6da13279df98fac960a828f1c"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-go/references/getting-started.md",
+        "sha256": "9e3be27c432b97ccfe47cceb23ba455501e211c58db10b1cd02147f6e6554aaf"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-go/references/middleware.md",
+        "sha256": "bc89e552b2452e0feed265c8dbe2f516683be5ef51645e03ad7ae6a1f6c2737e"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-go/references/observability.md",
+        "sha256": "8df597f03397dd1505925855462feede0040e43457e389d2ac1e905368df0123"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-go/references/prompts.md",
+        "sha256": "8498f72a0abb1309d8d85ae34f0be59acc831366f33493d93ed0205d9332285d"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-go/references/providers.md",
+        "sha256": "0e46d7ce6da6d01ac90b98dfcdc5111131d264bfc1b6a46c3c7f30e497626f6a"
+      },
+      {
+        "path": "~/.claude/skills/developing-genkit-go/references/tools.md",
+        "sha256": "c6d4a52454f88e6f4d5660d01de490f642bd9946b9936a4cfaba97bebe393634"
+      }
+    ],
+    "fingerprintScope": [
+      "eval-source",
+      "harness",
+      "environment",
+      "agent-cli",
+      "image-id",
+      "judge",
+      "context"
+    ]
+  },
+  "environments": [
+    {
+      "name": "go-new-control",
+      "parent": null,
+      "overrides": [],
+      "digest": "sha256:0d988b2278350d572a90ac09ebbef4ecc7e97cf37b56cba02122f91cc3fee07a",
+      "setup": [
+        "genkit --non-interactive config set analyticsOptOut true"
+      ],
+      "skills": [],
+      "mcp": [],
+      "files": [
+        {
+          "path": ".gitignore",
+          "sha256": "1d71be6f507b331429f997a1d7595b3152fcbf3cfca4413578abe2dcd131a9fe"
+        },
+        {
+          "path": "README.md",
+          "sha256": "c004013cf33edaae499a1ba42b7406e5b6764a79f9499a714fe74bf4370391b1"
+        }
+      ],
+      "vars": [
+        "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+      ],
+      "secrets": [
+        "GEMINI_API_KEY"
+      ],
+      "brokered": [
+        "GEMINI_API_KEY"
+      ],
+      "unset": [],
+      "egress": "proxy"
+    },
+    {
+      "name": "go-new-docsite",
+      "parent": "go-new-control",
+      "overrides": [],
+      "digest": "sha256:04ba6a86a553cc602bff99091c39b7f79bf7f425258ab505f784fda1ca898a97",
+      "setup": [
+        "genkit --non-interactive config set analyticsOptOut true"
+      ],
+      "skills": [],
+      "mcp": [],
+      "files": [
+        {
+          "path": ".gitignore",
+          "sha256": "1d71be6f507b331429f997a1d7595b3152fcbf3cfca4413578abe2dcd131a9fe"
+        },
+        {
+          "path": "README.md",
+          "sha256": "c004013cf33edaae499a1ba42b7406e5b6764a79f9499a714fe74bf4370391b1"
+        }
+      ],
+      "vars": [
+        "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+      ],
+      "secrets": [
+        "GEMINI_API_KEY"
+      ],
+      "brokered": [
+        "GEMINI_API_KEY"
+      ],
+      "unset": [],
+      "egress": {
+        "allow": [
+          "registry.npmjs.org",
+          "registry.yarnpkg.com",
+          "github.com",
+          "*.github.com",
+          "*.githubusercontent.com",
+          "pypi.org",
+          "files.pythonhosted.org",
+          "genkit.dev",
+          "*.genkit.dev",
+          "proxy.golang.org",
+          "sum.golang.org"
+        ]
+      }
+    },
+    {
+      "name": "go-new-index",
+      "parent": "go-new-docsite",
+      "overrides": [],
+      "digest": "sha256:6a72085a1b8306b461d563e142183013722bfb82266c18958558e09767b4f79d",
+      "setup": [
+        "genkit --non-interactive config set analyticsOptOut true"
+      ],
+      "skills": [],
+      "mcp": [],
+      "files": [
+        {
+          "path": ".gitignore",
+          "sha256": "1d71be6f507b331429f997a1d7595b3152fcbf3cfca4413578abe2dcd131a9fe"
+        },
+        {
+          "path": "README.md",
+          "sha256": "c004013cf33edaae499a1ba42b7406e5b6764a79f9499a714fe74bf4370391b1"
+        },
+        {
+          "path": "CLAUDE.md",
+          "sha256": "cc965e91371a139ba2b44ada74ab7ea6ec6920a13fce209aff96161c147ac473"
+        }
+      ],
+      "vars": [
+        "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+      ],
+      "secrets": [
+        "GEMINI_API_KEY"
+      ],
+      "brokered": [
+        "GEMINI_API_KEY"
+      ],
+      "unset": [],
+      "egress": {
+        "allow": [
+          "registry.npmjs.org",
+          "registry.yarnpkg.com",
+          "github.com",
+          "*.github.com",
+          "*.githubusercontent.com",
+          "pypi.org",
+          "files.pythonhosted.org",
+          "genkit.dev",
+          "*.genkit.dev",
+          "proxy.golang.org",
+          "sum.golang.org"
+        ]
+      }
+    },
+    {
+      "name": "go-new-llms",
+      "parent": "go-new-docsite",
+      "overrides": [],
+      "digest": "sha256:1414909dbb5c3157215152fddbbac85fc366f7644c2c403cac3c3254555a2173",
+      "setup": [
+        "genkit --non-interactive config set analyticsOptOut true"
+      ],
+      "skills": [],
+      "mcp": [],
+      "files": [
+        {
+          "path": ".gitignore",
+          "sha256": "1d71be6f507b331429f997a1d7595b3152fcbf3cfca4413578abe2dcd131a9fe"
+        },
+        {
+          "path": "README.md",
+          "sha256": "c004013cf33edaae499a1ba42b7406e5b6764a79f9499a714fe74bf4370391b1"
+        },
+        {
+          "path": "CLAUDE.md",
+          "sha256": "f694a18b48735eb7d045cc44593f28ee8376408666bdc7e5edaba8904cec106a"
+        }
+      ],
+      "vars": [
+        "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+      ],
+      "secrets": [
+        "GEMINI_API_KEY"
+      ],
+      "brokered": [
+        "GEMINI_API_KEY"
+      ],
+      "unset": [],
+      "egress": {
+        "allow": [
+          "registry.npmjs.org",
+          "registry.yarnpkg.com",
+          "github.com",
+          "*.github.com",
+          "*.githubusercontent.com",
+          "pypi.org",
+          "files.pythonhosted.org",
+          "genkit.dev",
+          "*.genkit.dev",
+          "proxy.golang.org",
+          "sum.golang.org"
+        ]
+      }
+    },
+    {
+      "name": "go-new-open",
+      "parent": "go-new-control",
+      "overrides": [],
+      "digest": "sha256:fd45f46ffa68e9b7249c0a012459803460c6b225286d5db3a122f169fa49e2ac",
+      "setup": [
+        "genkit --non-interactive config set analyticsOptOut true"
+      ],
+      "skills": [],
+      "mcp": [],
+      "files": [
+        {
+          "path": ".gitignore",
+          "sha256": "1d71be6f507b331429f997a1d7595b3152fcbf3cfca4413578abe2dcd131a9fe"
+        },
+        {
+          "path": "README.md",
+          "sha256": "c004013cf33edaae499a1ba42b7406e5b6764a79f9499a714fe74bf4370391b1"
+        }
+      ],
+      "vars": [
+        "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+      ],
+      "secrets": [
+        "GEMINI_API_KEY"
+      ],
+      "brokered": [
+        "GEMINI_API_KEY"
+      ],
+      "unset": [],
+      "egress": "allow-all"
+    },
+    {
+      "name": "go-new-skill",
+      "parent": "go-new-control",
+      "overrides": [],
+      "digest": "sha256:faf4c2beb8d0448cf644a8620fd93f5a0af2efd6274caf6e41448eed8492a33d",
+      "setup": [
+        "genkit --non-interactive config set analyticsOptOut true"
+      ],
+      "skills": [
+        {
+          "name": "developing-genkit-go",
+          "source": "github:genkit-ai/skills#196e1f64a6915fbe5ab507e8119f9eef6c18a1f5:skills",
+          "commit": "196e1f64a6915fbe5ab507e8119f9eef6c18a1f5",
+          "sha256": "edaeec1ae14f84c8bdd8c3ddd3f9bdad010576910f627656fcd49e446c0caedb",
+          "placement": "harness",
+          "excluded": []
+        }
+      ],
+      "mcp": [],
+      "files": [
+        {
+          "path": ".gitignore",
+          "sha256": "1d71be6f507b331429f997a1d7595b3152fcbf3cfca4413578abe2dcd131a9fe"
+        },
+        {
+          "path": "README.md",
+          "sha256": "c004013cf33edaae499a1ba42b7406e5b6764a79f9499a714fe74bf4370391b1"
+        }
+      ],
+      "vars": [
+        "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+      ],
+      "secrets": [
+        "GEMINI_API_KEY"
+      ],
+      "brokered": [
+        "GEMINI_API_KEY"
+      ],
+      "unset": [],
+      "egress": "proxy"
+    }
+  ],
+  "profile": {
+    "name": "smoke",
+    "reason": "--profile",
+    "defaults": {
+      "runs": 1
+    },
+    "limit": {
+      "harness": [
+        "claude-code:claude-sonnet-5"
+      ]
+    }
+  },
+  "invocation": {
+    "profile": "smoke",
+    "filters": [
+      "go-new-app"
+    ],
+    "tags": []
+  },
+  "plan": {
+    "evals": 1,
+    "cells": 6,
+    "attempts": 6,
+    "estimateMs": 190737,
+    "sandboxWarnings": []
+  },
+  "budget": null,
+  "config": {
+    "sandbox": "docker:go.Dockerfile",
+    "environment": null,
+    "runs": 1,
+    "judgeModel": "google/gemini-3.8-flash",
+    "threshold": 0.7,
+    "timeoutMs": 1500000,
+    "concurrency": 8,
+    "configHash": "4576aa66b2e784cbe2f18846ccbb10df01368f4fa4d188aa515a440444836762"
+  },
+  "cost": {
+    "inputTokens": 2796879,
+    "outputTokens": 15789,
+    "usage": {
+      "input": 172,
+      "output": 15789,
+      "cacheRead": 2722617,
+      "cacheWrite": 74090,
+      "reasoning": null
+    },
+    "source": "reported"
+  },
+  "artifacts": "all",
+  "redaction": {
+    "version": 1
+  },
+  "summary": {
+    "evals": 1,
+    "attempts": 6,
+    "pass": 6,
+    "fail": 0,
+    "notGated": 0,
+    "infraError": 0,
+    "skipped": 0
+  },
+  "evals": [
+    {
+      "id": "evals/probes/agents/agents.eval.ts › agents: go-new-app",
+      "key": "evals/probes/agents/agents.eval.ts › agents: go-new-app",
+      "slug": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d",
+      "file": "evals/probes/agents/agents.eval.ts",
+      "group": [],
+      "name": "agents: go-new-app",
+      "tags": [],
+      "compare": {
+        "baseline": "go-new-control"
+      },
+      "fingerprint": "5853d5159b53ad052ebb6be8bf9383ff71bcb89002b5cecc1265c4df3bf036d4",
+      "sources": [
+        {
+          "path": "evals/probes/agents/agents.eval.ts",
+          "sha256": "8788fa85523ea0354c703bcef5f535c9610662f2ed598186217b3246505b9d55"
+        }
+      ],
+      "source": {
+        "body": "9677f5a4dcd97535670ea9c16c0a97b78f2e1ea2f602c7d173fd7939e41d4303",
+        "options": "293d942b60557d902848a9e3853b33070b07263a29a7409bfd603970b2d00c12"
+      },
+      "outcome": "pass",
+      "todo": false,
+      "passRate": null,
+      "cells": [
+        {
+          "key": "claude-code:claude-sonnet-5/go-new-control/docker:go.Dockerfile",
+          "harness": "claude-code:claude-sonnet-5",
+          "environment": "go-new-control",
+          "sandbox": "docker:go.Dockerfile",
+          "role": "control",
+          "fingerprint": "4d5fc9b93a4dcc0abfa612f0ca9f1eb2f4ba52e009b41dbbda40a1b1bbadf9a7",
+          "fingerprintParts": {
+            "sources": "03f31436cfe1673a2c0fccf86b757bc4e3bdfd14b134f02db73881ce92834449",
+            "harness": "6d10a421f35e2bea6ff9a3f11b20390a46ca5419f044a27961b27a539198f0ad",
+            "environment": "sha256:0d988b2278350d572a90ac09ebbef4ecc7e97cf37b56cba02122f91cc3fee07a",
+            "image": "sha256:a2f13de18218fa4472492ce09966d12017f127d8d7b8bf2123093a2b074c78b8",
+            "agentCli": "2.1.290 (Claude Code)",
+            "judge": "c6a3ef77735b8b1b27d07bfbaffea685a60f9971c7b4be09edfc4862c19e7f1e",
+            "context": "d680a9af604b702351f33a2ce31b15296969758add41c64fb0a6166601be0556",
+            "gate": "none"
+          },
+          "environmentDigest": "sha256:0d988b2278350d572a90ac09ebbef4ecc7e97cf37b56cba02122f91cc3fee07a",
+          "harnessKind": "claude-code",
+          "model": "claude-sonnet-5",
+          "effort": "medium",
+          "gate": "none",
+          "overrides": [],
+          "runs": 1,
+          "pass": 1,
+          "fail": 0,
+          "infraError": 0,
+          "skipped": 0,
+          "passRate": 1,
+          "outcome": "pass",
+          "checks": [
+            {
+              "label": "agent ran without provider errors",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "requires the genkit module",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "builds",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "runs and prints an answer",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            },
+            {
+              "label": "calls the model",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0
+            }
+          ]
+        },
+        {
+          "key": "claude-code:claude-sonnet-5/go-new-skill/docker:go.Dockerfile",
+          "harness": "claude-code:claude-sonnet-5",
+          "environment": "go-new-skill",
+          "sandbox": "docker:go.Dockerfile",
+          "role": "variant",
+          "variant": "go-new-skill",
+          "fingerprint": "aba41206ef2663c8b80fdbc79853195ef62d18dc07ff6dbe80aa29d5c294b35c",
+          "fingerprintParts": {
+            "sources": "03f31436cfe1673a2c0fccf86b757bc4e3bdfd14b134f02db73881ce92834449",
+            "harness": "6d10a421f35e2bea6ff9a3f11b20390a46ca5419f044a27961b27a539198f0ad",
+            "environment": "sha256:faf4c2beb8d0448cf644a8620fd93f5a0af2efd6274caf6e41448eed8492a33d",
+            "image": "sha256:a2f13de18218fa4472492ce09966d12017f127d8d7b8bf2123093a2b074c78b8",
+            "agentCli": "2.1.290 (Claude Code)",
+            "judge": "c6a3ef77735b8b1b27d07bfbaffea685a60f9971c7b4be09edfc4862c19e7f1e",
+            "context": "5f13761bda891b738a53a348fe69be66e6ba12b2f6c0a19c2a9c7445aa3e4402",
+            "gate": "none"
+          },
+          "environmentDigest": "sha256:faf4c2beb8d0448cf644a8620fd93f5a0af2efd6274caf6e41448eed8492a33d",
+          "harnessKind": "claude-code",
+          "model": "claude-sonnet-5",
+          "effort": "medium",
+          "gate": "none",
+          "overrides": [],
+          "runs": 1,
+          "pass": 1,
+          "fail": 0,
+          "infraError": 0,
+          "skipped": 0,
+          "passRate": 1,
+          "outcome": "pass",
+          "checks": [
+            {
+              "label": "agent ran without provider errors",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            },
+            {
+              "label": "requires the genkit module",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            },
+            {
+              "label": "builds",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            },
+            {
+              "label": "runs and prints an answer",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            },
+            {
+              "label": "calls the model",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            }
+          ],
+          "lift": {
+            "vs": "claude-code:claude-sonnet-5/go-new-control/docker:go.Dockerfile",
+            "control": {
+              "pass": 1,
+              "counted": 1
+            },
+            "variant": {
+              "pass": 1,
+              "counted": 1
+            },
+            "points": 0,
+            "interval": {
+              "lo": -0.793,
+              "hi": 0.793,
+              "level": 0.95,
+              "method": "newcombe-wilson"
+            },
+            "withinNoise": true
+          }
+        },
+        {
+          "key": "claude-code:claude-sonnet-5/go-new-open/docker:go.Dockerfile",
+          "harness": "claude-code:claude-sonnet-5",
+          "environment": "go-new-open",
+          "sandbox": "docker:go.Dockerfile",
+          "role": "variant",
+          "variant": "go-new-open",
+          "fingerprint": "7d068902df750d603f6ef5fd797466f342a513c529dda17129134f6629642e61",
+          "fingerprintParts": {
+            "sources": "03f31436cfe1673a2c0fccf86b757bc4e3bdfd14b134f02db73881ce92834449",
+            "harness": "6d10a421f35e2bea6ff9a3f11b20390a46ca5419f044a27961b27a539198f0ad",
+            "environment": "sha256:fd45f46ffa68e9b7249c0a012459803460c6b225286d5db3a122f169fa49e2ac",
+            "image": "sha256:a2f13de18218fa4472492ce09966d12017f127d8d7b8bf2123093a2b074c78b8",
+            "agentCli": "2.1.290 (Claude Code)",
+            "judge": "c6a3ef77735b8b1b27d07bfbaffea685a60f9971c7b4be09edfc4862c19e7f1e",
+            "context": "d680a9af604b702351f33a2ce31b15296969758add41c64fb0a6166601be0556",
+            "gate": "none"
+          },
+          "environmentDigest": "sha256:fd45f46ffa68e9b7249c0a012459803460c6b225286d5db3a122f169fa49e2ac",
+          "harnessKind": "claude-code",
+          "model": "claude-sonnet-5",
+          "effort": "medium",
+          "gate": "none",
+          "overrides": [],
+          "runs": 1,
+          "pass": 1,
+          "fail": 0,
+          "infraError": 0,
+          "skipped": 0,
+          "passRate": 1,
+          "outcome": "pass",
+          "checks": [
+            {
+              "label": "agent ran without provider errors",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            },
+            {
+              "label": "requires the genkit module",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            },
+            {
+              "label": "builds",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            },
+            {
+              "label": "runs and prints an answer",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            },
+            {
+              "label": "calls the model",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            }
+          ],
+          "lift": {
+            "vs": "claude-code:claude-sonnet-5/go-new-control/docker:go.Dockerfile",
+            "control": {
+              "pass": 1,
+              "counted": 1
+            },
+            "variant": {
+              "pass": 1,
+              "counted": 1
+            },
+            "points": 0,
+            "interval": {
+              "lo": -0.793,
+              "hi": 0.793,
+              "level": 0.95,
+              "method": "newcombe-wilson"
+            },
+            "withinNoise": true
+          }
+        },
+        {
+          "key": "claude-code:claude-sonnet-5/go-new-docsite/docker:go.Dockerfile",
+          "harness": "claude-code:claude-sonnet-5",
+          "environment": "go-new-docsite",
+          "sandbox": "docker:go.Dockerfile",
+          "role": "variant",
+          "variant": "go-new-docsite",
+          "fingerprint": "6f80de05cd83b271121366aebd1b43e73dbbdee44e98137def89d888f8452bd0",
+          "fingerprintParts": {
+            "sources": "03f31436cfe1673a2c0fccf86b757bc4e3bdfd14b134f02db73881ce92834449",
+            "harness": "6d10a421f35e2bea6ff9a3f11b20390a46ca5419f044a27961b27a539198f0ad",
+            "environment": "sha256:04ba6a86a553cc602bff99091c39b7f79bf7f425258ab505f784fda1ca898a97",
+            "image": "sha256:a2f13de18218fa4472492ce09966d12017f127d8d7b8bf2123093a2b074c78b8",
+            "agentCli": "2.1.290 (Claude Code)",
+            "judge": "c6a3ef77735b8b1b27d07bfbaffea685a60f9971c7b4be09edfc4862c19e7f1e",
+            "context": "d680a9af604b702351f33a2ce31b15296969758add41c64fb0a6166601be0556",
+            "gate": "none"
+          },
+          "environmentDigest": "sha256:04ba6a86a553cc602bff99091c39b7f79bf7f425258ab505f784fda1ca898a97",
+          "harnessKind": "claude-code",
+          "model": "claude-sonnet-5",
+          "effort": "medium",
+          "gate": "none",
+          "overrides": [],
+          "runs": 1,
+          "pass": 1,
+          "fail": 0,
+          "infraError": 0,
+          "skipped": 0,
+          "passRate": 1,
+          "outcome": "pass",
+          "checks": [
+            {
+              "label": "agent ran without provider errors",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            },
+            {
+              "label": "requires the genkit module",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            },
+            {
+              "label": "builds",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            },
+            {
+              "label": "runs and prints an answer",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            },
+            {
+              "label": "calls the model",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            }
+          ],
+          "lift": {
+            "vs": "claude-code:claude-sonnet-5/go-new-control/docker:go.Dockerfile",
+            "control": {
+              "pass": 1,
+              "counted": 1
+            },
+            "variant": {
+              "pass": 1,
+              "counted": 1
+            },
+            "points": 0,
+            "interval": {
+              "lo": -0.793,
+              "hi": 0.793,
+              "level": 0.95,
+              "method": "newcombe-wilson"
+            },
+            "withinNoise": true
+          }
+        },
+        {
+          "key": "claude-code:claude-sonnet-5/go-new-llms/docker:go.Dockerfile",
+          "harness": "claude-code:claude-sonnet-5",
+          "environment": "go-new-llms",
+          "sandbox": "docker:go.Dockerfile",
+          "role": "variant",
+          "variant": "go-new-llms",
+          "fingerprint": "da62eeec34209d392f0f490b83b2c2d68ef748e641f88e956c369037468aed1f",
+          "fingerprintParts": {
+            "sources": "03f31436cfe1673a2c0fccf86b757bc4e3bdfd14b134f02db73881ce92834449",
+            "harness": "6d10a421f35e2bea6ff9a3f11b20390a46ca5419f044a27961b27a539198f0ad",
+            "environment": "sha256:1414909dbb5c3157215152fddbbac85fc366f7644c2c403cac3c3254555a2173",
+            "image": "sha256:a2f13de18218fa4472492ce09966d12017f127d8d7b8bf2123093a2b074c78b8",
+            "agentCli": "2.1.290 (Claude Code)",
+            "judge": "c6a3ef77735b8b1b27d07bfbaffea685a60f9971c7b4be09edfc4862c19e7f1e",
+            "context": "71e5a98dbb74e2f58347fa62d4613bf388d82b010fa48eccba92bf7533cfc9e9",
+            "gate": "none"
+          },
+          "environmentDigest": "sha256:1414909dbb5c3157215152fddbbac85fc366f7644c2c403cac3c3254555a2173",
+          "harnessKind": "claude-code",
+          "model": "claude-sonnet-5",
+          "effort": "medium",
+          "gate": "none",
+          "overrides": [],
+          "runs": 1,
+          "pass": 1,
+          "fail": 0,
+          "infraError": 0,
+          "skipped": 0,
+          "passRate": 1,
+          "outcome": "pass",
+          "checks": [
+            {
+              "label": "agent ran without provider errors",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            },
+            {
+              "label": "requires the genkit module",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            },
+            {
+              "label": "builds",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            },
+            {
+              "label": "runs and prints an answer",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            },
+            {
+              "label": "calls the model",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            }
+          ],
+          "lift": {
+            "vs": "claude-code:claude-sonnet-5/go-new-control/docker:go.Dockerfile",
+            "control": {
+              "pass": 1,
+              "counted": 1
+            },
+            "variant": {
+              "pass": 1,
+              "counted": 1
+            },
+            "points": 0,
+            "interval": {
+              "lo": -0.793,
+              "hi": 0.793,
+              "level": 0.95,
+              "method": "newcombe-wilson"
+            },
+            "withinNoise": true
+          }
+        },
+        {
+          "key": "claude-code:claude-sonnet-5/go-new-index/docker:go.Dockerfile",
+          "harness": "claude-code:claude-sonnet-5",
+          "environment": "go-new-index",
+          "sandbox": "docker:go.Dockerfile",
+          "role": "variant",
+          "variant": "go-new-index",
+          "fingerprint": "b91158e4728f890a41e0281713e84282339b92591f111f01d63690e54d19af4f",
+          "fingerprintParts": {
+            "sources": "03f31436cfe1673a2c0fccf86b757bc4e3bdfd14b134f02db73881ce92834449",
+            "harness": "6d10a421f35e2bea6ff9a3f11b20390a46ca5419f044a27961b27a539198f0ad",
+            "environment": "sha256:6a72085a1b8306b461d563e142183013722bfb82266c18958558e09767b4f79d",
+            "image": "sha256:a2f13de18218fa4472492ce09966d12017f127d8d7b8bf2123093a2b074c78b8",
+            "agentCli": "2.1.290 (Claude Code)",
+            "judge": "c6a3ef77735b8b1b27d07bfbaffea685a60f9971c7b4be09edfc4862c19e7f1e",
+            "context": "ebdfdab986e087946469b6196c1df6618dfc413c299ed55c1d897e9a65fd9c21",
+            "gate": "none"
+          },
+          "environmentDigest": "sha256:6a72085a1b8306b461d563e142183013722bfb82266c18958558e09767b4f79d",
+          "harnessKind": "claude-code",
+          "model": "claude-sonnet-5",
+          "effort": "medium",
+          "gate": "none",
+          "overrides": [],
+          "runs": 1,
+          "pass": 1,
+          "fail": 0,
+          "infraError": 0,
+          "skipped": 0,
+          "passRate": 1,
+          "outcome": "pass",
+          "checks": [
+            {
+              "label": "agent ran without provider errors",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            },
+            {
+              "label": "requires the genkit module",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            },
+            {
+              "label": "builds",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            },
+            {
+              "label": "runs and prints an answer",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            },
+            {
+              "label": "calls the model",
+              "pass": 1,
+              "fail": 0,
+              "error": 0,
+              "notRun": 0,
+              "control": {
+                "pass": 1,
+                "fail": 0,
+                "error": 0,
+                "notRun": 0
+              },
+              "verdict": "both-pass"
+            }
+          ],
+          "lift": {
+            "vs": "claude-code:claude-sonnet-5/go-new-control/docker:go.Dockerfile",
+            "control": {
+              "pass": 1,
+              "counted": 1
+            },
+            "variant": {
+              "pass": 1,
+              "counted": 1
+            },
+            "points": 0,
+            "interval": {
+              "lo": -0.793,
+              "hi": 0.793,
+              "level": 0.95,
+              "method": "newcombe-wilson"
+            },
+            "withinNoise": true
+          }
+        }
+      ],
+      "attempts": [
+        {
+          "key": "evals/probes/agents/agents.eval.ts › agents: go-new-app # claude-code:claude-sonnet-5/go-new-control/docker:go.Dockerfile#1",
+          "id": "claude-code:claude-sonnet-5/go-new-control/docker:go.Dockerfile#1",
+          "cell": "claude-code:claude-sonnet-5/go-new-control/docker:go.Dockerfile",
+          "n": 1,
+          "seq": 1,
+          "startedAt": "2026-11-02T15:27:39.817Z",
+          "imageId": "sha256:a2f13de18218fa4472492ce09966d12017f127d8d7b8bf2123093a2b074c78b8",
+          "env": {
+            "vars": [
+              "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+            ],
+            "secrets": [
+              "GEMINI_API_KEY"
+            ],
+            "brokered": [
+              "GEMINI_API_KEY"
+            ]
+          },
+          "context": [
+            {
+              "path": "~/.claude/skills/.ai-sdk-harness-skills.json",
+              "sha256": "5ddf48ce4d7015c17873d3c8b1c02e421c433763e17d96c4ef377bbddabb44fe"
+            }
+          ],
+          "egress": {
+            "policy": "proxy",
+            "allowed": null,
+            "recorded": true,
+            "contacted": [
+              {
+                "host": "api.anthropic.com",
+                "port": 443,
+                "connections": 3,
+                "sent": 1531010,
+                "received": 143717
+              },
+              {
+                "host": "generativelanguage.googleapis.com",
+                "port": 443,
+                "connections": 5,
+                "sent": 11503,
+                "received": 23644
+              },
+              {
+                "host": "proxy.golang.org",
+                "port": 443,
+                "connections": 4,
+                "sent": 7807,
+                "received": 49847
+              },
+              {
+                "host": "storage.googleapis.com",
+                "port": 443,
+                "connections": 1,
+                "sent": 50585,
+                "received": 32702436
+              },
+              {
+                "host": "sum.golang.org",
+                "port": 443,
+                "connections": 1,
+                "sent": 2747,
+                "received": 50285
+              }
+            ],
+            "blocked": [],
+            "expectedBlocked": [],
+            "unresolved": []
+          },
+          "servedModels": null,
+          "effort": "medium",
+          "servedEffort": null,
+          "outcome": "pass",
+          "error": null,
+          "durationMs": 69136,
+          "turns": [
+            {
+              "prompt": "Create a Genkit Go app here whose `main` prints a one-line Gemini answer to 'What is Genkit?' and exits non-zero if the call fails. The Gemini API key is in the GEMINI_API_KEY environment variable.",
+              "status": "completed",
+              "startedAt": "2026-11-02T15:27:42.771Z",
+              "durationMs": 59762,
+              "usage": {
+                "input": 32,
+                "output": 2660,
+                "cacheRead": 489116,
+                "cacheWrite": 11068,
+                "reasoning": null
+              },
+              "model": "claude-sonnet-5",
+              "unreported": [],
+              "error": null,
+              "reasoningMs": 6164,
+              "text": "That was auto-created by Genkit's runtime (for its local dev/trace directory), not something I need to touch. Everything's in place.\n\nCreated a Genkit Go app in `/reeval/workspace`:\n- `main.go` — initializes Genkit with the `googlegenai` plugin, calls `gemini-2.5-flash` with a prompt asking for a single-sentence answer to \"What is Genkit?\", prints it, and exits with status 1 (printing the error to stderr) if the call fails.\n- `go.mod`/`go.sum` — resolved via `go mod tidy`.\n\nVerified: success path prints one line and exits 0; an invalid `GEMINI_API_KEY` causes exit code 1 with an error message."
+            }
+          ],
+          "usage": {
+            "input": 32,
+            "output": 2660,
+            "cacheRead": 489116,
+            "cacheWrite": 11068,
+            "reasoning": null
+          },
+          "timings": {
+            "setupMs": 2890,
+            "agentMs": 59761,
+            "diffMs": 177,
+            "checksMs": 3506,
+            "judgeMs": 0
+          },
+          "activity": {
+            "tools": 13,
+            "fileEdits": 2,
+            "webSearches": 0,
+            "webFetches": 0,
+            "reasoningMs": 6164,
+            "stalledTools": 0,
+            "maxToolMs": 12774
+          },
+          "judgements": [],
+          "snapshots": [
+            {
+              "name": "final",
+              "form": "dir",
+              "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-control-docker-go-dockerf-c5dee8/1/snapshots/final",
+              "bytes": 27141690,
+              "files": 6,
+              "excluded": [],
+              "masked": [],
+              "dropped": [],
+              "skipped": null
+            }
+          ],
+          "assertions": [
+            {
+              "label": "agent ran without provider errors",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true,
+              "at": "evals/probes/agents/agents.eval.ts:114"
+            },
+            {
+              "label": "requires the genkit module",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true,
+              "at": "evals/probes/agents/agents.eval.ts:128"
+            },
+            {
+              "label": "builds",
+              "labelled": true,
+              "matcher": "toSucceed",
+              "status": "pass",
+              "soft": true,
+              "at": "evals/probes/agents/agents.eval.ts:131"
+            },
+            {
+              "label": "runs and prints an answer",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true,
+              "at": "evals/probes/agents/agents.eval.ts:137"
+            },
+            {
+              "label": "calls the model",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true,
+              "at": "evals/probes/agents/agents.eval.ts:140"
+            }
+          ],
+          "observations": [
+            {
+              "name": "genkit-commands",
+              "value": [],
+              "turn": 1
+            },
+            {
+              "name": "skills-installs",
+              "value": [],
+              "turn": 1
+            },
+            {
+              "name": "web-searches",
+              "value": 0,
+              "turn": 1
+            },
+            {
+              "name": "web-fetches",
+              "value": 0,
+              "turn": 1
+            },
+            {
+              "name": "web-fetched-hosts-ok",
+              "value": [],
+              "turn": 1
+            },
+            {
+              "name": "web-fetched-hosts-refused",
+              "value": [],
+              "turn": 1
+            },
+            {
+              "name": "install-conflicts",
+              "value": [],
+              "turn": 1
+            },
+            {
+              "name": "mirror-path-mentions",
+              "value": {
+                "written": 0,
+                "seen": 0,
+                "inDiff": false
+              },
+              "turn": 1
+            },
+            {
+              "name": "go-app-dir",
+              "value": ".",
+              "turn": 1
+            },
+            {
+              "name": "genkit-go-version",
+              "value": "v1.14.0",
+              "turn": 1
+            }
+          ],
+          "checks": [
+            {
+              "command": "find . -name go.mod -not -path './.git/*' -not -path '*/vendor/*' | awk '{ print gsub(\"/\", \"/\"), $0 }' | sort -n | head -1 | cut -d' ' -f2-",
+              "exitCode": 0,
+              "durationMs": 54,
+              "log": {
+                "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-control-docker-go-dockerf-c5dee8/1/checks/1.log",
+                "sha256": "0b47d35016e62976509ed3e7670dfdc734fbafb39e264e060fc09e6e2ae6ca25",
+                "bytes": 180
+              }
+            },
+            {
+              "command": "cd '.' && go build ./...",
+              "exitCode": 0,
+              "durationMs": 743,
+              "log": {
+                "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-control-docker-go-dockerf-c5dee8/1/checks/2.log",
+                "sha256": "c2ea2e701ad38d33360d039ea77b40f11cc3be2d320fff80a37a28daf9488c1d",
+                "bytes": 56
+              }
+            },
+            {
+              "command": "cd '.' && go list -m -f '{{.Version}}' github.com/firebase/genkit/go",
+              "exitCode": 0,
+              "durationMs": 56,
+              "log": {
+                "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-control-docker-go-dockerf-c5dee8/1/checks/3.log",
+                "sha256": "8728ade2c2e925c8793b69af87b035f078acf45435bcd72e78e2cb829d50eb92",
+                "bytes": 108
+              }
+            },
+            {
+              "command": "cd '.' && timeout 120 go run .",
+              "exitCode": 0,
+              "durationMs": 2405,
+              "log": {
+                "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-control-docker-go-dockerf-c5dee8/1/checks/4.log",
+                "sha256": "250249a291e5815bb23548a868dcaa4c815ad3e4cd8084513b450b395262a4fe",
+                "bytes": 315
+              }
+            },
+            {
+              "command": "cd '.' && GEMINI_API_KEY=invalid timeout 120 go run .",
+              "exitCode": 1,
+              "durationMs": 248,
+              "log": {
+                "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-control-docker-go-dockerf-c5dee8/1/checks/5.log",
+                "sha256": "dda127f25ebfeaff5c9b06e02e1eab35679ea5f73763657003532c86ceb68c9a",
+                "bytes": 578
+              }
+            }
+          ],
+          "changedFiles": [
+            {
+              "path": "go.mod",
+              "status": "added"
+            },
+            {
+              "path": "go.sum",
+              "status": "added"
+            },
+            {
+              "path": "main.go",
+              "status": "added"
+            }
+          ],
+          "files": {
+            "setupLog": {
+              "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-control-docker-go-dockerf-c5dee8/1/setup.log",
+              "sha256": "de805fe5594dd07e35dc4f93b751379b7705bb59bcbbd05e5a54b53d83d706db",
+              "bytes": 111
+            },
+            "transcript": {
+              "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-control-docker-go-dockerf-c5dee8/1/transcript.jsonl",
+              "sha256": "a195c8652cbc0fb81a717c5888d703e5a41ffa3bc31e6e52df8b23f58a41dce4",
+              "bytes": 18231
+            },
+            "diff": {
+              "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-control-docker-go-dockerf-c5dee8/1/diff.patch",
+              "sha256": "1e6cf3b8c195c1ed04b0d9d2daa7456f4a7bb8a9e744a75d63f11da8b367e16a",
+              "bytes": 12867
+            }
+          }
+        },
+        {
+          "key": "evals/probes/agents/agents.eval.ts › agents: go-new-app # claude-code:claude-sonnet-5/go-new-skill/docker:go.Dockerfile#1",
+          "id": "claude-code:claude-sonnet-5/go-new-skill/docker:go.Dockerfile#1",
+          "cell": "claude-code:claude-sonnet-5/go-new-skill/docker:go.Dockerfile",
+          "n": 1,
+          "seq": 2,
+          "startedAt": "2026-11-02T15:27:39.829Z",
+          "imageId": "sha256:a2f13de18218fa4472492ce09966d12017f127d8d7b8bf2123093a2b074c78b8",
+          "env": {
+            "vars": [
+              "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+            ],
+            "secrets": [
+              "GEMINI_API_KEY"
+            ],
+            "brokered": [
+              "GEMINI_API_KEY"
+            ]
+          },
+          "context": [
+            {
+              "path": "~/.claude/skills/.ai-sdk-harness-skills.json",
+              "sha256": "e829901dc17a1eec3ecccb754089288e8afdfee8fefddb2c75274ae7e6840c44"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-go/SKILL.md",
+              "sha256": "937157143a90d1c7e12efce3f6ac06b2394e9bbc5c98bbc6494e47db8b9a80e5"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-go/references/a2ui.md",
+              "sha256": "e1c34d1a46c910684982caffd01d1fc9ab14d03942ddd5e937aaee06588c74d7"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-go/references/agents-artifacts.md",
+              "sha256": "8115b75ee5d20fbc8918e9b108b79633415839ff54bca594520c4be4178d00ed"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-go/references/agents-background.md",
+              "sha256": "c74afd63d776762788afd70deb27e3c7c63164e407494f92464c668ad3b2a547"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-go/references/agents-branching.md",
+              "sha256": "c843681072af3dc4269681f2e2275d591338eb3e807c7ae1836ba0e1f7d12cfc"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-go/references/agents-custom.md",
+              "sha256": "6f34058e3b74ec41553acb14877bbed9f4daddff9ffb3663aa785feaadf9c34b"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-go/references/agents-deployment.md",
+              "sha256": "e541d12e0a6a81263904bb729cc1dd5ad6d5bb74b7c5b163d73eca246b2ba9e8"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-go/references/agents-human-in-the-loop.md",
+              "sha256": "95dfdc6f21dc6853296fa8370b2ad20be91f634eacf8dc1d9bb4e5211a1cd694"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-go/references/agents-multi-agent.md",
+              "sha256": "ce7f81b101b6cd5e52bec13a7fe9610284fcde71b923a996cb75e6583dfc2e89"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-go/references/agents-sessions.md",
+              "sha256": "24ada9ca2e976cbf9aee384be3e19d61778adab8a73e410437965ef551e8822b"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-go/references/agents-state.md",
+              "sha256": "8acd077ec703a4fce86903c8e1832b3473f240a7928acc024ccb6a34bfc3d32e"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-go/references/agents.md",
+              "sha256": "27e11c2a758d28066e09b64da5629faf8f2e71ef4f609af9e7f9442b881cdcff"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-go/references/flows-and-http.md",
+              "sha256": "9abd4fee7e2d4dc3842a2d4feb6fa8e1731e02a309430a3e971a3f9d0acec1bd"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-go/references/generation.md",
+              "sha256": "6bc15e234544be70118f15fbc25a45cae1f69bf6da13279df98fac960a828f1c"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-go/references/getting-started.md",
+              "sha256": "9e3be27c432b97ccfe47cceb23ba455501e211c58db10b1cd02147f6e6554aaf"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-go/references/middleware.md",
+              "sha256": "bc89e552b2452e0feed265c8dbe2f516683be5ef51645e03ad7ae6a1f6c2737e"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-go/references/observability.md",
+              "sha256": "8df597f03397dd1505925855462feede0040e43457e389d2ac1e905368df0123"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-go/references/prompts.md",
+              "sha256": "8498f72a0abb1309d8d85ae34f0be59acc831366f33493d93ed0205d9332285d"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-go/references/providers.md",
+              "sha256": "0e46d7ce6da6d01ac90b98dfcdc5111131d264bfc1b6a46c3c7f30e497626f6a"
+            },
+            {
+              "path": "~/.claude/skills/developing-genkit-go/references/tools.md",
+              "sha256": "c6d4a52454f88e6f4d5660d01de490f642bd9946b9936a4cfaba97bebe393634"
+            }
+          ],
+          "egress": {
+            "policy": "proxy",
+            "allowed": null,
+            "recorded": true,
+            "contacted": [
+              {
+                "host": "api.anthropic.com",
+                "port": 443,
+                "connections": 3,
+                "sent": 1466671,
+                "received": 119339
+              },
+              {
+                "host": "generativelanguage.googleapis.com",
+                "port": 443,
+                "connections": 5,
+                "sent": 11440,
+                "received": 31592
+              },
+              {
+                "host": "proxy.golang.org",
+                "port": 443,
+                "connections": 4,
+                "sent": 7881,
+                "received": 49881
+              },
+              {
+                "host": "storage.googleapis.com",
+                "port": 443,
+                "connections": 1,
+                "sent": 50777,
+                "received": 32702658
+              },
+              {
+                "host": "sum.golang.org",
+                "port": 443,
+                "connections": 1,
+                "sent": 2725,
+                "received": 50289
+              }
+            ],
+            "blocked": [],
+            "expectedBlocked": [],
+            "unresolved": []
+          },
+          "servedModels": null,
+          "effort": "medium",
+          "servedEffort": null,
+          "outcome": "pass",
+          "error": null,
+          "durationMs": 77402,
+          "turns": [
+            {
+              "prompt": "Create a Genkit Go app here whose `main` prints a one-line Gemini answer to 'What is Genkit?' and exits non-zero if the call fails. The Gemini API key is in the GEMINI_API_KEY environment variable.",
+              "status": "completed",
+              "startedAt": "2026-11-02T15:27:43.265Z",
+              "durationMs": 64504,
+              "usage": {
+                "input": 28,
+                "output": 2089,
+                "cacheRead": 473267,
+                "cacheWrite": 14962,
+                "reasoning": null
+              },
+              "model": "claude-sonnet-5",
+              "unreported": [],
+              "error": null,
+              "reasoningMs": 4034,
+              "text": "Confirmed: exits non-zero (1) with an error message on failure, and prints a one-line answer with exit 0 on success.\n\nCreated `/reeval/workspace/main.go` — a Genkit Go app using `googlegenai.GoogleAI` that calls `gemini-flash-latest` for \"What is Genkit?\" and prints the one-line answer, exiting non-zero on failure. `go.mod`/`go.sum` are set up via `go mod tidy`."
+            }
+          ],
+          "usage": {
+            "input": 28,
+            "output": 2089,
+            "cacheRead": 473267,
+            "cacheWrite": 14962,
+            "reasoning": null
+          },
+          "timings": {
+            "setupMs": 3375,
+            "agentMs": 64503,
+            "diffMs": 1068,
+            "checksMs": 5370,
+            "judgeMs": 0
+          },
+          "activity": {
+            "tools": 11,
+            "fileEdits": 2,
+            "webSearches": 0,
+            "webFetches": 0,
+            "reasoningMs": 4034,
+            "stalledTools": 0,
+            "maxToolMs": 17004
+          },
+          "judgements": [],
+          "snapshots": [
+            {
+              "name": "final",
+              "form": "dir",
+              "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-skill-docker-go-dockerfil-423461/1/snapshots/final",
+              "bytes": 27142950,
+              "files": 6,
+              "excluded": [],
+              "masked": [],
+              "dropped": [],
+              "skipped": null
+            }
+          ],
+          "assertions": [
+            {
+              "label": "agent ran without provider errors",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true,
+              "at": "evals/probes/agents/agents.eval.ts:114"
+            },
+            {
+              "label": "requires the genkit module",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true,
+              "at": "evals/probes/agents/agents.eval.ts:128"
+            },
+            {
+              "label": "builds",
+              "labelled": true,
+              "matcher": "toSucceed",
+              "status": "pass",
+              "soft": true,
+              "at": "evals/probes/agents/agents.eval.ts:131"
+            },
+            {
+              "label": "runs and prints an answer",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true,
+              "at": "evals/probes/agents/agents.eval.ts:137"
+            },
+            {
+              "label": "calls the model",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true,
+              "at": "evals/probes/agents/agents.eval.ts:140"
+            }
+          ],
+          "observations": [
+            {
+              "name": "genkit-commands",
+              "value": [],
+              "turn": 1
+            },
+            {
+              "name": "skills-installs",
+              "value": [],
+              "turn": 1
+            },
+            {
+              "name": "web-searches",
+              "value": 0,
+              "turn": 1
+            },
+            {
+              "name": "web-fetches",
+              "value": 0,
+              "turn": 1
+            },
+            {
+              "name": "web-fetched-hosts-ok",
+              "value": [],
+              "turn": 1
+            },
+            {
+              "name": "web-fetched-hosts-refused",
+              "value": [],
+              "turn": 1
+            },
+            {
+              "name": "install-conflicts",
+              "value": [],
+              "turn": 1
+            },
+            {
+              "name": "mirror-path-mentions",
+              "value": {
+                "written": 0,
+                "seen": 0,
+                "inDiff": false
+              },
+              "turn": 1
+            },
+            {
+              "name": "go-app-dir",
+              "value": ".",
+              "turn": 1
+            },
+            {
+              "name": "genkit-go-version",
+              "value": "v1.14.0",
+              "turn": 1
+            }
+          ],
+          "checks": [
+            {
+              "command": "find . -name go.mod -not -path './.git/*' -not -path '*/vendor/*' | awk '{ print gsub(\"/\", \"/\"), $0 }' | sort -n | head -1 | cut -d' ' -f2-",
+              "exitCode": 0,
+              "durationMs": 63,
+              "log": {
+                "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-skill-docker-go-dockerfil-423461/1/checks/1.log",
+                "sha256": "0b47d35016e62976509ed3e7670dfdc734fbafb39e264e060fc09e6e2ae6ca25",
+                "bytes": 180
+              }
+            },
+            {
+              "command": "cd '.' && go build ./...",
+              "exitCode": 0,
+              "durationMs": 899,
+              "log": {
+                "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-skill-docker-go-dockerfil-423461/1/checks/2.log",
+                "sha256": "c2ea2e701ad38d33360d039ea77b40f11cc3be2d320fff80a37a28daf9488c1d",
+                "bytes": 56
+              }
+            },
+            {
+              "command": "cd '.' && go list -m -f '{{.Version}}' github.com/firebase/genkit/go",
+              "exitCode": 0,
+              "durationMs": 66,
+              "log": {
+                "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-skill-docker-go-dockerfil-423461/1/checks/3.log",
+                "sha256": "8728ade2c2e925c8793b69af87b035f078acf45435bcd72e78e2cb829d50eb92",
+                "bytes": 108
+              }
+            },
+            {
+              "command": "cd '.' && timeout 120 go run .",
+              "exitCode": 0,
+              "durationMs": 4113,
+              "log": {
+                "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-skill-docker-go-dockerfil-423461/1/checks/4.log",
+                "sha256": "534c64f81b8fa24595349acae5f1997a172d590de8820168e81be0823f7c7fe5",
+                "bytes": 267
+              }
+            },
+            {
+              "command": "cd '.' && GEMINI_API_KEY=invalid timeout 120 go run .",
+              "exitCode": 1,
+              "durationMs": 229,
+              "log": {
+                "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-skill-docker-go-dockerfil-423461/1/checks/5.log",
+                "sha256": "17c6a54a6c927af7b0025095edf9943fbee53c13027ebf0ce059204d6741d3f9",
+                "bytes": 596
+              }
+            }
+          ],
+          "changedFiles": [
+            {
+              "path": "genkit-hello",
+              "status": "added"
+            },
+            {
+              "path": "go.mod",
+              "status": "added"
+            },
+            {
+              "path": "go.sum",
+              "status": "added"
+            },
+            {
+              "path": "main.go",
+              "status": "added"
+            }
+          ],
+          "files": {
+            "setupLog": {
+              "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-skill-docker-go-dockerfil-423461/1/setup.log",
+              "sha256": "e58388db15e57f742e30a322ebb824d6f73ae8ab03666e5fb6491dcc9f8056e3",
+              "bytes": 111
+            },
+            "transcript": {
+              "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-skill-docker-go-dockerfil-423461/1/transcript.jsonl",
+              "sha256": "287149c91e3c59e24b078f5edf8a514ca7ae79306f939aad4d5774716c9626c0",
+              "bytes": 16769
+            },
+            "diff": {
+              "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-skill-docker-go-dockerfil-423461/1/diff.patch",
+              "sha256": "1e0a33c30cc56d60f43bc910371c08bcf3e577159bfe4eb6ffe3f6c713495a10",
+              "bytes": 12891
+            }
+          }
+        },
+        {
+          "key": "evals/probes/agents/agents.eval.ts › agents: go-new-app # claude-code:claude-sonnet-5/go-new-open/docker:go.Dockerfile#1",
+          "id": "claude-code:claude-sonnet-5/go-new-open/docker:go.Dockerfile#1",
+          "cell": "claude-code:claude-sonnet-5/go-new-open/docker:go.Dockerfile",
+          "n": 1,
+          "seq": 3,
+          "startedAt": "2026-11-02T15:27:39.831Z",
+          "imageId": "sha256:a2f13de18218fa4472492ce09966d12017f127d8d7b8bf2123093a2b074c78b8",
+          "env": {
+            "vars": [
+              "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+            ],
+            "secrets": [
+              "GEMINI_API_KEY"
+            ],
+            "brokered": [
+              "GEMINI_API_KEY"
+            ]
+          },
+          "context": [
+            {
+              "path": "~/.claude/skills/.ai-sdk-harness-skills.json",
+              "sha256": "5ddf48ce4d7015c17873d3c8b1c02e421c433763e17d96c4ef377bbddabb44fe"
+            }
+          ],
+          "egress": {
+            "policy": "allow-all",
+            "allowed": null,
+            "recorded": true,
+            "partial": true,
+            "contacted": [
+              {
+                "host": "api.anthropic.com",
+                "port": 443,
+                "connections": 3,
+                "sent": 1343544,
+                "received": 166367
+              },
+              {
+                "host": "generativelanguage.googleapis.com",
+                "port": 443,
+                "connections": 6,
+                "sent": 13829,
+                "received": 27834
+              },
+              {
+                "host": "proxy.golang.org",
+                "port": 443,
+                "connections": 4,
+                "sent": 7885,
+                "received": 49966
+              },
+              {
+                "host": "storage.googleapis.com",
+                "port": 443,
+                "connections": 1,
+                "sent": 51353,
+                "received": 32704669
+              },
+              {
+                "host": "sum.golang.org",
+                "port": 443,
+                "connections": 1,
+                "sent": 2747,
+                "received": 50334
+              }
+            ],
+            "blocked": [],
+            "expectedBlocked": [],
+            "unresolved": []
+          },
+          "servedModels": null,
+          "effort": "medium",
+          "servedEffort": null,
+          "outcome": "pass",
+          "error": null,
+          "durationMs": 73194,
+          "turns": [
+            {
+              "prompt": "Create a Genkit Go app here whose `main` prints a one-line Gemini answer to 'What is Genkit?' and exits non-zero if the call fails. The Gemini API key is in the GEMINI_API_KEY environment variable.",
+              "status": "completed",
+              "startedAt": "2026-11-02T15:27:42.528Z",
+              "durationMs": 62017,
+              "usage": {
+                "input": 28,
+                "output": 3225,
+                "cacheRead": 427813,
+                "cacheWrite": 11410,
+                "reasoning": null
+              },
+              "model": "claude-sonnet-5",
+              "unreported": [],
+              "error": null,
+              "reasoningMs": 6096,
+              "text": "Exits non-zero with an error message on failure, and prints a clean one-line answer with empty stdout on failure. The app is working as expected.\n\nCreated at `/reeval/workspace/genkit-gemini-app`:\n- `main.go` — uses Genkit's `googlegenai` plugin with Gemini 2.5 Flash, asks \"What is Genkit?\", prints the answer collapsed to one line on stdout, exits 1 with an error on stderr if the call fails.\n- `go.mod`/`go.sum` — resolved via `go get` + `go mod tidy`.\n\nVerified: successful run prints a single-line answer; invalid API key causes exit code 1 with an error on stderr and empty stdout."
+            }
+          ],
+          "usage": {
+            "input": 28,
+            "output": 3225,
+            "cacheRead": 427813,
+            "cacheWrite": 11410,
+            "reasoning": null
+          },
+          "timings": {
+            "setupMs": 2613,
+            "agentMs": 62016,
+            "diffMs": 1046,
+            "checksMs": 4152,
+            "judgeMs": 0
+          },
+          "activity": {
+            "tools": 11,
+            "fileEdits": 2,
+            "webSearches": 0,
+            "webFetches": 0,
+            "reasoningMs": 6096,
+            "stalledTools": 0,
+            "maxToolMs": 10495
+          },
+          "judgements": [],
+          "snapshots": [
+            {
+              "name": "final",
+              "form": "dir",
+              "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-open-docker-go-dockerfile-e004db/1/snapshots/final",
+              "bytes": 27142210,
+              "files": 6,
+              "excluded": [],
+              "masked": [],
+              "dropped": [],
+              "skipped": null
+            }
+          ],
+          "assertions": [
+            {
+              "label": "agent ran without provider errors",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true,
+              "at": "evals/probes/agents/agents.eval.ts:114"
+            },
+            {
+              "label": "requires the genkit module",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true,
+              "at": "evals/probes/agents/agents.eval.ts:128"
+            },
+            {
+              "label": "builds",
+              "labelled": true,
+              "matcher": "toSucceed",
+              "status": "pass",
+              "soft": true,
+              "at": "evals/probes/agents/agents.eval.ts:131"
+            },
+            {
+              "label": "runs and prints an answer",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true,
+              "at": "evals/probes/agents/agents.eval.ts:137"
+            },
+            {
+              "label": "calls the model",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true,
+              "at": "evals/probes/agents/agents.eval.ts:140"
+            }
+          ],
+          "observations": [
+            {
+              "name": "genkit-commands",
+              "value": [],
+              "turn": 1
+            },
+            {
+              "name": "skills-installs",
+              "value": [],
+              "turn": 1
+            },
+            {
+              "name": "web-searches",
+              "value": 0,
+              "turn": 1
+            },
+            {
+              "name": "web-fetches",
+              "value": 0,
+              "turn": 1
+            },
+            {
+              "name": "web-fetched-hosts-ok",
+              "value": [],
+              "turn": 1
+            },
+            {
+              "name": "web-fetched-hosts-refused",
+              "value": [],
+              "turn": 1
+            },
+            {
+              "name": "install-conflicts",
+              "value": [],
+              "turn": 1
+            },
+            {
+              "name": "mirror-path-mentions",
+              "value": {
+                "written": 0,
+                "seen": 0,
+                "inDiff": false
+              },
+              "turn": 1
+            },
+            {
+              "name": "go-app-dir",
+              "value": "./genkit-gemini-app",
+              "turn": 1
+            },
+            {
+              "name": "genkit-go-version",
+              "value": "v1.14.0",
+              "turn": 1
+            }
+          ],
+          "checks": [
+            {
+              "command": "find . -name go.mod -not -path './.git/*' -not -path '*/vendor/*' | awk '{ print gsub(\"/\", \"/\"), $0 }' | sort -n | head -1 | cut -d' ' -f2-",
+              "exitCode": 0,
+              "durationMs": 57,
+              "log": {
+                "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-open-docker-go-dockerfile-e004db/1/checks/1.log",
+                "sha256": "a5a17da29e7eb16e4cd17789b7bf95c26c750a6a10ca1b8bb4e22f6d9fc56346",
+                "bytes": 198
+              }
+            },
+            {
+              "command": "cd './genkit-gemini-app' && go build ./...",
+              "exitCode": 0,
+              "durationMs": 841,
+              "log": {
+                "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-open-docker-go-dockerfile-e004db/1/checks/2.log",
+                "sha256": "136fa32a97f10b936d3b0b053014e146398f96e113af0d837b5cdde939cd6e4e",
+                "bytes": 74
+              }
+            },
+            {
+              "command": "cd './genkit-gemini-app' && go list -m -f '{{.Version}}' github.com/firebase/genkit/go",
+              "exitCode": 0,
+              "durationMs": 67,
+              "log": {
+                "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-open-docker-go-dockerfile-e004db/1/checks/3.log",
+                "sha256": "34a9c4a39cb83c71bfe890915ee9785e3e4bd13bf83c92dd601e13afeca6823a",
+                "bytes": 126
+              }
+            },
+            {
+              "command": "cd './genkit-gemini-app' && timeout 120 go run .",
+              "exitCode": 0,
+              "durationMs": 2954,
+              "log": {
+                "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-open-docker-go-dockerfile-e004db/1/checks/4.log",
+                "sha256": "7a6cf7223a7137c499a25345e6cca28846d686e4ecac295b490618ac1edea37d",
+                "bytes": 350
+              }
+            },
+            {
+              "command": "cd './genkit-gemini-app' && GEMINI_API_KEY=invalid timeout 120 go run .",
+              "exitCode": 1,
+              "durationMs": 233,
+              "log": {
+                "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-open-docker-go-dockerfile-e004db/1/checks/5.log",
+                "sha256": "85f4d47fc7cc433f77d1dcb28d45be950bf012674d858cfa8355e17bea04d0a7",
+                "bytes": 596
+              }
+            }
+          ],
+          "changedFiles": [
+            {
+              "path": "genkit-gemini-app/genkit-gemini-app",
+              "status": "added"
+            },
+            {
+              "path": "genkit-gemini-app/go.mod",
+              "status": "added"
+            },
+            {
+              "path": "genkit-gemini-app/go.sum",
+              "status": "added"
+            },
+            {
+              "path": "genkit-gemini-app/main.go",
+              "status": "added"
+            }
+          ],
+          "files": {
+            "setupLog": {
+              "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-open-docker-go-dockerfile-e004db/1/setup.log",
+              "sha256": "cc09aab680bea75570d7b78f83537e757df24274990b557cd33d7d70fe7f5e6c",
+              "bytes": 111
+            },
+            "transcript": {
+              "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-open-docker-go-dockerfile-e004db/1/transcript.jsonl",
+              "sha256": "12319b3882ab12017d993ca44a230b962e56d14cc6d72574876e14d0d0f02839",
+              "bytes": 17896
+            },
+            "diff": {
+              "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-open-docker-go-dockerfile-e004db/1/diff.patch",
+              "sha256": "399264edf8a52dbe1816812288fe1b2f39d3f8e5fd671f2a5b22a593a13830e3",
+              "bytes": 13157
+            }
+          }
+        },
+        {
+          "key": "evals/probes/agents/agents.eval.ts › agents: go-new-app # claude-code:claude-sonnet-5/go-new-docsite/docker:go.Dockerfile#1",
+          "id": "claude-code:claude-sonnet-5/go-new-docsite/docker:go.Dockerfile#1",
+          "cell": "claude-code:claude-sonnet-5/go-new-docsite/docker:go.Dockerfile",
+          "n": 1,
+          "seq": 4,
+          "startedAt": "2026-11-02T15:27:39.832Z",
+          "imageId": "sha256:a2f13de18218fa4472492ce09966d12017f127d8d7b8bf2123093a2b074c78b8",
+          "env": {
+            "vars": [
+              "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+            ],
+            "secrets": [
+              "GEMINI_API_KEY"
+            ],
+            "brokered": [
+              "GEMINI_API_KEY"
+            ]
+          },
+          "context": [
+            {
+              "path": "~/.claude/skills/.ai-sdk-harness-skills.json",
+              "sha256": "5ddf48ce4d7015c17873d3c8b1c02e421c433763e17d96c4ef377bbddabb44fe"
+            }
+          ],
+          "egress": {
+            "policy": {
+              "allow": [
+                "registry.npmjs.org",
+                "registry.yarnpkg.com",
+                "github.com",
+                "*.github.com",
+                "*.githubusercontent.com",
+                "pypi.org",
+                "files.pythonhosted.org",
+                "genkit.dev",
+                "*.genkit.dev",
+                "proxy.golang.org",
+                "sum.golang.org"
+              ]
+            },
+            "allowed": [
+              "registry.npmjs.org",
+              "registry.yarnpkg.com",
+              "github.com",
+              "*.github.com",
+              "*.githubusercontent.com",
+              "pypi.org",
+              "files.pythonhosted.org",
+              "genkit.dev",
+              "*.genkit.dev",
+              "proxy.golang.org",
+              "sum.golang.org",
+              "api.anthropic.com",
+              "*.anthropic.com",
+              "generativelanguage.googleapis.com"
+            ],
+            "recorded": true,
+            "contacted": [
+              {
+                "host": "api.anthropic.com",
+                "port": 443,
+                "connections": 3,
+                "sent": 1237921,
+                "received": 153564
+              },
+              {
+                "host": "generativelanguage.googleapis.com",
+                "port": 443,
+                "connections": 5,
+                "sent": 11470,
+                "received": 23943
+              },
+              {
+                "host": "proxy.golang.org",
+                "port": 443,
+                "connections": 4,
+                "sent": 7846,
+                "received": 49883
+              },
+              {
+                "host": "sum.golang.org",
+                "port": 443,
+                "connections": 1,
+                "sent": 2725,
+                "received": 50306
+              }
+            ],
+            "blocked": [
+              {
+                "host": "storage.googleapis.com",
+                "port": 443,
+                "connections": 1,
+                "reason": "storage.googleapis.com isn't in the allowlist"
+              }
+            ],
+            "expectedBlocked": [],
+            "unresolved": []
+          },
+          "servedModels": null,
+          "effort": "medium",
+          "servedEffort": null,
+          "outcome": "pass",
+          "error": null,
+          "durationMs": 59334,
+          "turns": [
+            {
+              "prompt": "Create a Genkit Go app here whose `main` prints a one-line Gemini answer to 'What is Genkit?' and exits non-zero if the call fails. The Gemini API key is in the GEMINI_API_KEY environment variable.",
+              "status": "completed",
+              "startedAt": "2026-11-02T15:27:42.573Z",
+              "durationMs": 48386,
+              "usage": {
+                "input": 26,
+                "output": 2901,
+                "cacheRead": 392928,
+                "cacheWrite": 11042,
+                "reasoning": null
+              },
+              "model": "claude-sonnet-5",
+              "unreported": [],
+              "error": null,
+              "reasoningMs": 6988,
+              "text": "Confirmed: exits 1 on failure, 0 with a one-line answer on success.\n\nCreated `/reeval/workspace/genkit-gemini-app`:\n- `go.mod`/`go.sum` — module using `github.com/firebase/genkit/go` with the `googlegenai` plugin (reads `GEMINI_API_KEY` automatically)\n- `main.go` — initializes Genkit, calls Gemini 2.5 Flash with the prompt \"What is Genkit?\", collapses the response to a single line, prints it, and exits 1 with an error message on failure\n\nVerified both paths: real key prints a one-line answer and exits 0; invalid key prints an error and exits 1."
+            }
+          ],
+          "usage": {
+            "input": 26,
+            "output": 2901,
+            "cacheRead": 392928,
+            "cacheWrite": 11042,
+            "reasoning": null
+          },
+          "timings": {
+            "setupMs": 2690,
+            "agentMs": 48385,
+            "diffMs": 1011,
+            "checksMs": 4035,
+            "judgeMs": 0
+          },
+          "activity": {
+            "tools": 10,
+            "fileEdits": 2,
+            "webSearches": 0,
+            "webFetches": 0,
+            "reasoningMs": 6988,
+            "stalledTools": 0,
+            "maxToolMs": 9870
+          },
+          "judgements": [],
+          "snapshots": [
+            {
+              "name": "final",
+              "form": "dir",
+              "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-docsite-docker-go-dockerf-1f5330/1/snapshots/final",
+              "bytes": 27142202,
+              "files": 6,
+              "excluded": [],
+              "masked": [],
+              "dropped": [],
+              "skipped": null
+            }
+          ],
+          "assertions": [
+            {
+              "label": "agent ran without provider errors",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true,
+              "at": "evals/probes/agents/agents.eval.ts:114"
+            },
+            {
+              "label": "requires the genkit module",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true,
+              "at": "evals/probes/agents/agents.eval.ts:128"
+            },
+            {
+              "label": "builds",
+              "labelled": true,
+              "matcher": "toSucceed",
+              "status": "pass",
+              "soft": true,
+              "at": "evals/probes/agents/agents.eval.ts:131"
+            },
+            {
+              "label": "runs and prints an answer",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true,
+              "at": "evals/probes/agents/agents.eval.ts:137"
+            },
+            {
+              "label": "calls the model",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true,
+              "at": "evals/probes/agents/agents.eval.ts:140"
+            }
+          ],
+          "observations": [
+            {
+              "name": "genkit-commands",
+              "value": [],
+              "turn": 1
+            },
+            {
+              "name": "skills-installs",
+              "value": [],
+              "turn": 1
+            },
+            {
+              "name": "web-searches",
+              "value": 0,
+              "turn": 1
+            },
+            {
+              "name": "web-fetches",
+              "value": 0,
+              "turn": 1
+            },
+            {
+              "name": "web-fetched-hosts-ok",
+              "value": [],
+              "turn": 1
+            },
+            {
+              "name": "web-fetched-hosts-refused",
+              "value": [],
+              "turn": 1
+            },
+            {
+              "name": "install-conflicts",
+              "value": [],
+              "turn": 1
+            },
+            {
+              "name": "mirror-path-mentions",
+              "value": {
+                "written": 0,
+                "seen": 0,
+                "inDiff": false
+              },
+              "turn": 1
+            },
+            {
+              "name": "go-app-dir",
+              "value": "./genkit-gemini-app",
+              "turn": 1
+            },
+            {
+              "name": "genkit-go-version",
+              "value": "v1.14.0",
+              "turn": 1
+            }
+          ],
+          "checks": [
+            {
+              "command": "find . -name go.mod -not -path './.git/*' -not -path '*/vendor/*' | awk '{ print gsub(\"/\", \"/\"), $0 }' | sort -n | head -1 | cut -d' ' -f2-",
+              "exitCode": 0,
+              "durationMs": 59,
+              "log": {
+                "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-docsite-docker-go-dockerf-1f5330/1/checks/1.log",
+                "sha256": "a5a17da29e7eb16e4cd17789b7bf95c26c750a6a10ca1b8bb4e22f6d9fc56346",
+                "bytes": 198
+              }
+            },
+            {
+              "command": "cd './genkit-gemini-app' && go build ./...",
+              "exitCode": 0,
+              "durationMs": 202,
+              "log": {
+                "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-docsite-docker-go-dockerf-1f5330/1/checks/2.log",
+                "sha256": "136fa32a97f10b936d3b0b053014e146398f96e113af0d837b5cdde939cd6e4e",
+                "bytes": 74
+              }
+            },
+            {
+              "command": "cd './genkit-gemini-app' && go list -m -f '{{.Version}}' github.com/firebase/genkit/go",
+              "exitCode": 0,
+              "durationMs": 51,
+              "log": {
+                "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-docsite-docker-go-dockerf-1f5330/1/checks/3.log",
+                "sha256": "34a9c4a39cb83c71bfe890915ee9785e3e4bd13bf83c92dd601e13afeca6823a",
+                "bytes": 126
+              }
+            },
+            {
+              "command": "cd './genkit-gemini-app' && timeout 120 go run .",
+              "exitCode": 0,
+              "durationMs": 3221,
+              "log": {
+                "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-docsite-docker-go-dockerf-1f5330/1/checks/4.log",
+                "sha256": "006bfa891127b02a140dae4417ec6f0bb41fdc94e3209959784927e7ac47e9e4",
+                "bytes": 361
+              }
+            },
+            {
+              "command": "cd './genkit-gemini-app' && GEMINI_API_KEY=invalid timeout 120 go run .",
+              "exitCode": 1,
+              "durationMs": 502,
+              "log": {
+                "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-docsite-docker-go-dockerf-1f5330/1/checks/5.log",
+                "sha256": "22bbdceaa3290f540f279410b3e1499e89e401b0d7adaf734488adb0537e5ef1",
+                "bytes": 596
+              }
+            }
+          ],
+          "changedFiles": [
+            {
+              "path": "genkit-gemini-app/genkit-gemini-app",
+              "status": "added"
+            },
+            {
+              "path": "genkit-gemini-app/go.mod",
+              "status": "added"
+            },
+            {
+              "path": "genkit-gemini-app/go.sum",
+              "status": "added"
+            },
+            {
+              "path": "genkit-gemini-app/main.go",
+              "status": "added"
+            }
+          ],
+          "files": {
+            "setupLog": {
+              "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-docsite-docker-go-dockerf-1f5330/1/setup.log",
+              "sha256": "8ba29c612e78f8001d8a045b4599b025a196d8e5d858211f60823d4f466524ef",
+              "bytes": 111
+            },
+            "transcript": {
+              "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-docsite-docker-go-dockerf-1f5330/1/transcript.jsonl",
+              "sha256": "97a7b1265e6ee86de9ffdab1f5f3df80deb9ef88642372a92387b866c0ca6e75",
+              "bytes": 17090
+            },
+            "diff": {
+              "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-docsite-docker-go-dockerf-1f5330/1/diff.patch",
+              "sha256": "23fac5a2c243d4f858fcf3a3a0a38a16045277612a3d2893b5d97aca230df7a1",
+              "bytes": 13149
+            }
+          }
+        },
+        {
+          "key": "evals/probes/agents/agents.eval.ts › agents: go-new-app # claude-code:claude-sonnet-5/go-new-llms/docker:go.Dockerfile#1",
+          "id": "claude-code:claude-sonnet-5/go-new-llms/docker:go.Dockerfile#1",
+          "cell": "claude-code:claude-sonnet-5/go-new-llms/docker:go.Dockerfile",
+          "n": 1,
+          "seq": 5,
+          "startedAt": "2026-11-02T15:27:39.834Z",
+          "imageId": "sha256:a2f13de18218fa4472492ce09966d12017f127d8d7b8bf2123093a2b074c78b8",
+          "env": {
+            "vars": [
+              "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+            ],
+            "secrets": [
+              "GEMINI_API_KEY"
+            ],
+            "brokered": [
+              "GEMINI_API_KEY"
+            ]
+          },
+          "context": [
+            {
+              "path": "~/.claude/skills/.ai-sdk-harness-skills.json",
+              "sha256": "5ddf48ce4d7015c17873d3c8b1c02e421c433763e17d96c4ef377bbddabb44fe"
+            },
+            {
+              "path": "CLAUDE.md",
+              "sha256": "f694a18b48735eb7d045cc44593f28ee8376408666bdc7e5edaba8904cec106a"
+            }
+          ],
+          "egress": {
+            "policy": {
+              "allow": [
+                "registry.npmjs.org",
+                "registry.yarnpkg.com",
+                "github.com",
+                "*.github.com",
+                "*.githubusercontent.com",
+                "pypi.org",
+                "files.pythonhosted.org",
+                "genkit.dev",
+                "*.genkit.dev",
+                "proxy.golang.org",
+                "sum.golang.org"
+              ]
+            },
+            "allowed": [
+              "registry.npmjs.org",
+              "registry.yarnpkg.com",
+              "github.com",
+              "*.github.com",
+              "*.githubusercontent.com",
+              "pypi.org",
+              "files.pythonhosted.org",
+              "genkit.dev",
+              "*.genkit.dev",
+              "proxy.golang.org",
+              "sum.golang.org",
+              "api.anthropic.com",
+              "*.anthropic.com",
+              "generativelanguage.googleapis.com"
+            ],
+            "recorded": true,
+            "contacted": [
+              {
+                "host": "api.anthropic.com",
+                "port": 443,
+                "connections": 4,
+                "sent": 1575995,
+                "received": 200626
+              },
+              {
+                "host": "generativelanguage.googleapis.com",
+                "port": 443,
+                "connections": 5,
+                "sent": 11548,
+                "received": 32637
+              },
+              {
+                "host": "genkit.dev",
+                "port": 443,
+                "connections": 2,
+                "sent": 3785,
+                "received": 297097
+              },
+              {
+                "host": "proxy.golang.org",
+                "port": 443,
+                "connections": 10,
+                "sent": 27962,
+                "received": 170038
+              },
+              {
+                "host": "sum.golang.org",
+                "port": 443,
+                "connections": 2,
+                "sent": 13956,
+                "received": 463308
+              }
+            ],
+            "blocked": [
+              {
+                "host": "storage.googleapis.com",
+                "port": 443,
+                "connections": 2,
+                "reason": "storage.googleapis.com isn't in the allowlist"
+              }
+            ],
+            "expectedBlocked": [],
+            "unresolved": []
+          },
+          "servedModels": null,
+          "effort": "medium",
+          "servedEffort": null,
+          "outcome": "pass",
+          "error": null,
+          "durationMs": 89297,
+          "turns": [
+            {
+              "prompt": "Create a Genkit Go app here whose `main` prints a one-line Gemini answer to 'What is Genkit?' and exits non-zero if the call fails. The Gemini API key is in the GEMINI_API_KEY environment variable.",
+              "status": "completed",
+              "startedAt": "2026-11-02T15:27:42.765Z",
+              "durationMs": 76850,
+              "usage": {
+                "input": 30,
+                "output": 2688,
+                "cacheRead": 463684,
+                "cacheWrite": 11175,
+                "reasoning": null
+              },
+              "model": "claude-sonnet-5",
+              "unreported": [],
+              "error": null,
+              "reasoningMs": 4472,
+              "text": "Both paths confirmed: success prints a one-line answer and exits 0; failure prints the error and exits 1.\n\nCreated `/reeval/workspace/genkit-gemini-app`: a Go module (`go.mod`/`go.sum`) with `main.go` using `genkit.Init` + the `googlegenai.GoogleAI` plugin (reads `GEMINI_API_KEY` automatically) and `genkit.Generate` to print a one-line answer to \"What is Genkit?\", exiting 1 on error. Build and both success/failure runs verified."
+            }
+          ],
+          "usage": {
+            "input": 30,
+            "output": 2688,
+            "cacheRead": 463684,
+            "cacheWrite": 11175,
+            "reasoning": null
+          },
+          "timings": {
+            "setupMs": 2878,
+            "agentMs": 76848,
+            "diffMs": 1009,
+            "checksMs": 5501,
+            "judgeMs": 0
+          },
+          "activity": {
+            "tools": 10,
+            "fileEdits": 2,
+            "webSearches": 0,
+            "webFetches": 2,
+            "reasoningMs": 4472,
+            "stalledTools": 0,
+            "maxToolMs": 18489
+          },
+          "judgements": [],
+          "snapshots": [
+            {
+              "name": "final",
+              "form": "dir",
+              "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-llms-docker-go-dockerfile-643e37/1/snapshots/final",
+              "bytes": 27075585,
+              "files": 7,
+              "excluded": [],
+              "masked": [],
+              "dropped": [],
+              "skipped": null
+            }
+          ],
+          "assertions": [
+            {
+              "label": "agent ran without provider errors",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true,
+              "at": "evals/probes/agents/agents.eval.ts:114"
+            },
+            {
+              "label": "requires the genkit module",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true,
+              "at": "evals/probes/agents/agents.eval.ts:128"
+            },
+            {
+              "label": "builds",
+              "labelled": true,
+              "matcher": "toSucceed",
+              "status": "pass",
+              "soft": true,
+              "at": "evals/probes/agents/agents.eval.ts:131"
+            },
+            {
+              "label": "runs and prints an answer",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true,
+              "at": "evals/probes/agents/agents.eval.ts:137"
+            },
+            {
+              "label": "calls the model",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true,
+              "at": "evals/probes/agents/agents.eval.ts:140"
+            }
+          ],
+          "observations": [
+            {
+              "name": "genkit-commands",
+              "value": [],
+              "turn": 1
+            },
+            {
+              "name": "skills-installs",
+              "value": [],
+              "turn": 1
+            },
+            {
+              "name": "web-searches",
+              "value": 0,
+              "turn": 1
+            },
+            {
+              "name": "web-fetches",
+              "value": 2,
+              "turn": 1
+            },
+            {
+              "name": "web-fetched-hosts-ok",
+              "value": [
+                "genkit.dev"
+              ],
+              "turn": 1
+            },
+            {
+              "name": "web-fetched-hosts-refused",
+              "value": [],
+              "turn": 1
+            },
+            {
+              "name": "install-conflicts",
+              "value": [],
+              "turn": 1
+            },
+            {
+              "name": "mirror-path-mentions",
+              "value": {
+                "written": 0,
+                "seen": 0,
+                "inDiff": false
+              },
+              "turn": 1
+            },
+            {
+              "name": "go-app-dir",
+              "value": "./genkit-gemini-app",
+              "turn": 1
+            },
+            {
+              "name": "genkit-go-version",
+              "value": "v1.14.0",
+              "turn": 1
+            }
+          ],
+          "checks": [
+            {
+              "command": "find . -name go.mod -not -path './.git/*' -not -path '*/vendor/*' | awk '{ print gsub(\"/\", \"/\"), $0 }' | sort -n | head -1 | cut -d' ' -f2-",
+              "exitCode": 0,
+              "durationMs": 49,
+              "log": {
+                "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-llms-docker-go-dockerfile-643e37/1/checks/1.log",
+                "sha256": "a5a17da29e7eb16e4cd17789b7bf95c26c750a6a10ca1b8bb4e22f6d9fc56346",
+                "bytes": 198
+              }
+            },
+            {
+              "command": "cd './genkit-gemini-app' && go build ./...",
+              "exitCode": 0,
+              "durationMs": 857,
+              "log": {
+                "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-llms-docker-go-dockerfile-643e37/1/checks/2.log",
+                "sha256": "136fa32a97f10b936d3b0b053014e146398f96e113af0d837b5cdde939cd6e4e",
+                "bytes": 74
+              }
+            },
+            {
+              "command": "cd './genkit-gemini-app' && go list -m -f '{{.Version}}' github.com/firebase/genkit/go",
+              "exitCode": 0,
+              "durationMs": 57,
+              "log": {
+                "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-llms-docker-go-dockerfile-643e37/1/checks/3.log",
+                "sha256": "34a9c4a39cb83c71bfe890915ee9785e3e4bd13bf83c92dd601e13afeca6823a",
+                "bytes": 126
+              }
+            },
+            {
+              "command": "cd './genkit-gemini-app' && timeout 120 go run .",
+              "exitCode": 0,
+              "durationMs": 4319,
+              "log": {
+                "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-llms-docker-go-dockerfile-643e37/1/checks/4.log",
+                "sha256": "73522f30a82f6c608fa71687fda3da8437931304d6701b601cb3d74093704c78",
+                "bytes": 293
+              }
+            },
+            {
+              "command": "cd './genkit-gemini-app' && GEMINI_API_KEY=invalid timeout 120 go run .",
+              "exitCode": 1,
+              "durationMs": 219,
+              "log": {
+                "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-llms-docker-go-dockerfile-643e37/1/checks/5.log",
+                "sha256": "0f4ba86de4bbf39766c59f236f068fb8b4c3043571ec1f519cfdc6ea42aca19c",
+                "bytes": 606
+              }
+            }
+          ],
+          "changedFiles": [
+            {
+              "path": "genkit-gemini-app/genkit-gemini-app",
+              "status": "added"
+            },
+            {
+              "path": "genkit-gemini-app/go.mod",
+              "status": "added"
+            },
+            {
+              "path": "genkit-gemini-app/go.sum",
+              "status": "added"
+            },
+            {
+              "path": "genkit-gemini-app/main.go",
+              "status": "added"
+            }
+          ],
+          "files": {
+            "setupLog": {
+              "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-llms-docker-go-dockerfile-643e37/1/setup.log",
+              "sha256": "387ec0f0eefbd2fbc426a7b6afd98f5255eaf8e59532a5dc4ae17a8b52809d5a",
+              "bytes": 111
+            },
+            "transcript": {
+              "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-llms-docker-go-dockerfile-643e37/1/transcript.jsonl",
+              "sha256": "a02ce796a1608aea2dc72e6c4a33d456f8a41811b9182edf2afe666b414139bb",
+              "bytes": 12743
+            },
+            "diff": {
+              "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-llms-docker-go-dockerfile-643e37/1/diff.patch",
+              "sha256": "8c0ed8c8799fc6a8cb68d4931262fc83cc939d33b7a6d03a7856c1fed53e9bd2",
+              "bytes": 11740
+            }
+          }
+        },
+        {
+          "key": "evals/probes/agents/agents.eval.ts › agents: go-new-app # claude-code:claude-sonnet-5/go-new-index/docker:go.Dockerfile#1",
+          "id": "claude-code:claude-sonnet-5/go-new-index/docker:go.Dockerfile#1",
+          "cell": "claude-code:claude-sonnet-5/go-new-index/docker:go.Dockerfile",
+          "n": 1,
+          "seq": 6,
+          "startedAt": "2026-11-02T15:27:39.835Z",
+          "imageId": "sha256:a2f13de18218fa4472492ce09966d12017f127d8d7b8bf2123093a2b074c78b8",
+          "env": {
+            "vars": [
+              "GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS"
+            ],
+            "secrets": [
+              "GEMINI_API_KEY"
+            ],
+            "brokered": [
+              "GEMINI_API_KEY"
+            ]
+          },
+          "context": [
+            {
+              "path": "~/.claude/skills/.ai-sdk-harness-skills.json",
+              "sha256": "5ddf48ce4d7015c17873d3c8b1c02e421c433763e17d96c4ef377bbddabb44fe"
+            },
+            {
+              "path": "CLAUDE.md",
+              "sha256": "cc965e91371a139ba2b44ada74ab7ea6ec6920a13fce209aff96161c147ac473"
+            }
+          ],
+          "egress": {
+            "policy": {
+              "allow": [
+                "registry.npmjs.org",
+                "registry.yarnpkg.com",
+                "github.com",
+                "*.github.com",
+                "*.githubusercontent.com",
+                "pypi.org",
+                "files.pythonhosted.org",
+                "genkit.dev",
+                "*.genkit.dev",
+                "proxy.golang.org",
+                "sum.golang.org"
+              ]
+            },
+            "allowed": [
+              "registry.npmjs.org",
+              "registry.yarnpkg.com",
+              "github.com",
+              "*.github.com",
+              "*.githubusercontent.com",
+              "pypi.org",
+              "files.pythonhosted.org",
+              "genkit.dev",
+              "*.genkit.dev",
+              "proxy.golang.org",
+              "sum.golang.org",
+              "api.anthropic.com",
+              "*.anthropic.com",
+              "generativelanguage.googleapis.com"
+            ],
+            "recorded": true,
+            "contacted": [
+              {
+                "host": "api.anthropic.com",
+                "port": 443,
+                "connections": 5,
+                "sent": 1485407,
+                "received": 197948
+              },
+              {
+                "host": "generativelanguage.googleapis.com",
+                "port": 443,
+                "connections": 4,
+                "sent": 9148,
+                "received": 21794
+              },
+              {
+                "host": "genkit.dev",
+                "port": 443,
+                "connections": 2,
+                "sent": 3824,
+                "received": 24414
+              },
+              {
+                "host": "proxy.golang.org",
+                "port": 443,
+                "connections": 4,
+                "sent": 7846,
+                "received": 49884
+              },
+              {
+                "host": "sum.golang.org",
+                "port": 443,
+                "connections": 1,
+                "sent": 2725,
+                "received": 50286
+              }
+            ],
+            "blocked": [
+              {
+                "host": "storage.googleapis.com",
+                "port": 443,
+                "connections": 1,
+                "reason": "storage.googleapis.com isn't in the allowlist"
+              }
+            ],
+            "expectedBlocked": [],
+            "unresolved": []
+          },
+          "servedModels": null,
+          "effort": "medium",
+          "servedEffort": null,
+          "outcome": "pass",
+          "error": null,
+          "durationMs": 56120,
+          "turns": [
+            {
+              "prompt": "Create a Genkit Go app here whose `main` prints a one-line Gemini answer to 'What is Genkit?' and exits non-zero if the call fails. The Gemini API key is in the GEMINI_API_KEY environment variable.",
+              "status": "completed",
+              "startedAt": "2026-11-02T15:27:42.760Z",
+              "durationMs": 44779,
+              "usage": {
+                "input": 28,
+                "output": 2226,
+                "cacheRead": 475809,
+                "cacheWrite": 14433,
+                "reasoning": null
+              },
+              "model": "claude-sonnet-5",
+              "unreported": [],
+              "error": null,
+              "reasoningMs": 3056,
+              "text": "The INFO log goes to stderr, so stdout cleanly contains just the one-line answer. The app works correctly: it builds, prints a one-line Gemini answer on success (exit 0), and exits non-zero on failure (e.g., missing API key).\n\nFiles created in `/reeval/workspace`: `main.go`, `go.mod`, `go.sum`."
+            }
+          ],
+          "usage": {
+            "input": 28,
+            "output": 2226,
+            "cacheRead": 475809,
+            "cacheWrite": 14433,
+            "reasoning": null
+          },
+          "timings": {
+            "setupMs": 2862,
+            "agentMs": 44778,
+            "diffMs": 165,
+            "checksMs": 5179,
+            "judgeMs": 0
+          },
+          "activity": {
+            "tools": 11,
+            "fileEdits": 1,
+            "webSearches": 0,
+            "webFetches": 2,
+            "reasoningMs": 3056,
+            "stalledTools": 0,
+            "maxToolMs": 6204
+          },
+          "judgements": [],
+          "snapshots": [
+            {
+              "name": "final",
+              "form": "dir",
+              "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-index-docker-go-dockerfil-935d79/1/snapshots/final",
+              "bytes": 27082153,
+              "files": 7,
+              "excluded": [],
+              "masked": [],
+              "dropped": [],
+              "skipped": null
+            }
+          ],
+          "assertions": [
+            {
+              "label": "agent ran without provider errors",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true,
+              "at": "evals/probes/agents/agents.eval.ts:114"
+            },
+            {
+              "label": "requires the genkit module",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true,
+              "at": "evals/probes/agents/agents.eval.ts:128"
+            },
+            {
+              "label": "builds",
+              "labelled": true,
+              "matcher": "toSucceed",
+              "status": "pass",
+              "soft": true,
+              "at": "evals/probes/agents/agents.eval.ts:131"
+            },
+            {
+              "label": "runs and prints an answer",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true,
+              "at": "evals/probes/agents/agents.eval.ts:137"
+            },
+            {
+              "label": "calls the model",
+              "labelled": true,
+              "matcher": "toEqual",
+              "status": "pass",
+              "soft": true,
+              "at": "evals/probes/agents/agents.eval.ts:140"
+            }
+          ],
+          "observations": [
+            {
+              "name": "genkit-commands",
+              "value": [],
+              "turn": 1
+            },
+            {
+              "name": "skills-installs",
+              "value": [],
+              "turn": 1
+            },
+            {
+              "name": "web-searches",
+              "value": 0,
+              "turn": 1
+            },
+            {
+              "name": "web-fetches",
+              "value": 2,
+              "turn": 1
+            },
+            {
+              "name": "web-fetched-hosts-ok",
+              "value": [
+                "genkit.dev"
+              ],
+              "turn": 1
+            },
+            {
+              "name": "web-fetched-hosts-refused",
+              "value": [],
+              "turn": 1
+            },
+            {
+              "name": "install-conflicts",
+              "value": [],
+              "turn": 1
+            },
+            {
+              "name": "mirror-path-mentions",
+              "value": {
+                "written": 0,
+                "seen": 0,
+                "inDiff": false
+              },
+              "turn": 1
+            },
+            {
+              "name": "go-app-dir",
+              "value": ".",
+              "turn": 1
+            },
+            {
+              "name": "genkit-go-version",
+              "value": "v1.14.0",
+              "turn": 1
+            }
+          ],
+          "checks": [
+            {
+              "command": "find . -name go.mod -not -path './.git/*' -not -path '*/vendor/*' | awk '{ print gsub(\"/\", \"/\"), $0 }' | sort -n | head -1 | cut -d' ' -f2-",
+              "exitCode": 0,
+              "durationMs": 52,
+              "log": {
+                "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-index-docker-go-dockerfil-935d79/1/checks/1.log",
+                "sha256": "0b47d35016e62976509ed3e7670dfdc734fbafb39e264e060fc09e6e2ae6ca25",
+                "bytes": 180
+              }
+            },
+            {
+              "command": "cd '.' && go build ./...",
+              "exitCode": 0,
+              "durationMs": 684,
+              "log": {
+                "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-index-docker-go-dockerfil-935d79/1/checks/2.log",
+                "sha256": "c2ea2e701ad38d33360d039ea77b40f11cc3be2d320fff80a37a28daf9488c1d",
+                "bytes": 56
+              }
+            },
+            {
+              "command": "cd '.' && go list -m -f '{{.Version}}' github.com/firebase/genkit/go",
+              "exitCode": 0,
+              "durationMs": 49,
+              "log": {
+                "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-index-docker-go-dockerfil-935d79/1/checks/3.log",
+                "sha256": "8728ade2c2e925c8793b69af87b035f078acf45435bcd72e78e2cb829d50eb92",
+                "bytes": 108
+              }
+            },
+            {
+              "command": "cd '.' && timeout 120 go run .",
+              "exitCode": 0,
+              "durationMs": 4138,
+              "log": {
+                "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-index-docker-go-dockerfil-935d79/1/checks/4.log",
+                "sha256": "bc648be2dbac3fbfa0fd2aff86896da86bde2f276c9cf27ab240dd03260d28a3",
+                "bytes": 290
+              }
+            },
+            {
+              "command": "cd '.' && GEMINI_API_KEY=invalid timeout 120 go run .",
+              "exitCode": 1,
+              "durationMs": 256,
+              "log": {
+                "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-index-docker-go-dockerfil-935d79/1/checks/5.log",
+                "sha256": "c502b564c884e5df168e2eb7f02ff6fa5a0b4a10df406f6f6d7df0605665290c",
+                "bytes": 578
+              }
+            }
+          ],
+          "changedFiles": [
+            {
+              "path": "go.mod",
+              "status": "added"
+            },
+            {
+              "path": "go.sum",
+              "status": "added"
+            },
+            {
+              "path": "main.go",
+              "status": "added"
+            }
+          ],
+          "files": {
+            "setupLog": {
+              "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-index-docker-go-dockerfil-935d79/1/setup.log",
+              "sha256": "ee32c1c6e39e97cbba99dfdf18b361757e05145c45b131dd11235ed79fb12e11",
+              "bytes": 111
+            },
+            "transcript": {
+              "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-index-docker-go-dockerfil-935d79/1/transcript.jsonl",
+              "sha256": "9d8cf00a1fa31254b124e7a79c8c4a895efd3cb90f36e3d8eacd7892bf324b86",
+              "bytes": 13850
+            },
+            "diff": {
+              "path": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d/claude-code-claude-sonnet-5-go-new-index-docker-go-dockerfil-935d79/1/diff.patch",
+              "sha256": "94ba95dd41d59e23f306a9aff3bf856ea7184e17f6a52bac4173a47654bb632c",
+              "bytes": 12849
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

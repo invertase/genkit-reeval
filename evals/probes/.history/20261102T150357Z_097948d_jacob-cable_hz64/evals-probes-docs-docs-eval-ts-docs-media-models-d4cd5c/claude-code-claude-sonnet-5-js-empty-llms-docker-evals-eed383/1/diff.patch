@@ -1,0 +1,84 @@
+[reeval: dropped package-lock.json: lockfile, 7001 changed lines]
+diff --git a/package.json b/package.json
+index e41aac9..4b528aa 100644
+--- a/package.json
++++ b/package.json
+@@ -10,5 +10,9 @@
+     "@types/node": "22.20.5",
+     "tsx": "4.23.15",
+     "typescript": "5.9.3"
++  },
++  "dependencies": {
++    "@genkit-ai/google-genai": "^1.43.0",
++    "genkit": "^1.43.0"
+   }
+ }
+diff --git a/src/flows.ts b/src/flows.ts
+new file mode 100644
+index 0000000..f5ad286
+--- /dev/null
++++ b/src/flows.ts
+@@ -0,0 +1,50 @@
++import { z } from 'genkit';
++import { googleAI } from '@genkit-ai/google-genai';
++import { ai } from './index.js';
++
++export const speak = ai.defineFlow(
++  {
++    name: 'speak',
++    inputSchema: z.object({ text: z.string() }),
++    outputSchema: z.string(),
++  },
++  async ({ text }) => {
++    const response = await ai.generate({
++      model: googleAI.model('gemini-3.8-flash-tts'),
++      prompt: text,
++      config: {
++        responseModalities: ['AUDIO'],
++        speechConfig: {
++          voiceConfig: {
++            prebuiltVoiceConfig: { voiceName: 'Algenib' },
++          },
++        },
++      },
++    });
++    if (!response.media?.url) {
++      throw new Error('No audio was generated.');
++    }
++    return response.media.url;
++  },
++);
++
++export const drawImage = ai.defineFlow(
++  {
++    name: 'drawImage',
++    inputSchema: z.object({ description: z.string() }),
++    outputSchema: z.string(),
++  },
++  async ({ description }) => {
++    const response = await ai.generate({
++      model: googleAI.model('gemini-nano-banana-2.1'),
++      prompt: description,
++      config: {
++        responseModalities: ['IMAGE'],
++      },
++    });
++    if (!response.media?.url) {
++      throw new Error('No image was generated.');
++    }
++    return response.media.url;
++  },
++);
+diff --git a/src/index.ts b/src/index.ts
+index 336ce12..f09506b 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1 +1,7 @@
+-export {}
++import { genkit } from 'genkit';
++import { googleAI } from '@genkit-ai/google-genai';
++
++export const ai = genkit({
++  plugins: [googleAI()],
++});
++

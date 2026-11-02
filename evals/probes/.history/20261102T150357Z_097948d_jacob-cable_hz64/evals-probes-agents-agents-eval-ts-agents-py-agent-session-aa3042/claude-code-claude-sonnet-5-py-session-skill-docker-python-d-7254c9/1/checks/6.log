@@ -1,0 +1,5 @@
+$ PY=$([ -x .venv/bin/python ] && echo .venv/bin/python || echo python3); timeout 300 "$PY" ~/.verify-py-turn.py '8513d555-e8ae-4a3e-8339-3104e6d945ae' 'What order id did I give you earlier? Reply with only the id.'
+exit 0
+--- stdout
+PROBE_RESULT {"reply": "A-4801", "session": "dec11ec7-d212-403f-bfac-0832d02fcd60"}
+--- stderr

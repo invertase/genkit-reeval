@@ -1,0 +1,6 @@
+$ cd '.' && timeout 120 go run .
+exit 0
+--- stdout
+Genkit is an open-source JavaScript framework for building AI-powered applications and agents by orchestrating generative models with tools, data, and user interfaces.
+--- stderr
+2026/11/02 15:28:44 INFO Genkit initialized env=prod plugins=[googleai] duration=4ms

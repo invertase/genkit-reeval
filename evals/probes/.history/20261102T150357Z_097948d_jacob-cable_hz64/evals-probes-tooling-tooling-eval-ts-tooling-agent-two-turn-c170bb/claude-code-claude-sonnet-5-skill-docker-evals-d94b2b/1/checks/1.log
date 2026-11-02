@@ -1,0 +1,5 @@
+$ ANSWER=answer.json node_modules/.bin/tsx ~/.verify-session.mts
+exit 0
+--- stdout
+PROBE_RESULT {"answers":[],"session":[]}
+--- stderr

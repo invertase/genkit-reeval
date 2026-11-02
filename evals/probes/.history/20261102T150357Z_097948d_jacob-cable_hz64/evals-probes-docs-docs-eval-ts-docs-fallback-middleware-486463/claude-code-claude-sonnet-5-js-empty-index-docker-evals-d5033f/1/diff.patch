@@ -1,0 +1,50 @@
+[reeval: dropped package-lock.json: lockfile, 7085 changed lines]
+diff --git a/package.json b/package.json
+index e41aac9..a7fdc33 100644
+--- a/package.json
++++ b/package.json
+@@ -10,5 +10,10 @@
+     "@types/node": "22.20.5",
+     "tsx": "4.23.15",
+     "typescript": "5.9.3"
++  },
++  "dependencies": {
++    "@genkit-ai/anthropic": "^0.6.0",
++    "@genkit-ai/google-genai": "^1.43.0",
++    "genkit": "^1.43.0"
+   }
+ }
+diff --git a/src/index.ts b/src/index.ts
+index 336ce12..5720260 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1 +1,28 @@
+-export {}
++import { genkit } from 'genkit';
++import { googleAI } from '@genkit-ai/google-genai';
++import { anthropic } from '@genkit-ai/anthropic';
++
++const ai = genkit({
++  plugins: [googleAI(), anthropic()],
++});
++
++const prompt = 'Tell me a short, original joke.';
++
++async function main() {
++  try {
++    const { text } = await ai.generate({
++      model: googleAI.model('gemini-flash-latest'),
++      prompt,
++    });
++    console.log(text);
++  } catch (error) {
++    console.warn('Gemini call failed, falling back to Claude:', error);
++    const { text } = await ai.generate({
++      model: anthropic.model('claude-sonnet-4-6'),
++      prompt,
++    });
++    console.log(text);
++  }
++}
++
++main();

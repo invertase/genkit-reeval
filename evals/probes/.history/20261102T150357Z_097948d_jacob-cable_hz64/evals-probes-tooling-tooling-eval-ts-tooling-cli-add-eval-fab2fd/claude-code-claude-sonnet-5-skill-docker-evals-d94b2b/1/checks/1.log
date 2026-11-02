@@ -1,0 +1,5 @@
+$  node_modules/.bin/tsx ~/.verify-registered.mts
+exit 0
+--- stdout
+PROBE_RESULT {"keys":["/evaluator/custom/ticketSummaryFaithfulness"]}
+--- stderr

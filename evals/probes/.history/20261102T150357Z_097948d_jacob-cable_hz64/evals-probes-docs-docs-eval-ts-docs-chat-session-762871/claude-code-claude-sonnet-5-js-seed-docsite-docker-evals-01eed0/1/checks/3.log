@@ -1,0 +1,7 @@
+$ timeout 180 node_modules/.bin/tsx ~/.verify-chat.mts - 'Remember this: my locker code is quartz-willow-2071. The shed code is cobalt-quartz-8450, which is not mine. Reply with OK.'; rc=$?; if [ $rc -eq 124 ]; then echo 'PROBE_RESULT {"ok":false,"error":"turn did not return within 180s"}'; exit 0; fi; exit $rc
+exit 0, passed on try 1 of 3
+
+try 1 of 3: exit 0 after 4s
+--- stdout
+PROBE_RESULT {"ok":true,"reply":"OK.","sessionId":"69d56fd6-ac17-4dc7-b9d0-757e980c7323"}
+--- stderr

@@ -1,0 +1,7 @@
+$ timeout 150 node_modules/.bin/tsx ~/.verify-mcp/verify.mts ~/.verify-mcp/spec.json
+exit 0, passed on try 1 of 2
+
+try 1 of 2: exit 0 after 839ms
+--- stdout
+PROBE_RESULT {"ok":true,"tools":["add"],"listed":true,"called":true}
+--- stderr

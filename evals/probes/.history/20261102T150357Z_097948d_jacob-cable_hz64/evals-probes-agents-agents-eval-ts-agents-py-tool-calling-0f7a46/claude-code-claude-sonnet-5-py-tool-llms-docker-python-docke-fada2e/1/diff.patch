@@ -1,0 +1,41 @@
+diff --git a/app.py b/app.py
+new file mode 100644
+index 0000000..6d71f3b
+--- /dev/null
++++ b/app.py
+@@ -0,0 +1,35 @@
++import json
++from pathlib import Path
++
++from genkit import Genkit
++from genkit_google_genai import GoogleAI
++from pydantic import BaseModel, Field
++
++ORDERS_PATH = Path(__file__).parent / 'orders.json'
++
++ai = Genkit(
++    plugins=[GoogleAI()],
++    model='googleai/gemini-flash-latest',
++)
++
++
++class OrderStatusInput(BaseModel):
++    order_id: str = Field(description='The order id to look up, e.g. A-7731')
++
++
++@ai.tool()
++async def get_order_status(input: OrderStatusInput) -> str:
++    """Looks up the status and ETA of an order given its order id."""
++    orders = json.loads(ORDERS_PATH.read_text())
++    order = orders.get(input.order_id)
++    if order is None:
++        return f'No order found with id {input.order_id}.'
++    return f"Order {input.order_id} is {order['status']}, with an ETA of {order['eta']}."
++
++
++async def ask(question: str) -> str:
++    response = await ai.generate(
++        prompt=question,
++        tools=[get_order_status],
++    )
++    return response.text

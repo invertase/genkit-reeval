@@ -1,0 +1,5 @@
+$ PY=$([ -x .venv/bin/python ] && echo .venv/bin/python || echo python3); timeout 300 "$PY" ~/.verify-py-tool.py 'Where is order A-8238? Reply with its status.'
+exit 0
+--- stdout
+PROBE_RESULT {"reply": "Order A-8238 is currently held at the Quarry Foxglove depot (estimated delivery date: December 4, 2026)."}
+--- stderr

@@ -1,0 +1,75 @@
+[reeval: dropped package-lock.json: lockfile, 7105 changed lines]
+diff --git a/package.json b/package.json
+index e41aac9..fafa975 100644
+--- a/package.json
++++ b/package.json
+@@ -10,5 +10,10 @@
+     "@types/node": "22.20.5",
+     "tsx": "4.23.15",
+     "typescript": "5.9.3"
++  },
++  "dependencies": {
++    "@genkit-ai/google-genai": "^1.43.0",
++    "genkit": "^1.43.0",
++    "zod": "^4.6.7"
+   }
+ }
+diff --git a/src/flows.ts b/src/flows.ts
+new file mode 100644
+index 0000000..1182523
+--- /dev/null
++++ b/src/flows.ts
+@@ -0,0 +1,53 @@
++import { genkit, z } from 'genkit';
++import { googleAI } from '@genkit-ai/google-genai';
++
++const ai = genkit({
++  plugins: [googleAI()],
++});
++
++export const speak = ai.defineFlow(
++  {
++    name: 'speak',
++    inputSchema: z.object({ text: z.string() }),
++    outputSchema: z.object({ audioUrl: z.string() }),
++  },
++  async ({ text }) => {
++    const response = await ai.generate({
++      model: googleAI.model('gemini-3.8-flash-tts'),
++      config: {
++        speechConfig: {
++          voiceConfig: {
++            prebuiltVoiceConfig: { voiceName: 'Algenib' },
++          },
++        },
++      },
++      prompt: text,
++    });
++
++    if (!response.media?.url) {
++      throw new Error('No audio was generated.');
++    }
++
++    return { audioUrl: response.media.url };
++  },
++);
++
++export const drawImage = ai.defineFlow(
++  {
++    name: 'drawImage',
++    inputSchema: z.object({ description: z.string() }),
++    outputSchema: z.object({ imageUrl: z.string() }),
++  },
++  async ({ description }) => {
++    const response = await ai.generate({
++      model: googleAI.model('gemini-nano-banana-2.1'),
++      prompt: description,
++    });
++
++    if (!response.media?.url) {
++      throw new Error('No image was generated.');
++    }
++
++    return { imageUrl: response.media.url };
++  },
++);

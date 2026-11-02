@@ -1,0 +1,56 @@
+diff --git a/src/evaluators.ts b/src/evaluators.ts
+new file mode 100644
+index 0000000..376ba21
+--- /dev/null
++++ b/src/evaluators.ts
+@@ -0,0 +1,42 @@
++import { z } from 'genkit/beta';
++import { ai } from './ai.js';
++
++const FaithfulnessJudgeSchema = z.object({
++  score: z
++    .number()
++    .min(0)
++    .max(1)
++    .describe('1 if every claim in the summary is grounded in the ticket text, 0 if any claim is fabricated'),
++  reasoning: z.string().describe('Brief explanation of the score'),
++});
++
++/** Checks that summarizeTicket's title, priority and tags only assert facts grounded in the original ticket text. */
++export const ticketSummaryFaithfulness = ai.defineEvaluator(
++  {
++    name: 'custom/ticketSummaryFaithfulness',
++    displayName: 'Ticket Summary Faithfulness',
++    definition:
++      "Measures whether summarizeTicket's title, priority and tags are faithful to the original ticket text, " +
++      'penalizing details that are fabricated rather than grounded in what the customer wrote.',
++  },
++  async (datapoint) => {
++    const ticketText = (datapoint.input as { text?: string } | undefined)?.text;
++    if (!ticketText) throw new Error('ticketSummaryFaithfulness: datapoint.input.text is required');
++    if (!datapoint.output) throw new Error('ticketSummaryFaithfulness: datapoint.output is required');
++
++    const { output: judgement } = await ai.generate({
++      system:
++        'You are grading whether a support-ticket summary is faithful to the original ticket. ' +
++        'A summary is faithful only if every claim in its title, priority and tags is supported by, or reasonably ' +
++        'inferable from, the ticket text. Penalize any fabricated detail not present in the ticket.',
++      prompt: `Ticket text:\n${ticketText}\n\nSummary to grade:\n${JSON.stringify(datapoint.output)}`,
++      output: { schema: FaithfulnessJudgeSchema },
++    });
++    if (!judgement) throw new Error('ticketSummaryFaithfulness: judge model returned no structured output');
++
++    return {
++      testCaseId: datapoint.testCaseId,
++      evaluation: { score: judgement.score, details: { reasoning: judgement.reasoning } },
++    };
++  },
++);
+diff --git a/src/index.ts b/src/index.ts
+index 712c374..8cc7bda 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1,2 +1,3 @@
+ export { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';
+ export { orderAgent, refundAgent, triage, tryRefundDesk, tryTriage } from './agents.js';
++export { ticketSummaryFaithfulness } from './evaluators.js';

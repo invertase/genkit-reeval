@@ -1,0 +1,279 @@
+{
+  "kind": "reeval-remarks",
+  "schemaVersion": 1,
+  "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+  "createdAt": "2026-11-02T15:24:50.921Z",
+  "remarks": [
+    {
+      "id": "d97231db097ae90e5b0c99de0122f0ba6ce836db1bfa86484580cddc8adabe5c",
+      "evalId": "evals%2Fprobes%2Fagents%2Fagents.eval.ts › agents: go-new-app",
+      "kind": "too-few-tries",
+      "severity": "concern",
+      "text": "The go-new-open variant passed 0 of 1 run and the baseline 1 of 1: worse by 100 points, but on too few runs for the difference to hold. It looks 12% faster, but 1 run a side can't confirm it; 4 is the least that can and 14% fewer tokens, but 1 run a side can't confirm it; 4 is the least that can. 4 more variants are too.",
+      "evidence": [
+        "evals%2Fprobes%2Fagents%2Fagents.eval.ts › agents: go-new-app/claude-code:claude-sonnet-5+go-new-open+docker:go.Dockerfile",
+        "evals%2Fprobes%2Fagents%2Fagents.eval.ts › agents: go-new-app/claude-code:claude-sonnet-5+go-new-control+docker:go.Dockerfile"
+      ],
+      "fix": {
+        "at": "source:evals/probes/agents/agents.eval.ts",
+        "edit": "set runs: 4, where a difference this size would hold"
+      },
+      "firstSeenRun": "20261102T143842Z_de55e87_jacob-cable_pgts",
+      "printed": true
+    },
+    {
+      "id": "385b5027c7558e19cf129257a68ebf7c218568eda9e52d9f0d3b53c99a5de425",
+      "evalId": "evals%2Fprobes%2Fagents%2Fagents.eval.ts › agents: go-agent-session",
+      "kind": "too-few-tries",
+      "severity": "concern",
+      "text": "The go-session-skill variant passed 1 of 1 run and the baseline 0 of 1: better by 100 points, but on too few runs for the difference to hold. It looks 2.4× fewer tool calls, but 1 run a side can't confirm it; 4 is the least that can, 2× faster, but 1 run a side can't confirm it; 4 is the least that can, 2.7× fewer tokens, but 1 run a side can't confirm it; 4 is the least that can and judge \"Did the agent build the conversation with Genkit's agents…\" +1.00, but 1 run a side can't confirm it; 4 is the least that can. 1 more variant is too.",
+      "evidence": [
+        "evals%2Fprobes%2Fagents%2Fagents.eval.ts › agents: go-agent-session/claude-code:claude-sonnet-5+go-session-skill+docker:go.Dockerfile",
+        "evals%2Fprobes%2Fagents%2Fagents.eval.ts › agents: go-agent-session/claude-code:claude-sonnet-5+go-session-control+docker:go.Dockerfile"
+      ],
+      "fix": {
+        "at": "source:evals/probes/agents/agents.eval.ts",
+        "edit": "set runs: 4, where a difference this size would hold"
+      },
+      "firstSeenRun": "20261102T143842Z_de55e87_jacob-cable_pgts",
+      "printed": true
+    },
+    {
+      "id": "f9a84ddb100b4753942ef5c73756e3bf37bed425b1dbf104532d7f2a935a0942",
+      "evalId": "evals%2Fprobes%2Fagents%2Fagents.eval.ts › agents: py-tool-calling",
+      "kind": "too-few-tries",
+      "severity": "concern",
+      "text": "The py-tool-index variant passed 0 of 1 run and the baseline 1 of 1: worse by 100 points, but on too few runs for the difference to hold. It looks 19% fewer tool calls, but 1 run a side can't confirm it; 4 is the least that can, 29% slower, but 1 run a side can't confirm it; 4 is the least that can and 1.8× fewer tokens, but 1 run a side can't confirm it; 4 is the least that can. 4 more variants are too.",
+      "evidence": [
+        "evals%2Fprobes%2Fagents%2Fagents.eval.ts › agents: py-tool-calling/claude-code:claude-sonnet-5+py-tool-index+docker:python.Dockerfile",
+        "evals%2Fprobes%2Fagents%2Fagents.eval.ts › agents: py-tool-calling/claude-code:claude-sonnet-5+py-tool-control+docker:python.Dockerfile"
+      ],
+      "fix": {
+        "at": "source:evals/probes/agents/agents.eval.ts",
+        "edit": "set runs: 4, where a difference this size would hold"
+      },
+      "firstSeenRun": "20261102T143842Z_de55e87_jacob-cable_pgts",
+      "printed": true
+    },
+    {
+      "id": "033a8c32b84210b202253c014e76fc7fd95c365aba3d87e1d6a90a86daa21ad3",
+      "evalId": "evals%2Fprobes%2Fagents%2Fagents.eval.ts › agents: py-agent-session",
+      "kind": "too-few-tries",
+      "severity": "concern",
+      "text": "The py-session-skill variant passed 1 of 1 run and the baseline 1 of 1: the same, but 1 run a side can't rule out a difference of up to 79 points. It looks 1.6× fewer tool calls, but 1 run a side can't confirm it; 4 is the least that can, 1.9× faster, but 1 run a side can't confirm it; 4 is the least that can and 2.6× fewer tokens, but 1 run a side can't confirm it; 4 is the least that can. 1 more variant is too.",
+      "evidence": [
+        "evals%2Fprobes%2Fagents%2Fagents.eval.ts › agents: py-agent-session/claude-code:claude-sonnet-5+py-session-skill+docker:python.Dockerfile",
+        "evals%2Fprobes%2Fagents%2Fagents.eval.ts › agents: py-agent-session/claude-code:claude-sonnet-5+py-session-control+docker:python.Dockerfile"
+      ],
+      "fix": {
+        "at": "source:evals/probes/agents/agents.eval.ts",
+        "edit": "set runs: 16, where the same rates would rule out 20 points either way"
+      },
+      "firstSeenRun": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "printed": false
+    },
+    {
+      "id": "3f5d305bd9b08466f06d5667a46ab085f80782f141442dcc932ac2e2a1847fa8",
+      "evalId": "evals%2Fprobes%2Fagents%2Fagents.eval.ts › agents: py-skill-setup",
+      "kind": "too-few-tries",
+      "severity": "concern",
+      "text": "The py-setup-skill variant passed 1 of 1 run and the baseline 1 of 1: the same, but 1 run a side can't rule out a difference of up to 79 points. It looks 2.9× fewer tool calls, but 1 run a side can't confirm it; 4 is the least that can, 2.5× faster, but 1 run a side can't confirm it; 4 is the least that can and 4× fewer tokens, but 1 run a side can't confirm it; 4 is the least that can. 1 more variant is too.",
+      "evidence": [
+        "evals%2Fprobes%2Fagents%2Fagents.eval.ts › agents: py-skill-setup/claude-code:claude-sonnet-5+py-setup-skill+docker:python.Dockerfile",
+        "evals%2Fprobes%2Fagents%2Fagents.eval.ts › agents: py-skill-setup/claude-code:claude-sonnet-5+py-setup-control+docker:python.Dockerfile"
+      ],
+      "fix": {
+        "at": "source:evals/probes/agents/agents.eval.ts",
+        "edit": "set runs: 16, where the same rates would rule out 20 points either way"
+      },
+      "firstSeenRun": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "printed": false
+    },
+    {
+      "id": "f3e494c477239058811b3e4dd459c319daf3ad910da0d3b8f44fbd230af6bc8b",
+      "evalId": "evals%2Fprobes%2Fdocs%2Fdocs.eval.ts › docs: $name",
+      "kind": "too-few-tries",
+      "severity": "concern",
+      "text": "The js-empty-docsite variant, pooled over 6 cases: worse, but a family's lift needs 6 to hold. 3 more variants are too.",
+      "evidence": [
+        "evals%2Fprobes%2Fdocs%2Fdocs.eval.ts › docs: $name/claude-code:claude-sonnet-5+js-empty-docsite+docker:evals"
+      ],
+      "fix": {
+        "at": "source:evals/probes/docs/docs.eval.ts#L40",
+        "edit": "add cases, so the pooled lift has 6 to hold on"
+      },
+      "firstSeenRun": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "printed": false
+    },
+    {
+      "id": "37cc028576f747d5f8e3dd9fc2fa0564fa2751b7dc7260ede3374c43a6d0cb4e",
+      "evalId": "evals%2Fprobes%2Fdocs%2Fdocs.eval.ts › docs: chat-session",
+      "kind": "too-few-tries",
+      "severity": "concern",
+      "text": "The js-seed-docsite variant passed 1 of 1 run and the baseline 1 of 1: the same, but 1 run a side can't rule out a difference of up to 79 points. It looks 19% more tool calls, but 1 run a side can't confirm it; 4 is the least that can and 17% faster, but 1 run a side can't confirm it; 4 is the least that can. 3 more variants are too.",
+      "evidence": [
+        "evals%2Fprobes%2Fdocs%2Fdocs.eval.ts › docs: chat-session/claude-code:claude-sonnet-5+js-seed-docsite+docker:evals",
+        "evals%2Fprobes%2Fdocs%2Fdocs.eval.ts › docs: chat-session/claude-code:claude-sonnet-5+js-seed-open+docker:evals"
+      ],
+      "fix": {
+        "at": "source:evals/probes/docs/docs.eval.ts",
+        "edit": "set runs: 16, where the same rates would rule out 20 points either way"
+      },
+      "firstSeenRun": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "printed": false
+    },
+    {
+      "id": "db94a34b6b1a8d74bdb0a1a8263fc9531b46322eb7541352dd2588b2a420d347",
+      "evalId": "evals%2Fprobes%2Ftooling%2Ftooling.eval.ts › tooling: cli-verify",
+      "kind": "too-few-tries",
+      "severity": "concern",
+      "text": "The skill variant passed 1 of 1 run and the baseline 1 of 1: the same, but 1 run a side can't rule out a difference of up to 79 points. It looks 22% fewer tool calls, but 1 run a side can't confirm it; 4 is the least that can. 1 more variant is too.",
+      "evidence": [
+        "evals%2Fprobes%2Ftooling%2Ftooling.eval.ts › tooling: cli-verify/claude-code:claude-sonnet-5+skill+docker:evals",
+        "evals%2Fprobes%2Ftooling%2Ftooling.eval.ts › tooling: cli-verify/claude-code:claude-sonnet-5+control+docker:evals"
+      ],
+      "fix": {
+        "at": "source:evals/probes/tooling/tooling.eval.ts",
+        "edit": "set runs: 16, where the same rates would rule out 20 points either way"
+      },
+      "firstSeenRun": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "printed": false
+    },
+    {
+      "id": "12aceaef4b306c9bd9ce79e02ca2976afd5110bdf0cac969d4197bb0fdeedca2",
+      "evalId": "evals%2Fprobes%2Ftooling%2Ftooling.eval.ts › tooling: cli-upgrade",
+      "kind": "too-few-tries",
+      "severity": "concern",
+      "text": "The skill variant passed 1 of 1 run and the baseline 1 of 1: the same, but 1 run a side can't rule out a difference of up to 79 points. It looks 17% more tool calls, but 1 run a side can't confirm it; 4 is the least that can and 29% more tokens, but 1 run a side can't confirm it; 4 is the least that can.",
+      "evidence": [
+        "evals%2Fprobes%2Ftooling%2Ftooling.eval.ts › tooling: cli-upgrade/claude-code:claude-sonnet-5+skill+docker:evals",
+        "evals%2Fprobes%2Ftooling%2Ftooling.eval.ts › tooling: cli-upgrade/claude-code:claude-sonnet-5+control+docker:evals"
+      ],
+      "fix": {
+        "at": "source:evals/probes/tooling/tooling.eval.ts",
+        "edit": "set runs: 16, where the same rates would rule out 20 points either way"
+      },
+      "firstSeenRun": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "printed": false
+    },
+    {
+      "id": "c7ef91579a6a88acf131446c3411e4bd33f1015923854a0738581c4ee4afa2d2",
+      "evalId": "evals%2Fprobes%2Ftooling%2Ftooling.eval.ts › tooling: cli-add-eval",
+      "kind": "too-few-tries",
+      "severity": "concern",
+      "text": "The skill variant passed 1 of 1 run and the baseline 1 of 1: the same, but 1 run a side can't rule out a difference of up to 79 points. It looks 27% fewer tool calls, but 1 run a side can't confirm it; 4 is the least that can, 11% faster, but 1 run a side can't confirm it; 4 is the least that can and 18% fewer tokens, but 1 run a side can't confirm it; 4 is the least that can.",
+      "evidence": [
+        "evals%2Fprobes%2Ftooling%2Ftooling.eval.ts › tooling: cli-add-eval/claude-code:claude-sonnet-5+skill+docker:evals",
+        "evals%2Fprobes%2Ftooling%2Ftooling.eval.ts › tooling: cli-add-eval/claude-code:claude-sonnet-5+control+docker:evals"
+      ],
+      "fix": {
+        "at": "source:evals/probes/tooling/tooling.eval.ts",
+        "edit": "set runs: 16, where the same rates would rule out 20 points either way"
+      },
+      "firstSeenRun": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "printed": false
+    },
+    {
+      "id": "38de2487afff1e68d921e86ff2ce40cd89b35814a0898a0b7d7c0b473a70be79",
+      "evalId": "evals%2Fprobes%2Ftooling%2Ftooling.eval.ts › tooling: devui-missing-env",
+      "kind": "too-few-tries",
+      "severity": "concern",
+      "text": "The directed variant passed 1 of 1 run and the baseline 0 of 1: better by 100 points, but on too few runs for the difference to hold. It looks 3.5× more tool calls, but 1 run a side can't confirm it; 4 is the least that can, 2.2× slower, but 1 run a side can't confirm it; 4 is the least that can and 3.2× more tokens, but 1 run a side can't confirm it; 4 is the least that can.",
+      "evidence": [
+        "evals%2Fprobes%2Ftooling%2Ftooling.eval.ts › tooling: devui-missing-env/claude-code:claude-sonnet-5+directed+docker:evals",
+        "evals%2Fprobes%2Ftooling%2Ftooling.eval.ts › tooling: devui-missing-env/claude-code:claude-sonnet-5+mcp+docker:evals"
+      ],
+      "fix": {
+        "at": "source:evals/probes/tooling/tooling.eval.ts",
+        "edit": "set runs: 4, where a difference this size would hold"
+      },
+      "firstSeenRun": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "printed": false
+    },
+    {
+      "id": "176344cbdbd604008cdc7f5cb568922bde3c3e97b8f539e44d7984182008dd37",
+      "evalId": "evals%2Fprobes%2Ftooling%2Ftooling.eval.ts › tooling: devui-two-runtimes",
+      "kind": "too-few-tries",
+      "severity": "concern",
+      "text": "The skill variant passed 1 of 1 run and the baseline 0 of 1: better by 100 points, but on too few runs for the difference to hold. It looks 29% more tool calls, but 1 run a side can't confirm it; 4 is the least that can, 17% slower, but 1 run a side can't confirm it; 4 is the least that can and 28% more tokens, but 1 run a side can't confirm it; 4 is the least that can.",
+      "evidence": [
+        "evals%2Fprobes%2Ftooling%2Ftooling.eval.ts › tooling: devui-two-runtimes/claude-code:claude-sonnet-5+skill+docker:evals",
+        "evals%2Fprobes%2Ftooling%2Ftooling.eval.ts › tooling: devui-two-runtimes/claude-code:claude-sonnet-5+mcp+docker:evals"
+      ],
+      "fix": {
+        "at": "source:evals/probes/tooling/tooling.eval.ts",
+        "edit": "set runs: 4, where a difference this size would hold"
+      },
+      "firstSeenRun": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "printed": false
+    },
+    {
+      "id": "f22c4f615f91a942ad189e90da0beaa9146e192a65bd6c353c6bfe9f84ba6b7c",
+      "evalId": "evals%2Fprobes%2Ftooling%2Ftooling.eval.ts › tooling: mcp-offline-docs",
+      "kind": "too-few-tries",
+      "severity": "concern",
+      "text": "The directed-offline variant passed 1 of 1 run and the baseline 1 of 1: the same, but 1 run a side can't rule out a difference of up to 79 points. It looks 40% more tool calls, but 1 run a side can't confirm it; 4 is the least that can, 32% slower, but 1 run a side can't confirm it; 4 is the least that can and 1.6× more tokens, but 1 run a side can't confirm it; 4 is the least that can.",
+      "evidence": [
+        "evals%2Fprobes%2Ftooling%2Ftooling.eval.ts › tooling: mcp-offline-docs/claude-code:claude-sonnet-5+directed-offline+docker:evals",
+        "evals%2Fprobes%2Ftooling%2Ftooling.eval.ts › tooling: mcp-offline-docs/claude-code:claude-sonnet-5+mcp-offline+docker:evals"
+      ],
+      "fix": {
+        "at": "source:evals/probes/tooling/tooling.eval.ts",
+        "edit": "set runs: 16, where the same rates would rule out 20 points either way"
+      },
+      "firstSeenRun": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "printed": false
+    },
+    {
+      "id": "ef787f504fd742c28dbc2059b99c1a9c84242db1c0b2c06f5dd47dd093fcd635",
+      "evalId": "evals%2Fprobes%2Ftooling%2Ftooling.eval.ts › tooling: mcp-setup-claude",
+      "kind": "too-few-tries",
+      "severity": "concern",
+      "text": "The skill-claude variant passed 1 of 1 run and the baseline 1 of 1: the same, but 1 run a side can't rule out a difference of up to 79 points. It looks 2.7× more tool calls, but 1 run a side can't confirm it; 4 is the least that can, 2.2× slower, but 1 run a side can't confirm it; 4 is the least that can and 2.3× more tokens, but 1 run a side can't confirm it; 4 is the least that can.",
+      "evidence": [
+        "evals%2Fprobes%2Ftooling%2Ftooling.eval.ts › tooling: mcp-setup-claude/claude-code:claude-sonnet-5+skill-claude+docker:evals",
+        "evals%2Fprobes%2Ftooling%2Ftooling.eval.ts › tooling: mcp-setup-claude/claude-code:claude-sonnet-5+control-claude+docker:evals"
+      ],
+      "fix": {
+        "at": "source:evals/probes/tooling/tooling.eval.ts",
+        "edit": "set runs: 16, where the same rates would rule out 20 points either way"
+      },
+      "firstSeenRun": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "printed": false
+    },
+    {
+      "id": "2fcfded76db8182b83a3de0dba6d175187043f7234daa18d92699b39f2261f92",
+      "evalId": "evals%2Fprobes%2Ftooling%2Ftooling.eval.ts › tooling: agent-two-turn",
+      "kind": "too-few-tries",
+      "severity": "concern",
+      "text": "The skill variant passed 1 of 1 run and the baseline 0 of 1: better by 100 points, but on too few runs for the difference to hold. It looks 42% more tool calls, but 1 run a side can't confirm it; 4 is the least that can, 1.9× slower, but 1 run a side can't confirm it; 4 is the least that can and 2.2× more tokens, but 1 run a side can't confirm it; 4 is the least that can. 1 more variant is too.",
+      "evidence": [
+        "evals%2Fprobes%2Ftooling%2Ftooling.eval.ts › tooling: agent-two-turn/claude-code:claude-sonnet-5+skill+docker:evals",
+        "evals%2Fprobes%2Ftooling%2Ftooling.eval.ts › tooling: agent-two-turn/claude-code:claude-sonnet-5+control+docker:evals"
+      ],
+      "fix": {
+        "at": "source:evals/probes/tooling/tooling.eval.ts",
+        "edit": "set runs: 4, where a difference this size would hold"
+      },
+      "firstSeenRun": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "printed": false
+    },
+    {
+      "id": "b3fe093d5ab542fb4b3c0f1378e52605b6f781a3d095b9da2d7d73c384ff5a36",
+      "evalId": "evals%2Fprobes%2Ftooling%2Ftooling.eval.ts › tooling: mcp-offline-docs",
+      "kind": "slow-mcp-start",
+      "severity": "concern",
+      "text": "MCP server genkit never answered within the start-up timeout, in 2 of 2 tries.",
+      "evidence": [
+        "evals%2Fprobes%2Ftooling%2Ftooling.eval.ts › tooling: mcp-offline-docs/claude-code:claude-sonnet-5+mcp-offline+docker:evals#1",
+        "evals%2Fprobes%2Ftooling%2Ftooling.eval.ts › tooling: mcp-offline-docs/claude-code:claude-sonnet-5+directed-offline+docker:evals#1"
+      ],
+      "fix": {
+        "at": "source:evals/probes/tooling/tooling.eval.ts#L1",
+        "edit": "run genkit's command in the sandbox with c.exec to see why it doesn't answer initialize"
+      },
+      "firstSeenRun": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "printed": false
+    }
+  ]
+}

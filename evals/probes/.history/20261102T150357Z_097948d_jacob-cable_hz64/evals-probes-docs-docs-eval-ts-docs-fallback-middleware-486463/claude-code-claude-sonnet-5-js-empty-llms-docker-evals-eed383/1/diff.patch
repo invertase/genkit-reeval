@@ -1,0 +1,46 @@
+[reeval: dropped package-lock.json: lockfile, 7001 changed lines]
+diff --git a/package.json b/package.json
+index e41aac9..4b528aa 100644
+--- a/package.json
++++ b/package.json
+@@ -10,5 +10,9 @@
+     "@types/node": "22.20.5",
+     "tsx": "4.23.15",
+     "typescript": "5.9.3"
++  },
++  "dependencies": {
++    "@genkit-ai/google-genai": "^1.43.0",
++    "genkit": "^1.43.0"
+   }
+ }
+diff --git a/src/index.ts b/src/index.ts
+index 336ce12..77a9415 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1 +1,25 @@
+-export {}
++import { genkit } from 'genkit';
++import { googleAI } from '@genkit-ai/google-genai';
++
++const ai = genkit({
++  plugins: [googleAI()],
++});
++
++const PRIMARY_MODEL = googleAI.model('gemini-flash-latest');
++const FALLBACK_MODEL = googleAI.model('gemini-flash-lite-latest');
++
++async function tellJoke(): Promise<string> {
++  const prompt = 'Tell me one short, clean joke. Respond with only the joke, no preamble.';
++
++  try {
++    const response = await ai.generate({ model: PRIMARY_MODEL, prompt });
++    return response.text;
++  } catch (err) {
++    console.error(`Primary model failed (${err instanceof Error ? err.message : err}), falling back...`);
++    const response = await ai.generate({ model: FALLBACK_MODEL, prompt });
++    return response.text;
++  }
++}
++
++const joke = await tellJoke();
++console.log(joke);

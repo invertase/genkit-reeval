@@ -1,0 +1,18 @@
+[reeval: dropped package-lock.json: lockfile, 253 changed lines]
+diff --git a/package.json b/package.json
+index 6f0d003..27c24f6 100644
+--- a/package.json
++++ b/package.json
+@@ -7,9 +7,9 @@
+     "dev": "tsx src/index.ts"
+   },
+   "dependencies": {
+-    "@genkit-ai/google-genai": "1.42.0",
+-    "@genkit-ai/middleware": "0.10.0",
+-    "genkit": "1.42.0"
++    "@genkit-ai/google-genai": "^1.43.0",
++    "@genkit-ai/middleware": "^0.11.0",
++    "genkit": "^1.43.0"
+   },
+   "devDependencies": {
+     "tsx": "^4.20.0",

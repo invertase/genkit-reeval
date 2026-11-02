@@ -1,0 +1,7 @@
+$ FLOW=summarizeTicket2 FIELDS=summary node_modules/.bin/tsx ~/.verify-flow.mts
+exit 0, passed on try 1 of 3
+
+try 1 of 3: exit 0 after 3s
+--- stdout
+PROBE_RESULT {"errors":[]}
+--- stderr

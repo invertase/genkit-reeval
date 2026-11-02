@@ -1,0 +1,73 @@
+diff --git a/app.py b/app.py
+new file mode 100644
+index 0000000..58c0bc2
+--- /dev/null
++++ b/app.py
+@@ -0,0 +1,59 @@
++"""Customer support agent: answers questions about orders using Gemini.
++
++Keeps a persistent session per customer (file-backed), so a conversation
++continues across process restarts when the caller passes back the session id.
++"""
++
++import json
++from pathlib import Path
++
++from pydantic import BaseModel, Field
++
++from genkit.exp import FileSessionStore, Genkit
++from genkit_google_genai import GoogleAI
++
++BASE_DIR = Path(__file__).parent
++ORDERS_PATH = BASE_DIR / 'orders.json'
++SESSIONS_DIR = BASE_DIR / '.sessions'
++
++ai = Genkit(plugins=[GoogleAI()])
++
++
++class LookupOrderInput(BaseModel):
++    order_id: str = Field(description='The order id to look up, e.g. A-7731.')
++
++
++@ai.tool()
++async def lookup_order(input: LookupOrderInput) -> str:
++    """Look up an order by its id and return its status and estimated delivery date."""
++    orders = json.loads(ORDERS_PATH.read_text())
++    order = orders.get(input.order_id)
++    if order is None:
++        return f"No order found with id '{input.order_id}'."
++    return f"Order {input.order_id}: status={order['status']}, eta={order['eta']}"
++
++
++support_agent = ai.define_agent(
++    name='customer_support_agent',
++    model=GoogleAI.gemini_model('gemini-flash-latest'),
++    system=(
++        'You are a friendly customer support agent. You help customers with '
++        'questions about their orders. Use the lookup_order tool to look up an '
++        "order's status and ETA by its order id. If the customer hasn't given "
++        'an order id, ask for one.'
++    ),
++    tools=[lookup_order],
++    store=FileSessionStore(str(SESSIONS_DIR)),
++)
++
++
++async def ask(session_id: str | None, message: str) -> tuple[str, str]:
++    """Send a message to the support agent and return (reply, session_id).
++
++    Pass ``session_id=None`` to start a new conversation. Pass back a
++    previously returned session id to continue that conversation, even from a
++    new process.
++    """
++    chat = support_agent.chat(session_id=session_id)
++    response = await chat.send(message)
++    return response.text, chat.session_id
+diff --git a/requirements.txt b/requirements.txt
+new file mode 100644
+index 0000000..761ada7
+--- /dev/null
++++ b/requirements.txt
+@@ -0,0 +1,2 @@
++genkit==0.12.0
++genkit-google-genai==0.12.0
