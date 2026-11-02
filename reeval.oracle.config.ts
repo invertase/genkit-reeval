@@ -27,7 +27,7 @@ const oracle = (args = '') =>
 const controlOnly = { compare: false } as const
 
 export default defineConfig({
-  include: ['evals/**/*.eval.ts'],
+  include: ['evals/*.eval.ts'],
   harness: oracle(),
   sandbox,
   // The judge code path runs in the oracle too, with no key and no model call.

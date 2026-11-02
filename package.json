@@ -6,7 +6,10 @@
     "eval": "reeval run",
     "oracle": "reeval run --config reeval.oracle.config.ts",
     "canary": "sh -c 'since=$(date -u +%Y-%m-%dT%H:%M:%SZ); reeval run --config reeval.oracle.config.ts --profile canary \"$@\"; tsx evals/canary-check.ts --since \"$since\"' canary",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "probe": "reeval run --config reeval.probes.config.ts",
+    "probe:oracle": "reeval run --config reeval.probes.oracle.config.ts",
+    "probe:canary": "sh -c 'since=$(date -u +%Y-%m-%dT%H:%M:%SZ); reeval run --config reeval.probes.oracle.config.ts --profile canary \"$@\"; tsx evals/canary-check.ts --since \"$since\"' probe-canary"
   },
   "license": "Apache-2.0",
   "packageManager": "pnpm@10.18.3",

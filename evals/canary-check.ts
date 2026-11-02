@@ -5,6 +5,7 @@ import { readdirSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { BUGS } from './bugs.ts'
+import { probeFor, SUITES } from './probes/registry.ts'
 import { FIXED_CHECKS, TASKS } from './tasks.ts'
 
 /** The checks every canary bug cell must fail: its answer names a decoy bug and the bug stays in place. */
@@ -29,6 +30,14 @@ export function cellErrors(cell: Cell): string[] {
     if (!BUGS.some((b) => b.name === name)) return [...errors, `no bug ${name}`]
     const missed = BUG_FAILS.filter((label) => !cell.failed.includes(label))
     if (missed.length > 0) errors.push(`passed ${missed.join(', ')}`)
+    return errors
+  }
+  if (cell.file.startsWith('evals/probes/')) {
+    const probe = probeFor(cell.file, name)
+    if (!probe) return [...errors, `no probe ${name} in ${cell.file}`]
+    const failed = [...new Set(cell.failed)].sort()
+    const expected = [...probe.cheat.fails].sort()
+    if (failed.join('\n') !== expected.join('\n')) errors.push(`failed ${JSON.stringify(failed)}, cheat.fails is ${JSON.stringify(expected)}`)
     return errors
   }
   return [...errors, `unknown family ${cell.file}`]
@@ -117,7 +126,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const failed = [...new Set(cell.failed.filter((label) => !(FIXED_CHECKS as readonly string[]).includes(label)))].join(', ')
     console.log(`${errors.length === 0 ? 'ok  ' : 'BAD '} ${cell.name.padEnd(50)} ${cell.outcome.padEnd(5)} failed: ${failed || '-'}${errors.length > 0 ? `\n       ${errors.join('; ')}` : ''}`)
   }
-  const cases = BUGS.length + TASKS.length
+  const probeRun = cells.some((c) => c.file.startsWith('evals/probes/'))
+  const cases = probeRun ? Object.values(SUITES).flat().length : BUGS.length + TASKS.length
   if (cells.length > 0 && cells.length < cases) console.log(`${cells.length} of ${cases} cases ran: a filtered canary proves only those`)
   console.log(bad === 0 ? `canary-check: all ${cells.length} cells failed as they must` : `canary-check: ${bad} of ${cells.length} cells are wrong`)
   process.exit(bad === 0 ? 0 : 1)

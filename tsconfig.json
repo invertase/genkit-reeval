@@ -12,9 +12,18 @@
     "noUncheckedIndexedAccess": true,
     "allowJs": true,
     "checkJs": true,
-    "types": ["node"],
+    "types": [
+      "node"
+    ],
     "noEmit": true
   },
-  "include": ["*.ts", "evals"],
-  "exclude": ["evals/app"]
+  "include": [
+    "*.ts",
+    "evals"
+  ],
+  "exclude": [
+    "evals/app",
+    "evals/probes/fixtures",
+    "evals/probes/*/sandbox"
+  ]
 }
