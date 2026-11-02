@@ -54,17 +54,17 @@ If the oracle fails a bug, the check is wrong, not the fix: read `failing_attemp
 Each probe in `evals/probes/<suite>/cases.ts` has a correct solution (`oracle`) and a plausible wrong one (`cheat`, with the checks it must fail). Under `reeval.probes.oracle.config.ts` the eval places both solutions under `~/.probe`, and the fake agent applies one of them. A real agent's sandbox has no `~/.probe`.
 
 ```bash
-pnpm probe:oracle                            # expect 20 passed
-pnpm probe:canary                            # expect "canary-check: all 20 cells failed as they must"
-pnpm probe --profile smoke                   # Claude Code Sonnet only: 73 cells
-pnpm probe                                   # all five harnesses: 365 cells
+pnpm probe:oracle                            # expect 21 passed
+pnpm probe:canary                            # expect "canary-check: all 21 cells failed as they must"
+pnpm probe --profile smoke                   # Claude Code Sonnet only: 75 cells
+pnpm probe                                   # all five harnesses: 375 cells
 pnpm probe evals/probes/docs/                # one suite, by path: a bare `docs` also matches `*-docsite` cells
 pnpm -s tsx scripts/docs-audit.ts            # rewrites DOCS-AUDIT.md; no agent, no Docker
-pnpm -s tsx scripts/llms-url-test.ts         # rewrites LLMS-URLS.md; exit 1 when a URL form llms.txt documents fails
+pnpm -s tsx scripts/llms-url-test.ts         # rewrites LLMS-URLS.md; exit 1 when a URL form llms.txt documents fails, 2 when only network errors remain
 pnpm -s tsx scripts/fetch-recheck.ts [<run>]  # per arm and harness: fetches, 404s, non-markdown, bytes, from a re-fetch now; --out <file.md>
 ```
 
-The Go and Python probes build `evals/probes/images/{go,python}.Dockerfile` the first time they run. Several hidden checks call real Gemini, so the oracle needs `GOOGLE_GENERATIVE_AI_API_KEY`. `pnpm -s tsx evals/probes/registry.ts`, `evals/probes/docs/checks.ts`, `evals/probes/tooling/gates.ts`, `evals/probes/agents/imports.ts` and `evals/probes/agents/skills-gate.ts` are self-checks: each prints `OK` or a pass count.
+The Go and Python probes build `evals/probes/images/{go,python}.Dockerfile` the first time they run. Several hidden checks call real Gemini, so the oracle needs `GOOGLE_GENERATIVE_AI_API_KEY`. `pnpm -s tsx evals/probes/registry.ts`, `evals/probes/docs/checks.ts`, `evals/probes/tooling/gates.ts`, `evals/probes/agents/imports.ts`, `evals/probes/agents/skills-gate.ts` and `evals/probes/transcript.ts` are self-checks: each prints `OK` or a pass count.
 
 ## Smoke
 
