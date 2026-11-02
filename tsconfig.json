@@ -19,7 +19,8 @@
   },
   "include": [
     "*.ts",
-    "evals"
+    "evals",
+    "scripts"
   ],
   "exclude": [
     "evals/app",
