@@ -60,6 +60,8 @@ pnpm probe --profile smoke                   # Claude Code Sonnet only: 58 cells
 pnpm probe                                   # all five harnesses: 290 cells
 pnpm probe evals/probes/docs/                # one suite, by path: a bare `docs` also matches `*-docsite` cells
 pnpm -s tsx scripts/docs-audit.ts            # rewrites DOCS-AUDIT.md; no agent, no Docker
+pnpm -s tsx scripts/llms-url-test.ts         # rewrites LLMS-URLS.md; exit 1 when a URL form llms.txt documents fails
+pnpm -s tsx scripts/fetch-recheck.ts [<run>]  # per arm and harness: fetches, 404s, non-markdown, bytes, from a re-fetch now; --out <file.md>
 ```
 
 The Go and Python probes build `evals/probes/images/{go,python}.Dockerfile` the first time they run. Several hidden checks call real Gemini, so the oracle needs `GOOGLE_GENERATIVE_AI_API_KEY`. `pnpm -s tsx evals/probes/registry.ts`, `evals/probes/docs/checks.ts` and `evals/probes/tooling/gates.ts` are self-checks: each prints `OK` or a pass count.
