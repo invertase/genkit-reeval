@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { randomInt } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import { type AttemptContext, expect } from 'reeval'
+import { verifyMcpServer } from '../mcp-client.ts'
 import { parseResult } from '../probe.ts'
 import { callsOf, isShell, observeWeb } from '../transcript.ts'
 
@@ -30,9 +31,6 @@ export const CHECK = {
   noDeprecatedChat: 'no ai.chat, createSession or loadSession',
   secondProcessRecalls: 'second process recalls the first turn',
 } as const
-
-/** The MCP client the hidden `verify-mcp.mts` imports; installed after the turn, outside the workspace. */
-const MCP_CLIENT = '@modelcontextprotocol/sdk@1.32.2'
 
 const verifyScript = (name: string) => readFileSync(new URL(`./sandbox/${name}`, import.meta.url), 'utf8')
 
@@ -285,12 +283,8 @@ const RUNNERS: Record<string, (c: AttemptContext, ws: Workspace) => Promise<void
     expect(hasDep(ws, '@genkit-ai/mcp'), CHECK.usesMcp).toBe(true)
     expect(['genkitx-mcp'].filter((n) => hasDep(ws, n) || importsPkg(ws, n)), CHECK.noLegacyMcp).toEqual([])
     await typecheck(c)
-    await c.writeFile('~/.verify-mcp/package.json', '{"name":"verify-mcp","private":true,"type":"module"}\n')
-    const install = await c.exec(`npm --prefix ~/.verify-mcp install --no-audit --no-fund ${MCP_CLIENT}`, { retries: 2, interval: 3000 })
-    if (install.exitCode !== 0) throw new Error(`could not install the MCP client: ${install.stderr.slice(-400)}`)
-    await c.writeFile('~/.verify-mcp/verify.mts', verifyScript('verify-mcp.mts'))
-    const run = await c.exec('timeout 120 node_modules/.bin/tsx ~/.verify-mcp/verify.mts', { retries: 1, interval: 3000 })
-    expect(resultErrors(run), CHECK.serverListsTool).toEqual([])
+    const served = await verifyMcpServer(c, { command: 'npm', args: ['run', '--silent', 'mcp'], expectTool: 'add', call: { arguments: { a: 2, b: 3 }, expect: '\\b5\\b' } })
+    expect(served, CHECK.serverListsTool).toEqual([])
   },
 
   'anthropic-plugin': async (c, ws) => {
