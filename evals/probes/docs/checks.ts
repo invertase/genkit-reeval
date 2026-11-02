@@ -22,6 +22,9 @@ export const CHECK = {
   usesFallback: 'uses the fallback middleware',
 } as const
 
+/** The MCP client the hidden `verify-mcp.mts` imports; installed after the turn, outside the workspace. */
+const MCP_CLIENT = '@modelcontextprotocol/sdk@1.32.2'
+
 const verifyScript = (name: string) => readFileSync(new URL(`./sandbox/${name}`, import.meta.url), 'utf8')
 
 /** The agent's project as the checks read it: `package.json`, every source file outside `node_modules` and every `.prompt` file. */
@@ -32,7 +35,7 @@ export type Workspace = {
   files: Record<string, string>
   /** workspace path to text of each `.prompt` file */
   prompts: Record<string, string>
-  /** every source file's text, joined */
+  /** every source file's text, joined, without comments */
   code: string
   /** package names imported by the source files */
   imports: string[]
@@ -41,7 +44,10 @@ export type Workspace = {
 }
 
 const IMPORT = /(?:\bfrom|\bimport)\s*\(?\s*['"]([^'"]+)['"]|\brequire\(\s*['"]([^'"]+)['"]\s*\)/g
-const NAMED_IMPORT = /\bimport\s+(?:type\s+)?\{([^}]*)\}\s*from\s*['"]([^'"]+)['"]/g
+const IMPORT_STATEMENT = /\bimport\s+(?:type\s+)?([^'";]*?)\s*from\s*['"]([^'"]+)['"]/g
+
+/** `code` without `//` and `/* *\/` comments; a `//` right after a colon or inside a quote stays, so URLs survive. */
+export const stripComments = (code: string): string => code.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:\\'"`])\/\/.*$/gm, '$1')
 
 function packageName(specifier: string): string | undefined {
   if (specifier.startsWith('.') || specifier.startsWith('node:') || specifier.startsWith('/')) return undefined
@@ -59,7 +65,7 @@ export function buildWorkspace(pkgText: string, found: Record<string, string>): 
   }
   const files = Object.fromEntries(Object.entries(found).filter(([path]) => !path.endsWith('.prompt')))
   const prompts = Object.fromEntries(Object.entries(found).filter(([path]) => path.endsWith('.prompt')))
-  const code = Object.values(files).join('\n')
+  const code = stripComments(Object.values(files).join('\n'))
   const imports = [...new Set([...code.matchAll(IMPORT)].flatMap((m) => packageName(m[1] ?? m[2] ?? '') ?? []))]
   return { deps, files, prompts, code, imports, everything: `${pkgText}\n${code}` }
 }
@@ -81,17 +87,27 @@ type Binding = { imported: string; local: string }
 
 /** The named imports of `code` from packages for which `fromPackage` is true, with their local names. */
 function namedImports(code: string, fromPackage: (name: string) => boolean): Binding[] {
-  return [...code.matchAll(NAMED_IMPORT)].flatMap((m) => {
+  return [...code.matchAll(IMPORT_STATEMENT)].flatMap((m) => {
     if (!fromPackage(m[2] ?? '')) return []
-    return (m[1] ?? '').split(',').flatMap((part) => {
+    const braces = /\{([^}]*)\}/.exec(m[1] ?? '')?.[1] ?? ''
+    return braces.split(',').flatMap((part) => {
       const [imported, local] = part.trim().replace(/^type\s+/, '').split(/\s+as\s+/)
       return imported ? [{ imported, local: local ?? imported }] : []
     })
   })
 }
 
-/** True when `code` calls `local(` outside its import statements. */
-const calls = (code: string, local: string) => new RegExp(`(?<![\\w$.])${local.replace(/\$/g, '\\$')}\\s*\\(`).test(code.replace(NAMED_IMPORT, ''))
+const escape = (name: string) => name.replace(/\$/g, '\\$')
+
+/** True when `code` imports `name` from `pkg`, by name under any alias or through `* as X`, and calls it outside the import statements. */
+function callsExport(code: string, pkg: string, name: string): boolean {
+  const body = code.replace(IMPORT_STATEMENT, '')
+  const namespaces = [...code.matchAll(IMPORT_STATEMENT)].flatMap((m) => (m[2] === pkg ? [...(m[1] ?? '').matchAll(/\*\s+as\s+([\w$]+)/g)].map((n) => n[1] ?? '') : []))
+  return (
+    namedImports(code, (n) => n === pkg).some((b) => b.imported === name && new RegExp(`(?<![\\w$.])${escape(b.local)}\\s*\\(`).test(body)) ||
+    namespaces.some((ns) => new RegExp(`(?<![\\w$.])${escape(ns)}\\.${name}\\s*\\(`).test(body))
+  )
+}
 
 /** Gemini model constants such as `gemini20Flash`, which `@genkit-ai/google-genai` no longer exports. */
 const MODEL_CONSTANT = /\bgemini(?:\d\w*|Pro\w*|Flash\w*)\b/
@@ -100,7 +116,7 @@ const GENKIT_PACKAGE = (name: string) => name === 'genkit' || name.startsWith('@
 /** Packages Genkit retired: the Gemini plugins and the pre-1.0 flow and prompt packages. */
 const DEPRECATED_JS = ['@genkit-ai/googleai', '@genkit-ai/vertexai', '@genkit-ai/flow', '@genkit-ai/dotprompt']
 
-const STALE_CLAUDE = /\bclaude-(?:3|2|instant)[\w.-]*/
+const STALE_CLAUDE = /\bclaude-(?:3|2|instant|opus-4-1)[\w.-]*/
 
 const STALE: [string, RegExp][] = [
   ['@genkit-ai/googleai', /@genkit-ai\/googleai\b/],
@@ -180,20 +196,21 @@ export const importedModelConstants = (ws: Workspace): string[] =>
 /** True when a generate call, flow or `.prompt` file asks for output with a schema. */
 export function asksForSchema(ws: Workspace): boolean {
   if (/\boutput\s*:\s*\{[^}]*\bschema\b/.test(ws.code)) return true
-  for (const m of ws.code.matchAll(/\boutput\s*:\s*([A-Za-z_$][\w$]*)\s*[,}\n]/g)) {
-    const name = (m[1] ?? '').replace(/\$/g, '\\$')
-    if (new RegExp(`\\b(?:const|let|var)\\s+${name}\\b[^=]*=\\s*\\{[^}]*\\bschema\\b`).test(ws.code)) return true
-  }
-  return Object.values(ws.prompts).some((text) => /^output:[ \t]*\n(?:[ \t]+.*\n)*?[ \t]+schema[ \t]*:/m.test(`${text}\n`))
+  const names = [...ws.code.matchAll(/\boutput\s*:\s*([A-Za-z_$][\w$]*)\s*[,}\n]/g)].map((m) => m[1] ?? '')
+  if (/[{,]\s*output\s*[,}]/.test(ws.code)) names.push('output')
+  if (names.some((name) => new RegExp(`\\b(?:const|let|var)\\s+${escape(name)}\\b[^=]*=\\s*\\{[^}]*\\bschema\\b`).test(ws.code))) return true
+  return Object.values(ws.prompts).some(
+    (text) => /^output:[ \t]*\n(?:[ \t]+.*\n)*?[ \t]+schema[ \t]*:/m.test(`${text}\n`) || /^output:[ \t]*\{[^}]*\bschema\b/m.test(text),
+  )
 }
 
-/** True when `anthropic` is imported from `@genkit-ai/anthropic` under any local name and that binding is called. */
+/** True when the project depends on `@genkit-ai/anthropic`, imports `anthropic` from it (any alias or `* as X`) and calls it. */
 export const registersAnthropic = (ws: Workspace): boolean =>
-  hasDep(ws, '@genkit-ai/anthropic') && namedImports(ws.code, (n) => n === '@genkit-ai/anthropic').some((b) => b.imported === 'anthropic' && calls(ws.code, b.local))
+  hasDep(ws, '@genkit-ai/anthropic') && callsExport(ws.code, '@genkit-ai/anthropic', 'anthropic')
 
-/** True when `fallback` is imported from `@genkit-ai/middleware` under any local name and that binding is called. */
+/** True when the project depends on `@genkit-ai/middleware`, imports `fallback` from it (any alias or `* as X`) and calls it. */
 export const usesFallback = (ws: Workspace): boolean =>
-  hasDep(ws, '@genkit-ai/middleware') && namedImports(ws.code, (n) => n === '@genkit-ai/middleware').some((b) => b.imported === 'fallback' && calls(ws.code, b.local))
+  hasDep(ws, '@genkit-ai/middleware') && callsExport(ws.code, '@genkit-ai/middleware', 'fallback')
 
 const typecheck = (c: AttemptContext) => expect(c.exec('node_modules/.bin/tsc --noEmit'), CHECK.typechecks).toSucceed()
 
@@ -219,6 +236,9 @@ const RUNNERS: Record<string, (c: AttemptContext, ws: Workspace) => Promise<void
     expect(hasDep(ws, '@genkit-ai/mcp'), CHECK.usesMcp).toBe(true)
     expect(['genkitx-mcp'].filter((n) => hasDep(ws, n) || importsPkg(ws, n)), CHECK.noLegacyMcp).toEqual([])
     await typecheck(c)
+    await c.writeFile('~/.verify-mcp/package.json', '{"name":"verify-mcp","private":true,"type":"module"}\n')
+    const install = await c.exec(`npm --prefix ~/.verify-mcp install --no-audit --no-fund ${MCP_CLIENT}`, { retries: 2, interval: 3000 })
+    if (install.exitCode !== 0) throw new Error(`could not install the MCP client: ${install.stderr.slice(-400)}`)
     await c.writeFile('~/.verify-mcp/verify.mts', verifyScript('verify-mcp.mts'))
     const run = await c.exec('timeout 120 node_modules/.bin/tsx ~/.verify-mcp/verify.mts', { retries: 1, interval: 3000 })
     expect(resultErrors(run), CHECK.serverListsTool).toEqual([])
@@ -282,8 +302,21 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     ['constant as a local variable', importedModelConstants(ws([], `import { googleAI } from '@genkit-ai/google-genai'\nconst gemini20Flash = googleAI.model('gemini-flash-latest')`)).length > 0, false],
     ['constant imported from a local module', importedModelConstants(ws([], `import { gemini20Flash } from './models'`)).length > 0, false],
     ['no constants', importedModelConstants(ws([], `import { googleAI } from '@genkit-ai/google-genai'`)).length > 0, false],
-    ['stale claude name', STALE_CLAUDE.test(`anthropic.model('claude-3-haiku')`), true],
-    ['current claude name', STALE_CLAUDE.test(`anthropic.model('claude-sonnet-4-6')`), false],
+    ['stale claude name', STALE_CLAUDE.test(ws([], `anthropic.model('claude-3-haiku')`).code), true],
+    ['stale claude opus-4-1', STALE_CLAUDE.test(ws([], `anthropic.model('claude-opus-4-1')`).code), true],
+    ['current claude name', STALE_CLAUDE.test(ws([], `anthropic.model('claude-sonnet-4-6')`).code), false],
+    ['stale claude name in a line comment', STALE_CLAUDE.test(ws([], `// claude-3-haiku is retired\nanthropic.model('claude-sonnet-4-6')`).code), false],
+    ['stale claude name in a block comment', STALE_CLAUDE.test(ws([], `/* claude-opus-4-1 is retired */\nanthropic.model('claude-sonnet-4-6')`).code), false],
+    ['fallback namespace import', usesFallback(ws([MW], `import * as mw from '${MW}'\nai.generate({ use: [mw.fallback({})] })`)), true],
+    ['fallback default plus named import', usesFallback(ws([MW], `import def, { fallback } from '${MW}'\nfallback({})`)), true],
+    ['fallback namespace imported not called', usesFallback(ws([MW], `import * as mw from '${MW}'\nmw.retry({})`)), false],
+    ['fallback only in a comment', usesFallback(ws([MW], `import { fallback } from '${MW}'\n// fallback({ models: [] })\n/* fallback({}) */`)), false],
+    ['anthropic namespace import', registersAnthropic(ws(['@genkit-ai/anthropic'], `import * as a from '@genkit-ai/anthropic'\ngenkit({ plugins: [a.anthropic()] })`)), true],
+    ['anthropic only in a comment', registersAnthropic(ws(['@genkit-ai/anthropic'], `import { anthropic } from '@genkit-ai/anthropic'\n// plugins: [anthropic()]`)), false],
+    ['schema shorthand output', asksForSchema(ws([], `const output = { schema: Contact }\nai.generate({ prompt, output })`)), true],
+    ['schema shorthand without a definition', asksForSchema(ws([], `const { output } = await ai.generate({ prompt })`)), false],
+    ['schema only in a comment', asksForSchema(ws([], `// output: { schema: Contact }`)), false],
+    ['schema yaml flow map', asksForSchema(ws([], 'x', { 'prompts/a.prompt': '---\nmodel: x\noutput: {format: json, schema: X}\n---\nhi' })), true],
     ['result ok', resultErrors({ exitCode: 0, stdout: 'x\nRESULT {"ok":true}\n', stderr: '' }).length === 0, true],
     ['result not ok', resultErrors({ exitCode: 0, stdout: 'RESULT {"ok":false}\n', stderr: '' }).length === 0, false],
     ['result malformed', resultErrors({ exitCode: 0, stdout: 'RESULT {oops\n', stderr: '' }).length === 0, false],
