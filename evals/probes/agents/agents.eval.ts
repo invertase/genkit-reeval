@@ -4,8 +4,10 @@ import { type AttemptContext, type ExecResult, evaluate, expect } from 'reeval'
 import { docsArms } from '../environments.ts'
 import { gate, noProviderErrors, type ProbeResult, parseResult, placeSolutions, type Probe } from '../probe.ts'
 import { callsOf, isShell, observeGenkitCommands, observeWeb } from '../transcript.ts'
-import { GO_MODULE, PROBES } from './cases.ts'
+import { GO_MODULE, PROBES, PY_SKILL_TASK } from './cases.ts'
 import { arms } from './environments.ts'
+import { agentsImportErrors } from './imports.ts'
+import { asSkillSubject, gatesSkills, GENKIT_SKILLS, skillsCalled } from './skills.ts'
 
 const hidden = (file: string) => readFileSync(new URL(`./sandbox/hidden/${file}`, import.meta.url), 'utf8')
 const probe = (name: string): Probe => {
@@ -209,6 +211,10 @@ const pyAgentSession = probe('py-agent-session')
       const defined = await c.exec("grep -rEq --include=*.py --exclude-dir=.venv 'define_agent\\(' .")
       expect(defined.exitCode === 0 ? [] : ['no Python file calls define_agent'], 'defines the agent with define_agent').toEqual([])
 
+      await c.writeFile('~/.verify-py-imports.py', hidden('py-imports.py'))
+      const agentImports = parseResult(await c.exec(python('~/.verify-py-imports.py .')))
+      expect(agentsImportErrors(agentImports), 'imports agents from genkit.exp').toEqual([])
+
       const imported = await c.exec(python('-c "import app"'))
       await expect(imported, 'imports resolve').toSucceed()
       const version = await c.exec(python('-c "import importlib.metadata as m; print(m.version(\'genkit\'))"'))
@@ -256,6 +262,20 @@ const pySkillSetup = probe('py-skill-setup')
       const genkit = Object.entries(added).filter(([, text]) => /genkit/i.test(text))
       expect(genkit.length > 0 ? [] : [`no line the agent added to a guidance file mentions Genkit (${Object.keys(added).join(', ') || 'none'})`], 'adds Genkit guidance').toEqual([])
       expect(genkit.some(([, text]) => PYTHON_API.test(text)) ? [] : ['no line the agent added to a guidance file shows the Genkit Python API'], 'guidance is for Python Genkit').toEqual([])
+
+      const task = await c.send(PY_SKILL_TASK)
+      noProviderErrors(task)
+      c.observe('skills-called', { turn1: skillsCalled(turn), turn2: skillsCalled(task) })
+
+      const tool = await c.exec("grep -rEq --include=*.py --exclude-dir=.venv '@ai\\.tool|\\.tool\\(|@tool' .")
+      expect(tool.exitCode === 0 ? [] : ['no Python file defines a tool with the Genkit decorator'], 'turn 2 defines a Genkit tool').toEqual([])
+      await expect(await c.exec(python('-c "import app"')), 'turn 2 imports resolve').toSucceed()
+
+      if (gatesSkills(c.attempt.cell.harness)) {
+        const seen = asSkillSubject(task)
+        expect(seen, 'turn 2 used the Python Genkit skill').toHaveCalledSkill('developing-genkit-python')
+        for (const other of GENKIT_SKILLS.filter((name) => name !== 'developing-genkit-python')) expect(seen, 'turn 2 used no other-language Genkit skill').not.toHaveCalledSkill(other)
+      }
     },
   )
 }

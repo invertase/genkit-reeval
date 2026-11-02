@@ -73,17 +73,29 @@ const pyAgentSession: Probe = {
     '`async def ask(session_id: str | None, message: str) -> tuple[str, str]`, returning the reply and the conversation\'s session id.\n' +
     'With `None` it starts a new conversation; an id that an earlier call returned continues that conversation, even from a new process. ' +
     "Install the dependencies in this directory (a `.venv` here is fine) so that `python3 -c 'import app'` works when run from it.",
-  checks: [PROVIDER_CHECK, 'defines the agent with define_agent', 'imports resolve', 'second process knows the order'],
+  checks: [PROVIDER_CHECK, 'defines the agent with define_agent', 'imports agents from genkit.exp', 'imports resolve', 'second process knows the order'],
   oracle: { files: { 'app.py': solution('py-agent-session', 'good.py') }, exec: PY_INSTALL },
   cheat: { files: { 'app.py': solution('py-agent-session', 'cheat.py') }, exec: PY_INSTALL, fails: ['second process knows the order'] },
 }
 
+/** The second turn of `py-skill-setup`: a small Python Genkit task in the workspace the first turn set up. */
+export const PY_SKILL_TASK =
+  'Now add `app.py` here with one Genkit tool that converts a temperature from Celsius to Fahrenheit. ' +
+  "Install the dependencies in this directory (a `.venv` here is fine) so that `python3 -c 'import app'` works when run from it."
+
+/** The skill checks of `py-skill-setup`, which gate only on harnesses whose transcripts show a skill load. */
+export const SKILL_CHECKS = ['turn 2 used the Python Genkit skill', 'turn 2 used no other-language Genkit skill']
+
 const pySkillSetup: Probe = {
   name: 'py-skill-setup',
   prompt: 'Set up this project so a coding agent writes good Genkit Python code.',
-  checks: [PROVIDER_CHECK, 'adds Genkit guidance', 'guidance is for Python Genkit'],
-  oracle: { files: { 'AGENTS.md': solution('py-skill-setup', 'good.md') } },
-  cheat: { files: { 'AGENTS.md': solution('py-skill-setup', 'cheat.md') }, fails: ['guidance is for Python Genkit'] },
+  checks: [PROVIDER_CHECK, 'adds Genkit guidance', 'guidance is for Python Genkit', 'turn 2 defines a Genkit tool', 'turn 2 imports resolve', ...SKILL_CHECKS],
+  oracle: { files: { 'AGENTS.md': solution('py-skill-setup', 'good.md'), 'app.py': solution('py-skill-setup', 'good.py') }, exec: PY_INSTALL },
+  cheat: {
+    files: { 'AGENTS.md': solution('py-skill-setup', 'cheat.md'), 'app.py': solution('py-skill-setup', 'cheat.py') },
+    exec: PY_INSTALL,
+    fails: ['guidance is for Python Genkit', 'turn 2 defines a Genkit tool'],
+  },
 }
 
 /** The agents suite's probes. */
