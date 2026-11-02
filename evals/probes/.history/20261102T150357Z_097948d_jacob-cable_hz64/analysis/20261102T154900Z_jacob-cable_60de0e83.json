@@ -1,0 +1,687 @@
+{
+  "kind": "reeval-analysis",
+  "schemaVersion": 1,
+  "scope": {
+    "kind": "run",
+    "head": "20261102T150357Z_097948d_jacob-cable_hz64",
+    "base": null,
+    "evals": null
+  },
+  "anchor": "20261102T150357Z_097948d_jacob-cable_hz64",
+  "inputs": {
+    "records": [
+      {
+        "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+        "sha256": "b2b4aca5bcd36d4574cac0cf227bab867c210c1716eb012207a371aec9603461"
+      }
+    ],
+    "digestVersion": 15,
+    "digestHash": "2929f992c2bef5b94a47413abd40eb927d93186a05752d62397ffc1acdd50891"
+  },
+  "promptVersion": "analysis-v13",
+  "author": "jacob-cable",
+  "model": "google/gemini-3.8-flash",
+  "resolvedModel": "gemini-3.8-flash",
+  "route": "direct",
+  "usage": {
+    "inputTokens": 139622,
+    "outputTokens": 4570
+  },
+  "latencyMs": 37053,
+  "createdAt": "2026-11-02T15:49:00.392Z",
+  "validation": {
+    "citations": 72,
+    "invalid": [],
+    "dropped": 0,
+    "commands": 4,
+    "invalidCommands": [],
+    "unverifiedNumbers": 2
+  },
+  "analysis": {
+    "tldr": "Sixty of 75 attempts passed across 21 probe evals, but small single-attempt sample sizes left all pass-rate comparisons within noise, requiring repeat runs to confirm directional differences.",
+    "whatHappened": [
+      {
+        "text": "Across the entire run, 60 of 75 attempts passed and 15 failed, with all cells evaluated ungated.",
+        "cites": [
+          "F1",
+          "F2",
+          "F3",
+          "F4",
+          "F5",
+          "F6",
+          "F7",
+          "F8",
+          "F9",
+          "F10",
+          "F11",
+          "F12",
+          "F13",
+          "F14",
+          "F15",
+          "F16",
+          "F17",
+          "F18",
+          "F19",
+          "F20",
+          "F21"
+        ],
+        "confidence": "high",
+        "unverifiedNumbers": [
+          "60",
+          "75"
+        ]
+      },
+      {
+        "text": "Thirteen evals were completely saturated with a 100% pass rate across all evaluated arms: agents-4, agents-5, docs-1, docs-2, docs-3, docs-6, docs-7, tooling-1, tooling-2, tooling-3, tooling-6, tooling-7, and tooling-8.",
+        "cites": [
+          "F46"
+        ],
+        "confidence": "high"
+      },
+      {
+        "text": "In the docs family suite across 6 cases, js-empty-open, js-empty-llms, js-empty-index, and js-empty-hosted achieved 83% pass@1 (5/6), whereas js-empty-docsite scored 67% (4/6).",
+        "cites": [
+          "F22"
+        ],
+        "confidence": "high"
+      }
+    ],
+    "results": [
+      {
+        "text": "In the docs family evaluation, js-empty-hosted reduced tool calls compared to js-empty-open control by 0.61× per case (exact signed-rank p = 0.031), while pass@1 lift was insufficient (+0 pts, 95% CI −36 to +36).",
+        "cites": [
+          "F22"
+        ],
+        "confidence": "high"
+      },
+      {
+        "text": "In agents-1, pass@1 lifts against go-new-control (1/1) were within noise for go-new-skill (+0 pts, 95% CI −79 to +79), go-new-open (−100 pts, 95% CI −100 to +12), go-new-docsite (−100 pts, 95% CI −100 to +12), go-new-llms (+0 pts, 95% CI −79 to +79), and go-new-index (+0 pts, 95% CI −79 to +79).",
+        "cites": [
+          "F1"
+        ],
+        "confidence": "high"
+      },
+      {
+        "text": "In agents-2, go-session-skill achieved +100 pts lift over go-session-control (1/1 vs 0/1, 95% CI −12 to +100, within noise due to small sample size), while go-session-index remained at 0/1 (+0 pts lift, 95% CI −79 to +79, within noise).",
+        "cites": [
+          "F2"
+        ],
+        "confidence": "high"
+      },
+      {
+        "text": "In tooling-4, tooling-5, and tooling-9, variants with directed instructions or skills recorded 1/1 vs 0/1 against controls (+100 pts lift, 95% CI −12 to +100), all within noise due to small sample sizes (1 vs 1).",
+        "cites": [
+          "F16",
+          "F17",
+          "F21"
+        ],
+        "confidence": "high"
+      }
+    ],
+    "why": [
+      {
+        "text": "In agents-2, go-session-control and go-session-index failed because neither imported the experimental agents packages nor called WithExperimental, whereas go-session-skill consulted the skill documentation and satisfied both requirements.",
+        "cites": [
+          "F45",
+          "F48",
+          "F71",
+          "F72",
+          "F894",
+          "F896"
+        ],
+        "confidence": "high"
+      },
+      {
+        "text": "In docs-4, js-empty-docsite failed because it installed the deprecated 'genkitx-anthropic' package rather than '@genkit-ai/anthropic', failing both dependency and plugin registration checks.",
+        "cites": [
+          "F55",
+          "F74",
+          "F495",
+          "F500"
+        ],
+        "confidence": "high"
+      },
+      {
+        "text": "In tooling-9, control and mcp failed because neither established a single persistent session across the two turns, whereas skill implemented a wrapper flow to maintain state.",
+        "cites": [
+          "F67",
+          "F850",
+          "F851",
+          "r1/tooling-9/control#1",
+          "r1/tooling-9/mcp#1",
+          "r1/tooling-9/skill#1"
+        ],
+        "confidence": "high"
+      },
+      {
+        "text": "In docs-5, all five arms failed to meet the 'uses the fallback middleware' check despite typechecking cleanly, pointing to a missing or unreachable requirement in the eval prompt or check implementation.",
+        "cites": [
+          "F10",
+          "F56",
+          "F75",
+          "F76"
+        ],
+        "confidence": "high"
+      }
+    ],
+    "anomalies": [
+      {
+        "text": "Eval docs-5 failed on 100% of arms (0/5 passed) because the 'uses the fallback middleware' assertion was never met by any configuration.",
+        "kind": "eval-design",
+        "cites": [
+          "F10",
+          "F46",
+          "F56",
+          "F75",
+          "F76"
+        ]
+      },
+      {
+        "text": "In agents-3, py-tool-index failed 'answers from the tool' despite correctly installing genkit 0.12.0, producing an empty tool response.",
+        "kind": "other",
+        "cites": [
+          "F49",
+          "F73",
+          "F263",
+          "F269"
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "title": "Investigate fallback-middleware eval design",
+        "target": "evals/probes/docs/docs.eval.ts › docs: fallback-middleware",
+        "kind": "eval",
+        "change": "Inspect the assertion for 'uses the fallback middleware' to determine whether the prompt or the assertion code expects an exact API signature that models currently miss.",
+        "expectedEffect": "At least one arm should satisfy 'uses the fallback middleware' and pass.",
+        "verify": "reeval run \"evals/probes/docs/docs.eval.ts › docs: fallback-middleware\"",
+        "impact": "high",
+        "effort": "low",
+        "cites": [
+          "F56",
+          "F75",
+          "F76"
+        ]
+      },
+      {
+        "title": "Scale agents-2 sample size to verify Go agent session skill effect",
+        "target": "evals/probes/agents/agents.eval.ts › agents: go-agent-session",
+        "kind": "eval",
+        "change": "Increase runs to at least 4 a side to confirm the directional 100 pt pass@1 lift and 2.4× reduction in tool calls.",
+        "expectedEffect": "Statistical separation with confidence interval excluding 0.",
+        "verify": "reeval run \"evals/probes/agents/agents.eval.ts › agents: go-agent-session\" --runs 4",
+        "impact": "high",
+        "effort": "low",
+        "cites": [
+          "F2",
+          "F24",
+          "F894"
+        ]
+      },
+      {
+        "title": "Clarify Anthropic package naming in docsite references",
+        "target": "evals/probes/docs/docs.eval.ts › docs: anthropic-plugin",
+        "kind": "docs",
+        "change": "Update documentation sources crawled by js-empty-docsite to point to '@genkit-ai/anthropic' instead of legacy 'genkitx-anthropic'.",
+        "expectedEffect": "js-empty-docsite passes 'depends on @genkit-ai/anthropic' and achieves 100% pass@1.",
+        "verify": "reeval run \"evals/probes/docs/docs.eval.ts › docs: anthropic-plugin\"",
+        "impact": "medium",
+        "effort": "low",
+        "cites": [
+          "F55",
+          "F74",
+          "F495",
+          "F500"
+        ]
+      },
+      {
+        "title": "Scale tooling-9 runs to evaluate two-turn session wrapper necessity",
+        "target": "evals/probes/tooling/tooling.eval.ts › tooling: agent-two-turn",
+        "kind": "eval",
+        "change": "Run at least 4 attempts per cell to verify whether the JS skill consistently produces valid two-turn replies over the unassisted baseline.",
+        "expectedEffect": "Narrow confidence interval around the pass rate difference on 'replies come from one two-turn session'.",
+        "verify": "reeval run \"evals/probes/tooling/tooling.eval.ts › tooling: agent-two-turn\" --runs 4",
+        "impact": "medium",
+        "effort": "low",
+        "cites": [
+          "F21",
+          "F43",
+          "F67",
+          "F997"
+        ]
+      }
+    ],
+    "confidence": {
+      "overall": "high",
+      "why": "The deterministic digest comprehensively records all check failures, tool usages, file reads, and effort comparisons across each attempt, clearly indicating that small sample sizes account for the wide confidence intervals."
+    }
+  },
+  "attempts": {
+    "r1/agents-1/control#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d",
+      "attempt": "claude-code:claude-sonnet-5/go-new-control/docker:go.Dockerfile#1"
+    },
+    "r1/agents-1/go-new-skill#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d",
+      "attempt": "claude-code:claude-sonnet-5/go-new-skill/docker:go.Dockerfile#1"
+    },
+    "r1/agents-1/go-new-open#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d",
+      "attempt": "claude-code:claude-sonnet-5/go-new-open/docker:go.Dockerfile#1"
+    },
+    "r1/agents-1/go-new-docsite#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d",
+      "attempt": "claude-code:claude-sonnet-5/go-new-docsite/docker:go.Dockerfile#1"
+    },
+    "r1/agents-1/go-new-llms#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d",
+      "attempt": "claude-code:claude-sonnet-5/go-new-llms/docker:go.Dockerfile#1"
+    },
+    "r1/agents-1/go-new-index#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-agents-agents-eval-ts-agents-go-new-app-d0ef5d",
+      "attempt": "claude-code:claude-sonnet-5/go-new-index/docker:go.Dockerfile#1"
+    },
+    "r1/agents-2/control#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-agents-agents-eval-ts-agents-go-agent-session-3baa90",
+      "attempt": "claude-code:claude-sonnet-5/go-session-control/docker:go.Dockerfile#1"
+    },
+    "r1/agents-2/go-session-skill#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-agents-agents-eval-ts-agents-go-agent-session-3baa90",
+      "attempt": "claude-code:claude-sonnet-5/go-session-skill/docker:go.Dockerfile#1"
+    },
+    "r1/agents-2/go-session-index#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-agents-agents-eval-ts-agents-go-agent-session-3baa90",
+      "attempt": "claude-code:claude-sonnet-5/go-session-index/docker:go.Dockerfile#1"
+    },
+    "r1/agents-3/control#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-agents-agents-eval-ts-agents-py-tool-calling-0f7a46",
+      "attempt": "claude-code:claude-sonnet-5/py-tool-control/docker:python.Dockerfile#1"
+    },
+    "r1/agents-3/py-tool-skill#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-agents-agents-eval-ts-agents-py-tool-calling-0f7a46",
+      "attempt": "claude-code:claude-sonnet-5/py-tool-skill/docker:python.Dockerfile#1"
+    },
+    "r1/agents-3/py-tool-open#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-agents-agents-eval-ts-agents-py-tool-calling-0f7a46",
+      "attempt": "claude-code:claude-sonnet-5/py-tool-open/docker:python.Dockerfile#1"
+    },
+    "r1/agents-3/py-tool-docsite#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-agents-agents-eval-ts-agents-py-tool-calling-0f7a46",
+      "attempt": "claude-code:claude-sonnet-5/py-tool-docsite/docker:python.Dockerfile#1"
+    },
+    "r1/agents-3/py-tool-llms#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-agents-agents-eval-ts-agents-py-tool-calling-0f7a46",
+      "attempt": "claude-code:claude-sonnet-5/py-tool-llms/docker:python.Dockerfile#1"
+    },
+    "r1/agents-3/py-tool-index#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-agents-agents-eval-ts-agents-py-tool-calling-0f7a46",
+      "attempt": "claude-code:claude-sonnet-5/py-tool-index/docker:python.Dockerfile#1"
+    },
+    "r1/agents-4/control#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-agents-agents-eval-ts-agents-py-agent-session-aa3042",
+      "attempt": "claude-code:claude-sonnet-5/py-session-control/docker:python.Dockerfile#1"
+    },
+    "r1/agents-4/py-session-skill#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-agents-agents-eval-ts-agents-py-agent-session-aa3042",
+      "attempt": "claude-code:claude-sonnet-5/py-session-skill/docker:python.Dockerfile#1"
+    },
+    "r1/agents-4/py-session-index#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-agents-agents-eval-ts-agents-py-agent-session-aa3042",
+      "attempt": "claude-code:claude-sonnet-5/py-session-index/docker:python.Dockerfile#1"
+    },
+    "r1/agents-5/control#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-agents-agents-eval-ts-agents-py-skill-setup-6caccc",
+      "attempt": "claude-code:claude-sonnet-5/py-setup-control/docker:python.Dockerfile#1"
+    },
+    "r1/agents-5/py-setup-skill#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-agents-agents-eval-ts-agents-py-skill-setup-6caccc",
+      "attempt": "claude-code:claude-sonnet-5/py-setup-skill/docker:python.Dockerfile#1"
+    },
+    "r1/agents-5/py-setup-index#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-agents-agents-eval-ts-agents-py-skill-setup-6caccc",
+      "attempt": "claude-code:claude-sonnet-5/py-setup-index/docker:python.Dockerfile#1"
+    },
+    "r1/docs-1/control#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-pkg-gemini-haiku-c1f538",
+      "attempt": "claude-code:claude-sonnet-5/js-empty-open/docker:evals#1"
+    },
+    "r1/docs-1/js-empty-docsite#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-pkg-gemini-haiku-c1f538",
+      "attempt": "claude-code:claude-sonnet-5/js-empty-docsite/docker:evals#1"
+    },
+    "r1/docs-1/js-empty-llms#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-pkg-gemini-haiku-c1f538",
+      "attempt": "claude-code:claude-sonnet-5/js-empty-llms/docker:evals#1"
+    },
+    "r1/docs-1/js-empty-index#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-pkg-gemini-haiku-c1f538",
+      "attempt": "claude-code:claude-sonnet-5/js-empty-index/docker:evals#1"
+    },
+    "r1/docs-1/js-empty-hosted#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-pkg-gemini-haiku-c1f538",
+      "attempt": "claude-code:claude-sonnet-5/js-empty-hosted/docker:evals#1"
+    },
+    "r1/docs-2/control#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-structured-output-51a6a1",
+      "attempt": "claude-code:claude-sonnet-5/js-empty-open/docker:evals#1"
+    },
+    "r1/docs-2/js-empty-docsite#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-structured-output-51a6a1",
+      "attempt": "claude-code:claude-sonnet-5/js-empty-docsite/docker:evals#1"
+    },
+    "r1/docs-2/js-empty-llms#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-structured-output-51a6a1",
+      "attempt": "claude-code:claude-sonnet-5/js-empty-llms/docker:evals#1"
+    },
+    "r1/docs-2/js-empty-index#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-structured-output-51a6a1",
+      "attempt": "claude-code:claude-sonnet-5/js-empty-index/docker:evals#1"
+    },
+    "r1/docs-2/js-empty-hosted#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-structured-output-51a6a1",
+      "attempt": "claude-code:claude-sonnet-5/js-empty-hosted/docker:evals#1"
+    },
+    "r1/docs-3/control#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-mcp-server-41449b",
+      "attempt": "claude-code:claude-sonnet-5/js-empty-open/docker:evals#1"
+    },
+    "r1/docs-3/js-empty-docsite#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-mcp-server-41449b",
+      "attempt": "claude-code:claude-sonnet-5/js-empty-docsite/docker:evals#1"
+    },
+    "r1/docs-3/js-empty-llms#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-mcp-server-41449b",
+      "attempt": "claude-code:claude-sonnet-5/js-empty-llms/docker:evals#1"
+    },
+    "r1/docs-3/js-empty-index#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-mcp-server-41449b",
+      "attempt": "claude-code:claude-sonnet-5/js-empty-index/docker:evals#1"
+    },
+    "r1/docs-3/js-empty-hosted#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-mcp-server-41449b",
+      "attempt": "claude-code:claude-sonnet-5/js-empty-hosted/docker:evals#1"
+    },
+    "r1/docs-4/control#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-anthropic-plugin-bbd6ae",
+      "attempt": "claude-code:claude-sonnet-5/js-empty-open/docker:evals#1"
+    },
+    "r1/docs-4/js-empty-docsite#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-anthropic-plugin-bbd6ae",
+      "attempt": "claude-code:claude-sonnet-5/js-empty-docsite/docker:evals#1"
+    },
+    "r1/docs-4/js-empty-llms#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-anthropic-plugin-bbd6ae",
+      "attempt": "claude-code:claude-sonnet-5/js-empty-llms/docker:evals#1"
+    },
+    "r1/docs-4/js-empty-index#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-anthropic-plugin-bbd6ae",
+      "attempt": "claude-code:claude-sonnet-5/js-empty-index/docker:evals#1"
+    },
+    "r1/docs-4/js-empty-hosted#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-anthropic-plugin-bbd6ae",
+      "attempt": "claude-code:claude-sonnet-5/js-empty-hosted/docker:evals#1"
+    },
+    "r1/docs-5/control#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-fallback-middleware-486463",
+      "attempt": "claude-code:claude-sonnet-5/js-empty-open/docker:evals#1"
+    },
+    "r1/docs-5/js-empty-docsite#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-fallback-middleware-486463",
+      "attempt": "claude-code:claude-sonnet-5/js-empty-docsite/docker:evals#1"
+    },
+    "r1/docs-5/js-empty-llms#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-fallback-middleware-486463",
+      "attempt": "claude-code:claude-sonnet-5/js-empty-llms/docker:evals#1"
+    },
+    "r1/docs-5/js-empty-index#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-fallback-middleware-486463",
+      "attempt": "claude-code:claude-sonnet-5/js-empty-index/docker:evals#1"
+    },
+    "r1/docs-5/js-empty-hosted#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-fallback-middleware-486463",
+      "attempt": "claude-code:claude-sonnet-5/js-empty-hosted/docker:evals#1"
+    },
+    "r1/docs-6/control#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-media-models-d4cd5c",
+      "attempt": "claude-code:claude-sonnet-5/js-empty-open/docker:evals#1"
+    },
+    "r1/docs-6/js-empty-docsite#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-media-models-d4cd5c",
+      "attempt": "claude-code:claude-sonnet-5/js-empty-docsite/docker:evals#1"
+    },
+    "r1/docs-6/js-empty-llms#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-media-models-d4cd5c",
+      "attempt": "claude-code:claude-sonnet-5/js-empty-llms/docker:evals#1"
+    },
+    "r1/docs-6/js-empty-index#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-media-models-d4cd5c",
+      "attempt": "claude-code:claude-sonnet-5/js-empty-index/docker:evals#1"
+    },
+    "r1/docs-6/js-empty-hosted#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-media-models-d4cd5c",
+      "attempt": "claude-code:claude-sonnet-5/js-empty-hosted/docker:evals#1"
+    },
+    "r1/docs-7/control#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-chat-session-762871",
+      "attempt": "claude-code:claude-sonnet-5/js-seed-open/docker:evals#1"
+    },
+    "r1/docs-7/js-seed-docsite#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-chat-session-762871",
+      "attempt": "claude-code:claude-sonnet-5/js-seed-docsite/docker:evals#1"
+    },
+    "r1/docs-7/js-seed-llms#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-chat-session-762871",
+      "attempt": "claude-code:claude-sonnet-5/js-seed-llms/docker:evals#1"
+    },
+    "r1/docs-7/js-seed-index#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-chat-session-762871",
+      "attempt": "claude-code:claude-sonnet-5/js-seed-index/docker:evals#1"
+    },
+    "r1/docs-7/js-seed-hosted#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-docs-docs-eval-ts-docs-chat-session-762871",
+      "attempt": "claude-code:claude-sonnet-5/js-seed-hosted/docker:evals#1"
+    },
+    "r1/tooling-1/control#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-tooling-tooling-eval-ts-tooling-cli-verify-860eda",
+      "attempt": "claude-code:claude-sonnet-5/control/docker:evals#1"
+    },
+    "r1/tooling-1/skill#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-tooling-tooling-eval-ts-tooling-cli-verify-860eda",
+      "attempt": "claude-code:claude-sonnet-5/skill/docker:evals#1"
+    },
+    "r1/tooling-1/directed#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-tooling-tooling-eval-ts-tooling-cli-verify-860eda",
+      "attempt": "claude-code:claude-sonnet-5/directed/docker:evals#1"
+    },
+    "r1/tooling-2/control#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-tooling-tooling-eval-ts-tooling-cli-upgrade-f529cf",
+      "attempt": "claude-code:claude-sonnet-5/control/docker:evals#1"
+    },
+    "r1/tooling-2/skill#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-tooling-tooling-eval-ts-tooling-cli-upgrade-f529cf",
+      "attempt": "claude-code:claude-sonnet-5/skill/docker:evals#1"
+    },
+    "r1/tooling-3/control#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-tooling-tooling-eval-ts-tooling-cli-add-eval-fab2fd",
+      "attempt": "claude-code:claude-sonnet-5/control/docker:evals#1"
+    },
+    "r1/tooling-3/skill#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-tooling-tooling-eval-ts-tooling-cli-add-eval-fab2fd",
+      "attempt": "claude-code:claude-sonnet-5/skill/docker:evals#1"
+    },
+    "r1/tooling-4/control#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-tooling-tooling-eval-ts-tooling-devui-missing-e-abdc74",
+      "attempt": "claude-code:claude-sonnet-5/mcp/docker:evals#1"
+    },
+    "r1/tooling-4/directed#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-tooling-tooling-eval-ts-tooling-devui-missing-e-abdc74",
+      "attempt": "claude-code:claude-sonnet-5/directed/docker:evals#1"
+    },
+    "r1/tooling-5/control#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-tooling-tooling-eval-ts-tooling-devui-two-runti-09522f",
+      "attempt": "claude-code:claude-sonnet-5/mcp/docker:evals#1"
+    },
+    "r1/tooling-5/skill#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-tooling-tooling-eval-ts-tooling-devui-two-runti-09522f",
+      "attempt": "claude-code:claude-sonnet-5/skill/docker:evals#1"
+    },
+    "r1/tooling-6/control#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-tooling-tooling-eval-ts-tooling-mcp-offline-doc-d9ffc6",
+      "attempt": "claude-code:claude-sonnet-5/mcp-offline/docker:evals#1"
+    },
+    "r1/tooling-6/directed-offline#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-tooling-tooling-eval-ts-tooling-mcp-offline-doc-d9ffc6",
+      "attempt": "claude-code:claude-sonnet-5/directed-offline/docker:evals#1"
+    },
+    "r1/tooling-7/control#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-tooling-tooling-eval-ts-tooling-mcp-broken-serv-f80bff",
+      "attempt": "claude-code:claude-sonnet-5/mcp-wrong-root/docker:evals#1"
+    },
+    "r1/tooling-8/control#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-tooling-tooling-eval-ts-tooling-mcp-setup-claud-8053f8",
+      "attempt": "claude-code:claude-sonnet-5/control-claude/docker:evals#1"
+    },
+    "r1/tooling-8/skill-claude#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-tooling-tooling-eval-ts-tooling-mcp-setup-claud-8053f8",
+      "attempt": "claude-code:claude-sonnet-5/skill-claude/docker:evals#1"
+    },
+    "r1/tooling-9/control#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-tooling-tooling-eval-ts-tooling-agent-two-turn-c170bb",
+      "attempt": "claude-code:claude-sonnet-5/control/docker:evals#1"
+    },
+    "r1/tooling-9/skill#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-tooling-tooling-eval-ts-tooling-agent-two-turn-c170bb",
+      "attempt": "claude-code:claude-sonnet-5/skill/docker:evals#1"
+    },
+    "r1/tooling-9/mcp#1": {
+      "runId": "20261102T150357Z_097948d_jacob-cable_hz64",
+      "evalSlug": "evals-probes-tooling-tooling-eval-ts-tooling-agent-two-turn-c170bb",
+      "attempt": "claude-code:claude-sonnet-5/mcp/docker:evals#1"
+    }
+  },
+  "cited": {
+    "F1": "{\"kind\":\"pass@1\",\"run\":\"r1\",\"eval\":\"agents-1\",\"cells\":[{\"cell\":\"go-new-control (control)\",\"pass\":\"1/1\",\"gated\":false},{\"cell\":\"go-new-skill\",\"pass\":\"1/1\",\"gated\":false,\"lift\":\"+0 pts (95% −79…+79)\",\"verdict\":\"within noise\",\"smallSample\":true,\"measures\":[\"leans: 1.6× faster, but 1 run a side can't confirm it; 4 is the least that can\",\"leans: 18% fewer tokens, but 1 run a side can't confirm it; 4…",
+    "F2": "{\"kind\":\"pass@1\",\"run\":\"r1\",\"eval\":\"agents-2\",\"cells\":[{\"cell\":\"go-session-control (control)\",\"pass\":\"0/1\",\"gated\":false},{\"cell\":\"go-session-skill\",\"pass\":\"1/1\",\"gated\":false,\"lift\":\"+100 pts (95% −12…+100)\",\"verdict\":\"within noise\",\"smallSample\":true,\"measures\":[\"leans: 2.4× fewer tool calls, but 1 run a side can't confirm it; 4 is the least that can\",\"leans: 2× faster, but 1 run a side can't…",
+    "F3": "{\"kind\":\"pass@1\",\"run\":\"r1\",\"eval\":\"agents-3\",\"cells\":[{\"cell\":\"py-tool-control (control)\",\"pass\":\"1/1\",\"gated\":false},{\"cell\":\"py-tool-skill\",\"pass\":\"1/1\",\"gated\":false,\"lift\":\"+0 pts (95% −79…+79)\",\"verdict\":\"within noise\",\"smallSample\":true,\"measures\":[\"leans: 14% fewer tool calls, but 1 run a side can't confirm it; 4 is the least that can\",\"leans: 2.6× faster, but 1 run a side can't confirm…",
+    "F4": "{\"kind\":\"pass@1\",\"run\":\"r1\",\"eval\":\"agents-4\",\"cells\":[{\"cell\":\"py-session-control (control)\",\"pass\":\"1/1\",\"gated\":false},{\"cell\":\"py-session-skill\",\"pass\":\"1/1\",\"gated\":false,\"lift\":\"+0 pts (95% −79…+79)\",\"verdict\":\"within noise\",\"smallSample\":true,\"measures\":[\"leans: 1.6× fewer tool calls, but 1 run a side can't confirm it; 4 is the least that can\",\"leans: 1.9× faster, but 1 run a side can't…",
+    "F5": "{\"kind\":\"pass@1\",\"run\":\"r1\",\"eval\":\"agents-5\",\"cells\":[{\"cell\":\"py-setup-control (control)\",\"pass\":\"1/1\",\"gated\":false},{\"cell\":\"py-setup-skill\",\"pass\":\"1/1\",\"gated\":false,\"lift\":\"+0 pts (95% −79…+79)\",\"verdict\":\"within noise\",\"smallSample\":true,\"measures\":[\"leans: 2.9× fewer tool calls, but 1 run a side can't confirm it; 4 is the least that can\",\"leans: 2.5× faster, but 1 run a side can't…",
+    "F6": "{\"kind\":\"pass@1\",\"run\":\"r1\",\"eval\":\"docs-1\",\"cells\":[{\"cell\":\"js-empty-open (control)\",\"pass\":\"1/1\",\"gated\":false},{\"cell\":\"js-empty-docsite\",\"pass\":\"1/1\",\"gated\":false},{\"cell\":\"js-empty-llms\",\"pass\":\"1/1\",\"gated\":false},{\"cell\":\"js-empty-index\",\"pass\":\"1/1\",\"gated\":false},{\"cell\":\"js-empty-hosted\",\"pass\":\"1/1\",\"gated\":false}],\"family\":\"evals/probes/docs/docs.eval.ts › docs: $name\",\"case\":0}",
+    "F7": "{\"kind\":\"pass@1\",\"run\":\"r1\",\"eval\":\"docs-2\",\"cells\":[{\"cell\":\"js-empty-open (control)\",\"pass\":\"1/1\",\"gated\":false},{\"cell\":\"js-empty-docsite\",\"pass\":\"1/1\",\"gated\":false},{\"cell\":\"js-empty-llms\",\"pass\":\"1/1\",\"gated\":false},{\"cell\":\"js-empty-index\",\"pass\":\"1/1\",\"gated\":false},{\"cell\":\"js-empty-hosted\",\"pass\":\"1/1\",\"gated\":false}],\"family\":\"evals/probes/docs/docs.eval.ts › docs: $name\",\"case\":1}",
+    "F8": "{\"kind\":\"pass@1\",\"run\":\"r1\",\"eval\":\"docs-3\",\"cells\":[{\"cell\":\"js-empty-open (control)\",\"pass\":\"1/1\",\"gated\":false},{\"cell\":\"js-empty-docsite\",\"pass\":\"1/1\",\"gated\":false},{\"cell\":\"js-empty-llms\",\"pass\":\"1/1\",\"gated\":false},{\"cell\":\"js-empty-index\",\"pass\":\"1/1\",\"gated\":false},{\"cell\":\"js-empty-hosted\",\"pass\":\"1/1\",\"gated\":false}],\"family\":\"evals/probes/docs/docs.eval.ts › docs: $name\",\"case\":2}",
+    "F9": "{\"kind\":\"pass@1\",\"run\":\"r1\",\"eval\":\"docs-4\",\"cells\":[{\"cell\":\"js-empty-open (control)\",\"pass\":\"1/1\",\"gated\":false},{\"cell\":\"js-empty-docsite\",\"pass\":\"0/1\",\"gated\":false},{\"cell\":\"js-empty-llms\",\"pass\":\"1/1\",\"gated\":false},{\"cell\":\"js-empty-index\",\"pass\":\"1/1\",\"gated\":false},{\"cell\":\"js-empty-hosted\",\"pass\":\"1/1\",\"gated\":false}],\"family\":\"evals/probes/docs/docs.eval.ts › docs: $name\",\"case\":3}",
+    "F10": "{\"kind\":\"pass@1\",\"run\":\"r1\",\"eval\":\"docs-5\",\"cells\":[{\"cell\":\"js-empty-open (control)\",\"pass\":\"0/1\",\"gated\":false},{\"cell\":\"js-empty-docsite\",\"pass\":\"0/1\",\"gated\":false},{\"cell\":\"js-empty-llms\",\"pass\":\"0/1\",\"gated\":false},{\"cell\":\"js-empty-index\",\"pass\":\"0/1\",\"gated\":false},{\"cell\":\"js-empty-hosted\",\"pass\":\"0/1\",\"gated\":false}],\"family\":\"evals/probes/docs/docs.eval.ts › docs: $name\",\"case\":4}",
+    "F11": "{\"kind\":\"pass@1\",\"run\":\"r1\",\"eval\":\"docs-6\",\"cells\":[{\"cell\":\"js-empty-open (control)\",\"pass\":\"1/1\",\"gated\":false},{\"cell\":\"js-empty-docsite\",\"pass\":\"1/1\",\"gated\":false},{\"cell\":\"js-empty-llms\",\"pass\":\"1/1\",\"gated\":false},{\"cell\":\"js-empty-index\",\"pass\":\"1/1\",\"gated\":false},{\"cell\":\"js-empty-hosted\",\"pass\":\"1/1\",\"gated\":false}],\"family\":\"evals/probes/docs/docs.eval.ts › docs: $name\",\"case\":5}",
+    "F12": "{\"kind\":\"pass@1\",\"run\":\"r1\",\"eval\":\"docs-7\",\"cells\":[{\"cell\":\"js-seed-open (control)\",\"pass\":\"1/1\",\"gated\":false},{\"cell\":\"js-seed-docsite\",\"pass\":\"1/1\",\"gated\":false,\"lift\":\"+0 pts (95% −79…+79)\",\"verdict\":\"within noise\",\"smallSample\":true,\"measures\":[\"leans: 19% more tool calls, but 1 run a side can't confirm it; 4 is the least that can\",\"leans: 17% faster, but 1 run a side can't confirm it; 4…",
+    "F13": "{\"kind\":\"pass@1\",\"run\":\"r1\",\"eval\":\"tooling-1\",\"cells\":[{\"cell\":\"control (control)\",\"pass\":\"1/1\",\"gated\":false},{\"cell\":\"skill\",\"pass\":\"1/1\",\"gated\":false,\"lift\":\"+0 pts (95% −79…+79)\",\"verdict\":\"within noise\",\"smallSample\":true,\"measures\":[\"leans: 22% fewer tool calls, but 1 run a side can't confirm it; 4 is the least that can\"]},{\"cell\":\"directed\",\"pass\":\"1/1\",\"gated\":false,\"lift\":\"+0 pts (95%…",
+    "F14": "{\"kind\":\"pass@1\",\"run\":\"r1\",\"eval\":\"tooling-2\",\"cells\":[{\"cell\":\"control (control)\",\"pass\":\"1/1\",\"gated\":false},{\"cell\":\"skill\",\"pass\":\"1/1\",\"gated\":false,\"lift\":\"+0 pts (95% −79…+79)\",\"verdict\":\"within noise\",\"smallSample\":true,\"measures\":[\"leans: 17% more tool calls, but 1 run a side can't confirm it; 4 is the least that can\",\"leans: 29% more tokens, but 1 run a side can't confirm it; 4 is the…",
+    "F15": "{\"kind\":\"pass@1\",\"run\":\"r1\",\"eval\":\"tooling-3\",\"cells\":[{\"cell\":\"control (control)\",\"pass\":\"1/1\",\"gated\":false},{\"cell\":\"skill\",\"pass\":\"1/1\",\"gated\":false,\"lift\":\"+0 pts (95% −79…+79)\",\"verdict\":\"within noise\",\"smallSample\":true,\"measures\":[\"leans: 27% fewer tool calls, but 1 run a side can't confirm it; 4 is the least that can\",\"leans: 11% faster, but 1 run a side can't confirm it; 4 is the…",
+    "F16": "{\"kind\":\"pass@1\",\"run\":\"r1\",\"eval\":\"tooling-4\",\"cells\":[{\"cell\":\"mcp (control)\",\"pass\":\"0/1\",\"gated\":false},{\"cell\":\"directed\",\"pass\":\"1/1\",\"gated\":false,\"lift\":\"+100 pts (95% −12…+100)\",\"verdict\":\"within noise\",\"smallSample\":true,\"measures\":[\"leans: 3.5× more tool calls, but 1 run a side can't confirm it; 4 is the least that can\",\"leans: 2.2× slower, but 1 run a side can't confirm it; 4 is the…",
+    "F17": "{\"kind\":\"pass@1\",\"run\":\"r1\",\"eval\":\"tooling-5\",\"cells\":[{\"cell\":\"mcp (control)\",\"pass\":\"0/1\",\"gated\":false},{\"cell\":\"skill\",\"pass\":\"1/1\",\"gated\":false,\"lift\":\"+100 pts (95% −12…+100)\",\"verdict\":\"within noise\",\"smallSample\":true,\"measures\":[\"leans: 29% more tool calls, but 1 run a side can't confirm it; 4 is the least that can\",\"leans: 17% slower, but 1 run a side can't confirm it; 4 is the least…",
+    "F18": "{\"kind\":\"pass@1\",\"run\":\"r1\",\"eval\":\"tooling-6\",\"cells\":[{\"cell\":\"mcp-offline (control)\",\"pass\":\"1/1\",\"gated\":false},{\"cell\":\"directed-offline\",\"pass\":\"1/1\",\"gated\":false,\"lift\":\"+0 pts (95% −79…+79)\",\"verdict\":\"within noise\",\"smallSample\":true,\"measures\":[\"leans: 40% more tool calls, but 1 run a side can't confirm it; 4 is the least that can\",\"leans: 32% slower, but 1 run a side can't confirm…",
+    "F19": "{\"kind\":\"pass@1\",\"run\":\"r1\",\"eval\":\"tooling-7\",\"cells\":[{\"cell\":\"control\",\"pass\":\"1/1\",\"gated\":true}]}",
+    "F20": "{\"kind\":\"pass@1\",\"run\":\"r1\",\"eval\":\"tooling-8\",\"cells\":[{\"cell\":\"control-claude (control)\",\"pass\":\"1/1\",\"gated\":false},{\"cell\":\"skill-claude\",\"pass\":\"1/1\",\"gated\":false,\"lift\":\"+0 pts (95% −79…+79)\",\"verdict\":\"within noise\",\"smallSample\":true,\"measures\":[\"leans: 2.7× more tool calls, but 1 run a side can't confirm it; 4 is the least that can\",\"leans: 2.2× slower, but 1 run a side can't confirm…",
+    "F21": "{\"kind\":\"pass@1\",\"run\":\"r1\",\"eval\":\"tooling-9\",\"cells\":[{\"cell\":\"control (control)\",\"pass\":\"0/1\",\"gated\":false},{\"cell\":\"skill\",\"pass\":\"1/1\",\"gated\":false,\"lift\":\"+100 pts (95% −12…+100)\",\"verdict\":\"within noise\",\"smallSample\":true,\"measures\":[\"leans: 42% more tool calls, but 1 run a side can't confirm it; 4 is the least that can\",\"leans: 1.9× slower, but 1 run a side can't confirm it; 4 is the…",
+    "F46": "{\"kind\":\"saturation\",\"evals\":[{\"eval\":\"agents-1\",\"pass\":\"4/6\"},{\"eval\":\"agents-2\",\"pass\":\"1/3\"},{\"eval\":\"agents-3\",\"pass\":\"5/6\"},{\"eval\":\"agents-4\",\"pass\":\"3/3\"},{\"eval\":\"agents-5\",\"pass\":\"3/3\"},{\"eval\":\"docs-1\",\"pass\":\"5/5\"},{\"eval\":\"docs-2\",\"pass\":\"5/5\"},{\"eval\":\"docs-3\",\"pass\":\"5/5\"},{\"eval\":\"docs-4\",\"pass\":\"4/5\"},{\"eval\":\"docs-5\",\"pass\":\"0/5\"},{\"eval\":\"docs-6\",\"pass\":\"5/5\"},{\"eval\":\"docs-7\",\"…",
+    "F22": "{\"kind\":\"family\",\"run\":\"r1\",\"family\":\"evals/probes/docs/docs.eval.ts › docs: $name\",\"cases\":6,\"rates\":[{\"cell\":\"js-empty-open (control)\",\"passAt1\":\"pass@1 5/6 · 83% (95% 44…97)\"},{\"cell\":\"js-empty-docsite\",\"passAt1\":\"pass@1 4/6 · 67% (95% 30…90)\"},{\"cell\":\"js-empty-llms\",\"passAt1\":\"pass@1 5/6 · 83% (95% 44…97)\"},{\"cell\":\"js-empty-index\",\"passAt1\":\"pass@1 5/6 · 83% (95%…",
+    "F45": "{\"kind\":\"context-use\",\"note\":\"Tool calls per counted attempt by class (context: a placed skill, rules or MCP tool; dependency: node_modules, site-packages, vendor, --help; web; verify: a check command or test/build/lint; workspace: the rest), a heuristic. files: each placed file, opened in k/n attempts.\",\"cells\":[{\"run\":\"r1\",\"eval\":\"agents-2\",\"cell\":\"go-session-control…",
+    "F48": "{\"kind\":\"criteria\",\"run\":\"r1\",\"eval\":\"agents-2\",\"note\":\"Each check (expect label) per cell: passed/counted, then the mean judge score for a judge.\",\"rows\":[{\"label\":\"imports the agents packages\",\"cells\":{\"go-session-control (control)\":\"0/1\",\"go-session-skill\":\"1/1\",\"go-session-index\":\"0/1\"}},{\"label\":\"opts in to the experimental API\",\"cells\":{\"go-session-control…",
+    "F71": "{\"kind\":\"failure\",\"attempt\":\"r1/agents-2/control#1\",\"outcome\":\"fail\",\"errorKind\":\"assertion\",\"message\":\"imports the agents packages: expected [ Array(1) ] to deeply equal []\",\"gated\":false,\"failed\":[\"imports the agents packages\",\"opts in to the experimental API\"],\"judges\":[{\"label\":\"Did the agent build the conversation with Genkit's agents…\",\"question\":\"Did the agent build the conversation with…",
+    "F72": "{\"kind\":\"failure\",\"attempt\":\"r1/agents-2/go-session-index#1\",\"outcome\":\"fail\",\"errorKind\":\"assertion\",\"message\":\"imports the agents packages: expected [ Array(1) ] to deeply equal []\",\"gated\":false,\"failed\":[\"imports the agents packages\",\"opts in to the experimental API\"],\"judges\":[{\"label\":\"Did the agent build the conversation with Genkit's agents…\",\"question\":\"Did the agent build the…",
+    "F894": "{\"kind\":\"contrast\",\"run\":\"r1\",\"eval\":\"agents-2\",\"a\":\"go-session-skill\",\"b\":\"go-session-control (control)\",\"passRate\":\"1/1 vs 0/1\",\"lift\":\"+100 pts (95% −12…+100)\",\"liftVerdict\":\"within noise\",\"smallSample\":true,\"measures\":[\"leans: 2.4× fewer tool calls, but 1 run a side can't confirm it; 4 is the least that can\",\"leans: 2× faster, but 1 run a side can't confirm it; 4 is the least that…",
+    "F896": "{\"kind\":\"contrast\",\"run\":\"r1\",\"eval\":\"agents-2\",\"a\":\"go-session-index\",\"b\":\"go-session-skill\",\"passRate\":\"0/1 vs 1/1\",\"lift\":\"−100 pts (95% −100…+12)\",\"liftVerdict\":\"within noise\",\"smallSample\":true,\"measures\":[\"leans: 1.6× slower, but 1 run a side can't confirm it; 4 is the least that can\",\"leans: 22% more tokens, but 1 run a side can't confirm it; 4 is the least that can\",\"leans: judge \\\"Did…",
+    "F55": "{\"kind\":\"criteria\",\"run\":\"r1\",\"eval\":\"docs-4\",\"note\":\"Each check (expect label) per cell: passed/counted, then the mean judge score for a judge.\",\"rows\":[{\"label\":\"depends on @genkit-ai/anthropic\",\"cells\":{\"js-empty-open (control)\":\"1/1\",\"js-empty-docsite\":\"0/1\",\"js-empty-llms\":\"1/1\",\"js-empty-index\":\"1/1\",\"js-empty-hosted\":\"1/1\"}},{\"label\":\"registers the anthropic…",
+    "F74": "{\"kind\":\"failure\",\"attempt\":\"r1/docs-4/js-empty-docsite#1\",\"outcome\":\"fail\",\"errorKind\":\"assertion\",\"message\":\"depends on @genkit-ai/anthropic: expected false to be true // Object.is equality\",\"gated\":false,\"failed\":[\"depends on @genkit-ai/anthropic\",\"registers the anthropic plugin\"],\"failingExecs\":[]}",
+    "F495": "{\"kind\":\"observed\",\"run\":\"r1\",\"eval\":\"docs-4\",\"cell\":\"js-empty-docsite\",\"name\":\"stale\",\"attempts\":1,\"counts\":[{\"value\":\"genkitx-*\",\"n\":1}]}",
+    "F500": "{\"kind\":\"observed\",\"run\":\"r1\",\"eval\":\"docs-4\",\"cell\":\"js-empty-docsite\",\"name\":\"dependencies\",\"attempts\":1,\"counts\":[{\"value\":\"genkit\",\"n\":1},{\"value\":\"genkitx-anthropic\",\"n\":1},{\"value\":\"zod\",\"n\":1},{\"value\":\"@types/node\",\"n\":1},{\"value\":\"tsx\",\"n\":1},{\"value\":\"typescript\",\"n\":1}]}",
+    "F67": "{\"kind\":\"criteria\",\"run\":\"r1\",\"eval\":\"tooling-9\",\"note\":\"Each check (expect label) per cell: passed/counted, then the mean judge score for a judge.\",\"rows\":[{\"label\":\"replies come from one two-turn session\",\"cells\":{\"control (control)\":\"0/1\",\"skill\":\"1/1\",\"mcp\":\"0/1\"}}],\"neverMet\":[],\"alwaysMet\":[\"agent ran without provider errors\",\"replies answer both questions\"]}",
+    "F850": "{\"kind\":\"observed\",\"run\":\"r1\",\"eval\":\"tooling-9\",\"cell\":\"skill\",\"name\":\"used-wrapper-flow\",\"attempts\":1,\"counts\":[{\"value\":\"true\",\"n\":1}]}",
+    "F851": "{\"kind\":\"observed\",\"run\":\"r1\",\"eval\":\"tooling-9\",\"cell\":\"mcp\",\"name\":\"used-wrapper-flow\",\"attempts\":1,\"counts\":[{\"value\":\"false\",\"n\":1}]}",
+    "r1/tooling-9/control#1": "20261102T150357Z_097948d_jacob-cable_hz64 · claude-code:claude-sonnet-5/control/docker:evals#1 · fail · 12 tool calls · checks 2/3",
+    "r1/tooling-9/mcp#1": "20261102T150357Z_097948d_jacob-cable_hz64 · claude-code:claude-sonnet-5/mcp/docker:evals#1 · fail · 5 tool calls · checks 2/3",
+    "r1/tooling-9/skill#1": "20261102T150357Z_097948d_jacob-cable_hz64 · claude-code:claude-sonnet-5/skill/docker:evals#1 · pass · 17 tool calls · checks 3/3",
+    "F56": "{\"kind\":\"criteria\",\"run\":\"r1\",\"eval\":\"docs-5\",\"note\":\"Each check (expect label) per cell: passed/counted, then the mean judge score for a judge.\",\"rows\":[{\"label\":\"npm start prints text\",\"cells\":{\"js-empty-open (control)\":\"1/1\",\"js-empty-docsite\":\"0/1\",\"js-empty-llms\":\"1/1\",\"js-empty-index\":\"0/1\",\"js-empty-hosted\":\"1/1\"}}],\"neverMet\":[\"uses the fallback middleware\"],\"alwaysMet\":[\"agent ran…",
+    "F75": "{\"kind\":\"failure\",\"attempt\":\"r1/docs-5/control#1\",\"outcome\":\"fail\",\"errorKind\":\"assertion\",\"message\":\"uses the fallback middleware: expected false to be true // Object.is equality\",\"gated\":false,\"failed\":[\"uses the fallback middleware\"],\"failingExecs\":[]}",
+    "F76": "{\"kind\":\"failure\",\"attempt\":\"r1/docs-5/js-empty-docsite#1\",\"outcome\":\"fail\",\"errorKind\":\"assertion\",\"message\":\"uses the fallback middleware: expected false to be true // Object.is equality\",\"gated\":false,\"failed\":[\"uses the fallback middleware\",\"npm start prints text\"],\"failingExecs\":[{\"exec\":3,\"exit\":1,\"command\":\"timeout 120 npm start --silent\"}]}",
+    "F49": "{\"kind\":\"criteria\",\"run\":\"r1\",\"eval\":\"agents-3\",\"note\":\"Each check (expect label) per cell: passed/counted, then the mean judge score for a judge.\",\"rows\":[{\"label\":\"answers from the tool\",\"cells\":{\"py-tool-control (control)\":\"1/1\",\"py-tool-skill\":\"1/1\",\"py-tool-open\":\"1/1\",\"py-tool-docsite\":\"1/1\",\"py-tool-llms\":\"1/1\",\"py-tool-index\":\"0/1\"}}],\"neverMet\":[],\"alwaysMet\":[\"agent ran without…",
+    "F73": "{\"kind\":\"failure\",\"attempt\":\"r1/agents-3/py-tool-index#1\",\"outcome\":\"fail\",\"errorKind\":\"assertion\",\"message\":\"answers from the tool: expected [ Array(1) ] to deeply equal []\",\"gated\":false,\"failed\":[\"answers from the tool\"],\"failingExecs\":[]}",
+    "F263": "{\"kind\":\"observed\",\"run\":\"r1\",\"eval\":\"agents-3\",\"cell\":\"py-tool-index\",\"name\":\"genkit-py-version\",\"attempts\":1,\"counts\":[{\"value\":\"0.12.0\",\"n\":1}]}",
+    "F269": "{\"kind\":\"observed\",\"run\":\"r1\",\"eval\":\"agents-3\",\"cell\":\"py-tool-index\",\"name\":\"tool-run\",\"attempts\":1,\"counts\":[{\"value\":\"\",\"n\":1}]}",
+    "F24": "{\"kind\":\"effort\",\"run\":\"r1\",\"eval\":\"agents-2\",\"cells\":[{\"cell\":\"go-session-control (control)\",\"n\":1,\"medianToolCalls\":36,\"medianAgentS\":169.1,\"medianTokens\":2349769,\"medianCallsByClass\":{\"dependency\":7,\"verify\":3,\"workspace\":26}},{\"cell\":\"go-session-skill\",\"n\":1,\"medianToolCalls\":15,\"medianAgentS\":84.9,\"medianTokens\":881105,\"medianCallsByClass\":{\"context\":3,\"verify\":3,\"workspace\":9},\"vsControl\":{…",
+    "F43": "{\"kind\":\"effort\",\"run\":\"r1\",\"eval\":\"tooling-9\",\"cells\":[{\"cell\":\"control (control)\",\"n\":1,\"medianToolCalls\":12,\"medianAgentS\":28.7,\"medianTokens\":269661,\"medianCallsByClass\":{\"workspace\":12}},{\"cell\":\"skill\",\"n\":1,\"medianToolCalls\":17,\"medianAgentS\":53.7,\"medianTokens\":596630,\"medianCallsByClass\":{\"context\":2,\"verify\":1,\"workspace\":14},\"vsControl\":{\"n\":\"1 vs 1\",\"toolCalls\":\"17 vs 12…",
+    "F997": "{\"kind\":\"contrast\",\"run\":\"r1\",\"eval\":\"tooling-9\",\"a\":\"skill\",\"b\":\"control (control)\",\"passRate\":\"1/1 vs 0/1\",\"lift\":\"+100 pts (95% −12…+100)\",\"liftVerdict\":\"within noise\",\"smallSample\":true,\"measures\":[\"leans: 42% more tool calls, but 1 run a side can't confirm it; 4 is the least that can\",\"leans: 1.9× slower, but 1 run a side can't confirm it; 4 is the least that can\",\"leans: 2.2× more tokens,…"
+  }
+}
