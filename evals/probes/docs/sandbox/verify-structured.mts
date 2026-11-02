@@ -1,4 +1,5 @@
-// Placed in the sandbox after the agent's turn and run from the workspace as `tsx ~/.verify-structured.mts`; prints one `RESULT <json>` line.
+// Placed in the sandbox after the agent's turn and run from the workspace as `tsx ~/.verify-structured.mts`.
+// Prints one `RESULT <json>` line; exits 1 on a transport or provider error so `retries` reruns it, 0 otherwise.
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 
@@ -7,7 +8,9 @@ const MESSAGES = [
   { text: 'Grace Hopper here, grace.hopper@navy.example is the best address for me.', name: 'grace hopper', email: 'grace.hopper@navy.example' },
 ]
 
-const result: { ok: boolean; error?: string; outputs?: unknown[] } = { ok: false }
+const TRANSIENT = /ECONNRESET|ECONNREFUSED|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|fetch failed|socket hang up|\b(?:429|500|502|503|504)\b|UNAVAILABLE|RESOURCE_EXHAUSTED|overloaded/i
+
+const result: { ok: boolean; error?: string; outputs?: unknown[]; transient?: boolean } = { ok: false }
 try {
   const flows = (await import(pathToFileURL(path.resolve(process.cwd(), 'src/flows.ts')).href)) as Record<string, unknown>
   const extract = flows.extractContact
@@ -26,6 +29,7 @@ try {
   result.outputs = outputs
 } catch (error) {
   result.error = error instanceof Error ? error.message : String(error)
+  result.transient = TRANSIENT.test(`${result.error} ${error instanceof Error ? String(error.cause ?? '') : ''}`)
 }
 console.log(`RESULT ${JSON.stringify(result)}`)
-process.exit(0)
+process.exit(result.transient ? 1 : 0)

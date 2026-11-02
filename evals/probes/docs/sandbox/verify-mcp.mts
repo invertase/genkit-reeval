@@ -1,8 +1,15 @@
-// Placed in `~/.verify-mcp` beside an install of @modelcontextprotocol/sdk and run from the workspace as `tsx ~/.verify-mcp/verify.mts`; prints one `RESULT <json>` line.
+// Run from the workspace as `tsx ~/.verify-mcp/verify.mts`, beside the MCP client the environment setup installed in `~/.verify-mcp`.
+// Prints one `RESULT <json>` line; exits 1 on a transport or provider error so `retries` reruns it, 0 otherwise.
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 
-const result: { ok: boolean; listed?: boolean; called?: boolean; tools?: string[]; error?: string } = { ok: false }
+const TRANSIENT = /ECONNRESET|ECONNREFUSED|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|fetch failed|socket hang up|\b(?:429|500|502|503|504)\b|UNAVAILABLE|RESOURCE_EXHAUSTED|overloaded/i
+
+const result: { ok: boolean; listed?: boolean; called?: boolean; tools?: string[]; error?: string; transient?: boolean } = { ok: false }
+const finish = (code: number): never => {
+  console.log(`RESULT ${JSON.stringify(result)}`)
+  process.exit(code)
+}
 const transport = new StdioClientTransport({
   command: 'npm',
   args: ['run', '--silent', 'mcp'],
@@ -11,9 +18,9 @@ const transport = new StdioClientTransport({
   stderr: 'pipe',
 })
 const client = new Client({ name: 'verify', version: '1.0.0' })
-const deadline = setTimeout(() => {
-  console.log(`RESULT ${JSON.stringify({ ...result, error: 'timed out waiting for the server' })}`)
-  process.exit(0)
+setTimeout(() => {
+  result.error = 'timed out waiting for the server'
+  finish(0)
 }, 60_000)
 try {
   await client.connect(transport)
@@ -22,14 +29,12 @@ try {
   result.listed = result.tools.includes('add')
   if (result.listed) {
     const reply = await client.callTool({ name: 'add', arguments: { a: 2, b: 3 } })
-    const text = JSON.stringify(reply.content ?? reply)
-    result.called = /\b5\b/.test(text)
+    result.called = /\b5\b/.test(JSON.stringify(reply.content ?? reply))
   }
   result.ok = result.listed === true && result.called === true
 } catch (error) {
   result.error = error instanceof Error ? error.message : String(error)
+  result.transient = TRANSIENT.test(result.error)
 }
-clearTimeout(deadline)
-console.log(`RESULT ${JSON.stringify(result)}`)
 await client.close().catch(() => undefined)
-process.exit(0)
+finish(result.transient ? 1 : 0)

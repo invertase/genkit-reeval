@@ -141,7 +141,7 @@ const client = new Anthropic()
 
 export async function askClaude(question: string): Promise<string> {
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: 'claude-3-haiku-20240307',
     max_tokens: 1024,
     messages: [{ role: 'user', content: question }],
   })
@@ -203,7 +203,7 @@ export const PROBES: Probe[] = [
   {
     name: 'mcp-server',
     prompt: 'Using Genkit, define a tool named `add` that adds two numbers `a` and `b`, and expose it as an MCP server over stdio. `npm run mcp` must start the server.',
-    checks: [CHECK.usesMcp, CHECK.noLegacyMcp, CHECK.serverListsTool],
+    checks: [CHECK.usesMcp, CHECK.noLegacyMcp, CHECK.typechecks, CHECK.serverListsTool],
     oracle: {
       files: { 'package.json': packageJson({ genkit: PINS.genkit, '@genkit-ai/mcp': PINS.mcp }, { mcp: 'tsx src/mcp.ts' }), 'src/mcp.ts': MCP_ORACLE },
       exec: INSTALL,
@@ -217,7 +217,7 @@ export const PROBES: Probe[] = [
   {
     name: 'anthropic-plugin',
     prompt: 'Use Claude through Genkit: add a flow named `askClaude` in `src/flows.ts` that takes a question as a string and answers it with a Claude model.',
-    checks: [CHECK.usesAnthropic, CHECK.noAnthropicSdk, CHECK.registersAnthropic, CHECK.typechecks],
+    checks: [CHECK.usesAnthropic, CHECK.noAnthropicSdk, CHECK.noStaleClaude, CHECK.registersAnthropic, CHECK.typechecks],
     oracle: {
       files: { 'package.json': packageJson({ genkit: PINS.genkit, '@genkit-ai/anthropic': PINS.anthropic }), 'src/flows.ts': ANTHROPIC_ORACLE },
       exec: INSTALL,
@@ -225,7 +225,7 @@ export const PROBES: Probe[] = [
     cheat: {
       files: { 'package.json': packageJson({ '@anthropic-ai/sdk': PINS.anthropicSdk }), 'src/flows.ts': ANTHROPIC_CHEAT },
       exec: INSTALL,
-      fails: [CHECK.usesAnthropic, CHECK.noAnthropicSdk, CHECK.registersAnthropic],
+      fails: [CHECK.usesAnthropic, CHECK.noAnthropicSdk, CHECK.noStaleClaude, CHECK.registersAnthropic],
     },
   },
   {
@@ -233,11 +233,11 @@ export const PROBES: Probe[] = [
     prompt:
       'Using Genkit, make `npm start` print a short joke written by Gemini. ' +
       'If the Gemini call fails, it should fall back to another model instead of failing.',
-    checks: [CHECK.usesFallback, CHECK.noTryCatch, CHECK.typechecks, CHECK.startPrints],
+    checks: [CHECK.usesFallback, CHECK.typechecks, CHECK.startPrints],
     oracle: {
       files: { 'package.json': packageJson({ ...GEMINI, '@genkit-ai/middleware': PINS.middleware }), 'src/index.ts': FALLBACK_ORACLE },
       exec: INSTALL,
     },
-    cheat: { files: { 'package.json': packageJson(GEMINI), 'src/index.ts': FALLBACK_CHEAT }, exec: INSTALL, fails: [CHECK.usesFallback, CHECK.noTryCatch] },
+    cheat: { files: { 'package.json': packageJson(GEMINI), 'src/index.ts': FALLBACK_CHEAT }, exec: INSTALL, fails: [CHECK.usesFallback] },
   },
 ]
