@@ -1,9 +1,8 @@
 import fs from 'node:fs'
 import { evaluate, expect, type Turn } from 'reeval'
-import { BUGS, causeErrors, locationErrors, seed } from './bugs.ts'
+import { BUGS, causeErrors, locationErrors, missedKeeps, seed } from './bugs.ts'
 import { control, directed, mcp, rules, skill } from './environments.ts'
 import { providerErrors } from './infra.ts'
-import { hideSeedHistory } from './snapshot.ts'
 
 const prompt = (symptom: string) =>
   `You are on the support-desk Genkit app in this directory. Bug report: ${symptom}
@@ -52,38 +51,37 @@ evaluate.each(BUGS)(
       baseline: control,
       variants: [rules, mcp, directed, skill],
       gate,
-      questions: [
-        {
-          question:
-            "Which attempt's answer.json evidence describes something observed by running the app (an output, an error, a trace) rather than inferred from reading the code?",
-          across: 'environment',
-          state: { transcript: 'tools' },
-        },
-      ],
     },
+    questions: [
+      {
+        question:
+          "Which attempt's answer.json evidence describes something observed by running the app (an output, an error, a trace) rather than inferred from reading the code?",
+        across: 'environment',
+        task: true,
+        diff: true,
+        transcript: 'tools',
+      },
+    ],
   },
   async (c, bug) => {
     const healthy = (await c.readFile(bug.file)) ?? ''
     if (healthy.split(bug.from).length !== 2) throw new Error(`${bug.name}: healthy snippet not found once in ${bug.file}`)
     await c.writeFile(bug.file, seed(healthy, bug))
-    await hideSeedHistory(c, bug.name)
 
     const turn = await c.send(prompt(bug.symptom))
-    expect.soft(providerErrors(turn), 'agent ran without provider errors').toEqual([])
-    expect.soft(c, 'leaves package.json alone').not.toHaveChanged(['package.json', 'package-lock.json'])
+    expect(providerErrors(turn), 'agent ran without provider errors').toEqual([])
+    expect(c, 'leaves package.json alone').not.toHaveChanged(['package.json', 'package-lock.json'])
 
     const answerText = await c.readFile('answer.json')
     const answer = parseAnswer(answerText)
-    expect.soft(locationErrors(answer, bug), 'locates the file').toEqual([])
-    expect.soft(causeErrors(answer, bug, healthy), 'names the cause').toEqual([])
+    expect(locationErrors(answer, bug), 'locates the file').toEqual([])
+    expect(causeErrors(answer, bug, healthy), 'names the cause').toEqual([])
 
     await c.writeFile('~/.verify.mts', verify)
-    await expect
-      .soft(c.exec(`node_modules/.bin/tsx --test --test-name-pattern '^${bug.name}$' ~/.verify.mts`), 'flow works')
-      .toSucceed()
+    await expect(c.exec(`node_modules/.bin/tsx --test --test-name-pattern '^${bug.name}$' ~/.verify.mts`), 'flow works').toSucceed()
 
     const fixed = (await c.readFile(bug.file)) ?? ''
-    expect.soft(bug.keeps.filter((keep) => !keep.test(fixed)).map(String), 'keeps the flow').toEqual([])
+    expect(missedKeeps(bug.keeps, fixed), 'keeps the flow').toEqual([])
 
     // Recorded in `judgements`, never asserted: pass and lift stay on the checks.
     await c.judge(EVIDENCE_QUESTION, {
@@ -93,8 +91,11 @@ evaluate.each(BUGS)(
         finalMessage: turn.text,
         toolCalls: toolLog(turn),
       },
-      state: { diff: [bug.file, 'answer.json'] },
+      task: true,
+      output: true,
+      files: true,
+      diff: [bug.file, 'answer.json'],
     })
-    await c.judge(SUMMARY_QUESTION)
+    await c.judge(SUMMARY_QUESTION, { task: true, output: true, files: true, diff: true })
   },
 )

@@ -3,7 +3,7 @@ import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, symlinkSync, wri
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { BUGS, seed } from './bugs.ts'
+import { BUGS, missedKeeps, seed } from './bugs.ts'
 
 /** One build task: the app starts without a feature and the agent must build it with the agents API. */
 export type Task = {
@@ -15,8 +15,8 @@ export type Task = {
   prompt: string
   /** workspace-relative file `keeps` is matched against */
   file: string
-  /** must still match `file` after the build (anti-cheat) */
-  keeps: RegExp[]
+  /** regex sources that must still match `file` after the build (anti-cheat) */
+  keeps: string[]
   /** the requirements `verify-build.mts` checks, each its own `test('<name>: <check>')` */
   checks: string[]
   /** a plausible wrong build the canary writes, and which of `checks` it must fail */
@@ -67,7 +67,7 @@ const agentsWithoutTriage = cutOnce(
 
 const FLOWS = ['chat', 'draftReply', 'greet', 'orderStatus', 'summarizeTicket']
 /** Each flow is still exported from `src/index.ts`, by name or through a star export of `./flows.js`. */
-const keepsFlows = FLOWS.map((flow) => new RegExp(`\\b${flow}\\b|export \\* from '\\./flows(\\.js)?'`))
+const keepsFlows = FLOWS.map((flow) => `\\b${flow}\\b|export \\* from '\\./flows(\\.js)?'`)
 
 const sessionNotLoaded = BUGS.find((b) => b.name === 'session-not-loaded')
 if (!sessionNotLoaded) throw new Error('no session-not-loaded bug')
@@ -397,10 +397,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const index = startFile('src/index.ts')
     const agents = startFile('src/agents.ts')
     if (!isBuildStart(startFile)) errors.push(`${task.name}: the oracle would not see a build start state`)
-    for (const keep of task.keeps) {
-      if (!keep.test(HEALTHY['src/index.ts'])) errors.push(`${task.name}: keeps ${keep} does not match the healthy src/index.ts`)
-      if (index && !keep.test(index)) errors.push(`${task.name}: keeps ${keep} does not match the start src/index.ts`)
-    }
+    for (const keep of missedKeeps(task.keeps, HEALTHY['src/index.ts'])) errors.push(`${task.name}: keeps ${keep} does not match the healthy src/index.ts`)
+    if (index) for (const keep of missedKeeps(task.keeps, index)) errors.push(`${task.name}: keeps ${keep} does not match the start src/index.ts`)
     if (agents === null || !agents.includes(TRIAGE)) {
       for (const gone of ['triage', 'tryTriage', 'tryRefundDesk']) {
         if (index && new RegExp(`\\b${gone}\\b`).test(index)) errors.push(`${task.name}: start src/index.ts still exports ${gone}`)
@@ -419,10 +417,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     if (tsc !== null) errors.push(`${task.name}: start state does not typecheck:\n${tsc}`)
     const cheatTsc = typecheckWith({ ...task.start, ...task.cheat.files })
     if (cheatTsc !== null) errors.push(`${task.name}: the cheat does not typecheck:\n${cheatTsc}`)
-    for (const keep of task.keeps) {
-      const file = task.cheat.files[task.file]
-      if (file !== undefined && !keep.test(file)) errors.push(`${task.name}: the cheat's ${task.file} fails keeps ${keep}`)
-    }
+    const cheatFile = task.cheat.files[task.file]
+    if (cheatFile !== undefined) for (const keep of missedKeeps(task.keeps, cheatFile)) errors.push(`${task.name}: the cheat's ${task.file} fails keeps ${keep}`)
   }
   const healthyFile = (file: string) => readFileSync(new URL(file, appDir), 'utf8')
   if (isBuildStart(healthyFile)) errors.push('isBuildStart takes the healthy app for a build start state')

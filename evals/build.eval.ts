@@ -1,8 +1,8 @@
 import fs from 'node:fs'
 import { evaluate, expect } from 'reeval'
+import { missedKeeps } from './bugs.ts'
 import { control, directed, mcp, rules, skill } from './environments.ts'
 import { providerErrors } from './infra.ts'
-import { hideSeedHistory } from './snapshot.ts'
 import { requirementErrors, TASKS, verifyErrors } from './tasks.ts'
 
 const verify = fs.readFileSync(new URL('./verify-build.mts', import.meta.url), 'utf8')
@@ -30,8 +30,8 @@ evaluate.each(TASKS)(
       baseline: control,
       variants: [rules, mcp, directed, skill],
       gate,
-      questions: [{ question: PAIR_QUESTION, across: 'environment' }],
     },
+    questions: [{ question: PAIR_QUESTION, across: 'environment', task: true, diff: true }],
   },
   async (c, task) => {
     for (const [file, text] of Object.entries(task.start)) {
@@ -44,27 +44,26 @@ evaluate.each(TASKS)(
       const removed = await c.exec(`rm ${file}`)
       if (removed.exitCode !== 0) throw new Error(`${task.name}: could not remove ${file}: ${removed.stderr}`)
     }
-    await hideSeedHistory(c, task.name)
     // Only the oracle reads it, since two tasks share a start state; a real agent could read its home dir.
     if (gate === 'all') await c.writeFile('~/.task', task.name)
 
     const turn = await c.send(task.prompt)
-    expect.soft(providerErrors(turn), 'agent ran without provider errors').toEqual([])
-    expect.soft(c, 'leaves package.json alone').not.toHaveChanged(['package.json', 'package-lock.json'])
+    expect(providerErrors(turn), 'agent ran without provider errors').toEqual([])
+    expect(c, 'leaves package.json alone').not.toHaveChanged(['package.json', 'package-lock.json'])
 
-    await expect.soft(c.exec('node_modules/.bin/tsc --noEmit'), 'typechecks').toSucceed()
+    await expect(c.exec('node_modules/.bin/tsc --noEmit'), 'typechecks').toSucceed()
 
     await c.writeFile('~/.verify-build.mts', verify)
     const run = await c.exec(`node_modules/.bin/tsx --test --test-reporter=tap --test-name-pattern '^${task.name}:' ~/.verify-build.mts`)
-    expect.soft(verifyErrors(run, task), 'verify ran').toEqual([])
+    expect(verifyErrors(run, task), 'verify ran').toEqual([])
     for (const [check, errors] of Object.entries(requirementErrors(run.stdout, task, `${run.stdout}\n${run.stderr}`))) {
-      expect.soft(errors, check).toEqual([])
+      expect(errors, check).toEqual([])
     }
 
     const built = (await c.readFile(task.file)) ?? ''
-    expect.soft(task.keeps.filter((keep) => !keep.test(built)).map(String), 'keeps the flows').toEqual([])
+    expect(missedKeeps(task.keeps, built), 'keeps the flows').toEqual([])
 
     // Recorded in `judgements`, never asserted: pass and lift stay on the checks.
-    await c.judge(IDIOM_QUESTION, { state: { diff: ['src/agents.ts'], contents: ['src/agents.ts'] } })
+    await c.judge(IDIOM_QUESTION, { task: true, output: true, files: true, diff: ['src/agents.ts'], contents: ['src/agents.ts'] })
   },
 )

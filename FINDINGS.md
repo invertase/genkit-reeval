@@ -96,7 +96,7 @@ Everything the study holds fixed, with where it came from. `evals/rules/GENKIT.m
 | genkit (app dependency) | `1.42.0` | npm |
 | @genkit-ai/google-genai (app dependency) | `1.42.0` | npm |
 | @genkit-ai/middleware (app dependency) | `0.10.0` | npm |
-| reeval (root devDependency) | `0.9.0` | npm |
+| reeval (root devDependency) | `0.18.0` | npm |
 | genkit-ai/skills repository | `d02d49da3a77687914715188d495999170bbf48b` (`main` on 2026-10-20) | `gh api repos/genkit-ai/skills/commits/HEAD --jq .sha` |
 | Skill directory in that repository | `skills/developing-genkit-js/` (`SKILL.md` plus `references/*.md`) | `gh api repos/genkit-ai/skills/git/trees/<sha>?recursive=1` |
 | Skill's own CLI requirement | `genkit-cli >= 1.29.0`; `SKILL.md` metadata `version: "1.0.0"` | `SKILL.md` lines 14-15, `references/docs-and-cli.md` line 7 |

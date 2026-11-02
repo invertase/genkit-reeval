@@ -15,8 +15,8 @@ export type Bug = {
   to: string
   /** the bug report the agent gets; never names the tooling */
   symptom: string
-  /** must still match `file` after the fix (anti-cheat) */
-  keeps: RegExp[]
+  /** regex sources that must still match `file` after the fix (anti-cheat); strings, since reeval fingerprints case data as JSON */
+  keeps: string[]
 }
 
 /** Seeded bugs for the support-desk app, flows first, then agents. */
@@ -30,7 +30,7 @@ export const BUGS: Bug[] = [
     symptom:
       'Since this week summarizeTicket returns the tags as one comma-separated string such as "shipping, damage" instead of a list of tags. ' +
       'The triage dashboard reads tags as a list and now shows nothing. It happens for every ticket, for example one about a cracked monitor that arrived damaged.',
-    keeps: [/name: 'summarizeTicket'/, /priority: z\.enum\(\['low', 'medium', 'high'\]\)/],
+    keeps: [String.raw`name: 'summarizeTicket'`, String.raw`priority: z\.enum\(\['low', 'medium', 'high'\]\)`],
   },
   {
     name: 'prompt-var-typo',
@@ -41,7 +41,7 @@ export const BUGS: Bug[] = [
     symptom:
       'The greet flow for customer "Ada" returns a generic welcome like "Welcome to Northwind Supplies!" that never uses her name. ' +
       'Other customers get the same nameless greeting. I expected a one-sentence welcome that addresses the customer by name.',
-    keeps: [/\{\{\s*customerName\s*\}\}/, /customerName: string/],
+    keeps: [String.raw`\{\{\s*customerName\s*\}\}`, String.raw`customerName: string`],
   },
   {
     name: 'prompt-model-override',
@@ -52,7 +52,7 @@ export const BUGS: Bug[] = [
     symptom:
       'The greet flow now fails with an error for every customer, for example "Grace", instead of returning a welcome. ' +
       'The other flows, such as summarizeTicket, still work. I expected a one-sentence welcome that addresses the customer by name.',
-    keeps: [/\{\{\s*customerName\s*\}\}/, /customerName: string/],
+    keeps: [String.raw`\{\{\s*customerName\s*\}\}`, String.raw`customerName: string`],
   },
   {
     name: 'order-id-case',
@@ -64,7 +64,7 @@ export const BUGS: Bug[] = [
       'Some customers with valid orders are told their order does not exist. ' +
       'One customer asked the orderStatus flow "where is order a-1001?" and got that answer, but A-1001 is in our system and has shipped. ' +
       'I expected the reply to give the status and delivery date.',
-    keeps: [/name: 'lookupOrder'/, /ORDERS/],
+    keeps: [String.raw`name: 'lookupOrder'`, String.raw`ORDERS`],
   },
   {
     name: 'tool-requests-returned',
@@ -75,7 +75,7 @@ export const BUGS: Bug[] = [
     symptom:
       'The orderStatus flow returns an empty answer for "Where is order A-1001?". There is no error, just an empty string. ' +
       'The order is in our system and has shipped. I expected the reply to give the status, delivery date and tracking code.',
-    keeps: [/name: 'orderStatus'/, /tools:\s*\[[^\]]*lookupOrder/],
+    keeps: [String.raw`name: 'orderStatus'`, String.raw`tools:\s*\[[^\]]*lookupOrder`],
   },
   {
     name: 'stop-sequence',
@@ -87,7 +87,7 @@ export const BUGS: Bug[] = [
       'The replies that draftReply writes for customer tickets stop after the first line, usually just "Dear customer," or "Hi there,". ' +
       'There is no error, and the reason it reports for stopping looks normal. ' +
       'I expected a complete reply that explains the next steps and signs off from the support team.',
-    keeps: [/name: 'draftReply'/, /finishReason: response\.finishReason/],
+    keeps: [String.raw`name: 'draftReply'`, String.raw`finishReason: response\.finishReason`],
   },
   {
     name: 'delegation-dropped',
@@ -99,7 +99,7 @@ export const BUGS: Bug[] = [
       'In the support chat I write "I want a refund for order A-1001, it arrived broken" and the assistant never hands it to the refund desk. ' +
       'It says it cannot process refunds or just asks me for more details, and no refund approval request ever shows up. ' +
       'Questions about where an order is still get answered correctly. Refunds worked through this chat before.',
-    keeps: [/name: 'triage'/, /agents: \[[^\]]*'orderAgent'/, /name: 'refundAgent'/],
+    keeps: [String.raw`name: 'triage'`, String.raw`agents: \[[^\]]*'orderAgent'`, String.raw`name: 'refundAgent'`],
   },
   {
     name: 'session-not-loaded',
@@ -111,7 +111,7 @@ export const BUGS: Bug[] = [
       'In the support chat a customer says "My order is A-1001." and then, in the same conversation, sends "What is the status of my order?". ' +
       'The follow-up fails: the chat cannot be picked up again by its session id, so the customer has to start over and repeat the order number. ' +
       'Single questions still get answered.',
-    keeps: [/name: 'triage'/, /use: \[\s*agents\(/],
+    keeps: [String.raw`name: 'triage'`, String.raw`use: \[\s*agents\(`],
   },
   {
     name: 'tool-choice-required',
@@ -123,7 +123,7 @@ export const BUGS: Bug[] = [
       'On the refund desk a customer wrote "I want a refund for order A-1001, it arrived broken." The desk asked for approval as usual, ' +
       'and the supervisor declined it as a duplicate claim. After that the desk never gives the customer a final answer: ' +
       'it fails, asks for approval again, or keeps working on the order. A declined refund should end with a short reply to the customer.',
-    keeps: [/name: 'refundAgent'/, /name: 'approveRefund'/, /tools: \[[^\]]*approveRefund[^\]]*issueRefund[^\]]*\]/],
+    keeps: [String.raw`name: 'refundAgent'`, String.raw`name: 'approveRefund'`, String.raw`tools: \[[^\]]*approveRefund[^\]]*issueRefund[^\]]*\]`],
   },
   {
     name: 'max-delegations-zero',
@@ -135,7 +135,7 @@ export const BUGS: Bug[] = [
       'In the support chat I ask "Where is order A-1003?" and the assistant answers politely but without any details, ' +
       'saying it cannot get the information right now. There is no error. ' +
       'It happens for every order and every refund request, although the order desk on its own still answers correctly.',
-    keeps: [/name: 'triage'/, /agents: \[[^\]]*'orderAgent'[^\]]*'refundAgent'/],
+    keeps: [String.raw`name: 'triage'`, String.raw`agents: \[[^\]]*'orderAgent'[^\]]*'refundAgent'`],
   },
   {
     name: 'max-turns-zero',
@@ -146,7 +146,7 @@ export const BUGS: Bug[] = [
     symptom:
       'Every question in the support chat that needs order details, such as "Where is order A-1001?", now fails with an error instead of a reply. ' +
       'A plain "hello" still gets a friendly answer, and the order desk on its own answers order questions correctly.',
-    keeps: [/name: 'triage'/, /use: \[\s*agents\(/],
+    keeps: [String.raw`name: 'triage'`, String.raw`use: \[\s*agents\(`],
   },
   {
     name: 'tool-output-drift',
@@ -157,7 +157,7 @@ export const BUGS: Bug[] = [
     symptom:
       'This week the support chat started failing on some orders. A customer asked "Where is order A-1001?" and the assistant said it could not retrieve the order details, ' +
       'although A-1001 is in our system and has shipped. Questions about other orders, such as A-1002, still get the real status and delivery date.',
-    keeps: [/"A-1001": \{[^}]*"eta": "2026-10-22"/],
+    keeps: [String.raw`"A-1001": \{[^}]*"eta": "2026-10-22"`],
   },
 ]
 
@@ -169,6 +169,9 @@ const field = (answer: unknown, key: string): string => {
 }
 
 const collapse = (text: string) => text.replace(/\s+/g, ' ').trim()
+
+/** The `keeps` patterns that `text` does not match. */
+export const missedKeeps = (keeps: string[], text: string): string[] => keeps.filter((keep) => !new RegExp(keep).test(text))
 
 /** The healthy text of `bug.file` with `bug` seeded into it. */
 export const seed = (healthy: string, bug: Bug): string => healthy.replace(bug.from, () => bug.to)
@@ -215,9 +218,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     if (fromCount !== 1) errors.push(`${bug.name}: from occurs ${fromCount} times in ${bug.file}, expected 1`)
     if (toCount !== 0) errors.push(`${bug.name}: to occurs ${toCount} times in ${bug.file}, expected 0`)
     if (source.replace(bug.from, bug.to) === source) errors.push(`${bug.name}: from -> to changes nothing`)
-    for (const keep of bug.keeps) {
-      if (!keep.test(source)) errors.push(`${bug.name}: keeps ${keep} does not match the healthy ${bug.file}`)
-    }
+    for (const keep of missedKeeps(bug.keeps, source)) errors.push(`${bug.name}: keeps ${keep} does not match the healthy ${bug.file}`)
     for (const file of [bug.file, `./${bug.file}`, `/reeval/workspace/${bug.file}`]) {
       for (const e of locationErrors({ file }, bug)) errors.push(`${bug.name}: own file rejected: ${e}`)
     }
