@@ -1,0 +1,45 @@
+$ node_modules/.bin/tsx --test --test-reporter=tap --test-name-pattern '^build-triage:' ~/.verify-build.mts
+exit 1
+--- stdout
+TAP version 13
+# Subtest: build-triage: delegates orders
+ok 1 - build-triage: delegates orders
+  ---
+  duration_ms: 3358.009252
+  type: 'test'
+  ...
+# Subtest: build-triage: delegates refunds
+ok 2 - build-triage: delegates refunds
+  ---
+  duration_ms: 3666.914751
+  type: 'test'
+  ...
+# Subtest: build-triage: resumes by session id
+not ok 3 - build-triage: resumes by session id
+  ---
+  duration_ms: 5016.915336
+  type: 'test'
+  location: '/home/reeval/.verify-build.mts:167:1'
+  failureType: 'testCodeFailure'
+  error: 'the second turn has no status, ETA or tracking code for A-1001: "I can help with that. What is your order ID?"'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    assertKnowsA1001 (/home/reeval/.verify-build.mts:56:10)
+    TestContext.<anonymous> (/home/reeval/.verify-build.mts:173:3)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 2
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 12654.430089
+--- stderr

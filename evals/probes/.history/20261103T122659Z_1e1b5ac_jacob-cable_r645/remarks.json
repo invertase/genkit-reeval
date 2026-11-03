@@ -1,0 +1,42 @@
+{
+  "kind": "reeval-remarks",
+  "schemaVersion": 1,
+  "runId": "20261103T122659Z_1e1b5ac_jacob-cable_r645",
+  "createdAt": "2026-11-03T13:24:00.997Z",
+  "remarks": [
+    {
+      "id": "94be557355659c5e8883fbfab5215d9eab6c4b6f5d3f14e0cd6ce396c91cf3cc",
+      "evalId": "evals%2Fprobes%2Finline-docs%2Finline-docs.eval.ts › inline-docs: build-triage",
+      "kind": "too-few-tries",
+      "severity": "concern",
+      "text": "The tsdoc variant on cursor:composer-2.5 passed 9 of 12 runs and the baseline 6 of 12: better by 25 points, but on too few runs for the difference to hold. 1 more variant is too.",
+      "evidence": [
+        "evals%2Fprobes%2Finline-docs%2Finline-docs.eval.ts › inline-docs: build-triage/cursor:composer-2.5+tsdoc+docker:evals",
+        "evals%2Fprobes%2Finline-docs%2Finline-docs.eval.ts › inline-docs: build-triage/cursor:composer-2.5+stock+docker:evals"
+      ],
+      "fix": {
+        "at": "source:evals/probes/inline-docs/inline-docs.eval.ts",
+        "edit": "set runs: 26, where a difference this size would hold"
+      },
+      "firstSeenRun": "20261103T100703Z_64d83cc_jacob-cable_ej8t",
+      "printed": true
+    },
+    {
+      "id": "5a4d300a4ac7487105dad8c23f463c749c5c7b44e3f28526d80182175204ee76",
+      "evalId": "evals%2Fprobes%2Finline-docs%2Finline-docs.eval.ts › inline-docs: build-triage",
+      "kind": "cant-tell-apart",
+      "severity": "concern",
+      "text": "The tsdoc variant on antigravity:gemini-3.8-flash-medium and the baseline passed every run (12 of 12 and 12 of 12): the task can't tell them apart, since both always pass.",
+      "evidence": [
+        "evals%2Fprobes%2Finline-docs%2Finline-docs.eval.ts › inline-docs: build-triage/antigravity:gemini-3.8-flash-medium+tsdoc+docker:evals",
+        "evals%2Fprobes%2Finline-docs%2Finline-docs.eval.ts › inline-docs: build-triage/antigravity:gemini-3.8-flash-medium+stock+docker:evals"
+      ],
+      "fix": {
+        "at": "source:evals/probes/inline-docs/inline-docs.eval.ts",
+        "edit": "make the task harder, so the baseline can fail"
+      },
+      "firstSeenRun": "20261103T122659Z_1e1b5ac_jacob-cable_r645",
+      "printed": true
+    }
+  ]
+}

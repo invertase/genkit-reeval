@@ -1,0 +1,16 @@
+$ cp -r /opt/support-desk/node_modules .
+exit 0 after 1384ms
+
+$ genkit --non-interactive config set analyticsOptOut true
+exit 0 after 362ms
+Set "analyticsOptOut" to "true".
+
+$ genkit --non-interactive docs:list js >/dev/null
+exit 0 after 559ms
+
+$ node "$HOME/.agents-tsdoc/patch-tsdoc.mjs" node_modules "$HOME/.agents-tsdoc"
+exit 0 after 93ms
+patched @genkit-ai/middleware/lib/agents.d.mts, @genkit-ai/middleware/lib/agents.d.ts, @genkit-ai/ai/lib/agent.d.mts, @genkit-ai/ai/lib/agent.d.ts, genkit/lib/genkit-beta.d.mts, genkit/lib/genkit-beta.d.ts
+
+$ rm -rf "$HOME/.agents-tsdoc"
+exit 0 after 100ms

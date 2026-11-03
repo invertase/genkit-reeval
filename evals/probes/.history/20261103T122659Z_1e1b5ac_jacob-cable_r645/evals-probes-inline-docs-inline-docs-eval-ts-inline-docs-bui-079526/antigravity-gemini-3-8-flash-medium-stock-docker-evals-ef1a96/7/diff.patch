@@ -1,0 +1,36 @@
+diff --git a/src/agents.ts b/src/agents.ts
+index 42df985..61c175a 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -1,4 +1,5 @@
+ import { FileSessionStore, z } from 'genkit/beta';
++import { agents } from '@genkit-ai/middleware';
+ import { ai } from './ai.js';
+ import { createRefund } from './db.js';
+ import { lookupOrder } from './tools.js';
+@@ -51,3 +52,17 @@ export const refundAgent = ai.defineAgent({
+   maxTurns: 6,
+   store,
+ });
++
++/** Front desk triage agent customers talk to first. */
++export const triage = ai.defineAgent({
++  name: 'triage',
++  description: 'Front desk agent customers talk to first. Routes order inquiries and refund requests to specialized agents.',
++  system:
++    'You are the Northwind Supplies front desk agent, the agent customers talk to first. ' +
++    'Hand order questions to orderAgent and refund requests to refundAgent instead of answering them yourself. ' +
++    'Never answer order questions or refund requests directly. ' +
++    'When a customer provides information such as their order ID without asking a question yet, acknowledge it and ask how you can assist them. ' +
++    'When delegating to orderAgent or refundAgent, include all relevant context from the conversation, including the order ID.',
++  use: [agents({ agents: ['orderAgent', 'refundAgent'] })],
++  store,
++});
+diff --git a/src/index.ts b/src/index.ts
+index 6eb2d9f..31fb90c 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1,2 +1,2 @@
+ export { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';
+-export { orderAgent, refundAgent } from './agents.js';
++export { orderAgent, refundAgent, triage } from './agents.js';
