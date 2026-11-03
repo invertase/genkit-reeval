@@ -1,7 +1,7 @@
 {
   "name": "genkit-reeval",
   "version": "1.0.0",
-  "description": "Does Genkit agent tooling help coding agents fix a broken Genkit app? A reeval study.",
+  "description": "Does Genkit's agent tooling help coding agents? A reeval study of Genkit's rules, MCP server, skills, docs and TSDoc.",
   "scripts": {
     "eval": "reeval run",
     "oracle": "reeval run --config reeval.oracle.config.ts",

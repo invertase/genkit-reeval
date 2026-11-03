@@ -58,7 +58,7 @@ pnpm probe:oracle                            # expect 22 passed
 pnpm probe:canary                            # expect "canary-check: all 22 cells failed as they must"
 pnpm probe --profile smoke                   # Claude Code Sonnet only: 77 cells
 pnpm probe                                   # all five harnesses: 385 cells
-pnpm probe --profile agents-tsdoc            # inline-docs only, Claude Code Haiku, 12 attempts a side: 24 attempts
+pnpm probe --profile agents-tsdoc            # inline-docs only, all five harnesses, 12 attempts a side: 120 attempts
 pnpm probe evals/probes/docs/                # one suite, by path: a bare `docs` also matches `*-docsite` cells
 pnpm -s tsx scripts/docs-audit.ts            # rewrites DOCS-AUDIT.md; no agent, no Docker
 pnpm -s tsx scripts/llms-url-test.ts         # rewrites LLMS-URLS.md; exit 1 when a URL form llms.txt documents fails, 2 when only network errors remain

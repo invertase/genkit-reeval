@@ -1,6 +1,6 @@
 # What building this study taught us about Genkit's agent tooling
 
-We wrote this before any real run. Each item says how we established it:
+We started this before any real run and added to it as runs came in. Each item says how we established it:
 
 - **from source**: read in the pinned packages (`genkit` 1.42.0, `@genkit-ai/middleware` 0.10.0, `genkit-cli` 1.44.1) or in the docs.
 - **scripted model**: seen when the app ran with a scripted or test model, not with an agent.
@@ -58,7 +58,7 @@ So the `rules` and `mcp` arms are told not to run `genkit flow:run` and to lean 
 ## 2. Agents API
 
 - **MCP and `flow:run` cannot reach agents** (from source). `run_flow`, `list_flows` and `genkit flow:run` address `/flow/<name>` actions only. An agent is a `/agent/<name>` action, so this app wraps one agent turn in a flow (`tryTriage`, `tryRefundDesk`), as the skill's own `agents.md` advises.
-- **`agents()` cannot carry a sub-agent's approval interrupt back to the caller** (scripted model, `evals/repro/sub-agent-interrupt.mts`). `refundAgent` called directly stops with `finishReason: 'interrupted'` and the `approveRefund` interrupt. The same request through `triage` with `agents({ agents: ['refundAgent'] })` ends with `finishReason: 'unknown'`, no interrupts and no refund: the middleware turns the sub-agent's interrupt into the tool response "Sub-agent 'refundAgent' interrupted for additional input and could not complete the task. Interactive sub-agent interrupts are not currently supported; try delegating a more self-contained task." (`@genkit-ai/middleware` 0.10.0, `lib/agents.js:178`; its README calls stateful sub-agent interrupts "a future feature"). The caller has nothing to resume, so approval through delegation, the obvious multi-agent shape for a support desk, is not possible with the shipped packages. The app's own healthy `triage` has this shape: a refund asked for at the front desk can never complete. It also blocks an approval round-trip build task for this study, since no idiomatic solution can pass the check. Run the repro with `ln -s ../app/node_modules evals/repro/node_modules && evals/app/node_modules/.bin/tsx evals/repro/sub-agent-interrupt.mts`.
+- **`agents()` cannot carry a sub-agent's approval interrupt back to the caller** (scripted model, `evals/repro/sub-agent-interrupt.mts`). `refundAgent` called directly stops with `finishReason: 'interrupted'` and the `approveRefund` interrupt. The same request through `triage` with `agents({ agents: ['refundAgent'] })` ends with `finishReason: 'unknown'`, no interrupts and no refund: the middleware turns the sub-agent's interrupt into the tool response "Sub-agent 'refundAgent' interrupted for additional input and could not complete the task. Interactive sub-agent interrupts are not currently supported; try delegating a more self-contained task." (`@genkit-ai/middleware` 0.10.0, `lib/agents.js:178`; its README calls stateful sub-agent interrupts "a future feature"). The caller has nothing to resume, so approval through delegation, the obvious multi-agent shape for a support desk, is not possible with the shipped packages. The app's own healthy `triage` has this shape: a refund asked for at the front desk can never complete. It also blocks an approval round-trip build task for this study, since no idiomatic solution can pass the check. Run the repro with `evals/app/node_modules/.bin/tsx evals/repro/sub-agent-interrupt.mts` (`evals/repro/node_modules` links to the app's).
 - **A healthy interrupt looks like an error in a trace** (scripted model). The interrupt's tool span has `status.code: 2` and `isFailureSource: true` with an empty message, while the agent's `finishReason` is `interrupted`. An agent that reads the trace can take a working approval step for the bug.
 - **`trace:get --format json` truncates when piped** (scripted model). Piped output stops at 64 KB. Agent turns produce large traces, so an agent that pipes the trace into `jq` gets invalid JSON.
 - **One condition has two names** (scripted model). Exceeding `maxTurns` throws `AgentError` `ABORTED` ("Exceeded maximum tool call iterations") from `chat.send`, but the flow output shows `finishReason: 'failed'` plus `error`. A search for either name misses the other.
@@ -113,7 +113,7 @@ The skill is fetched with `skill.git('github:genkit-ai/skills', { ref, path: 'sk
 
 ## 6. What building the probes taught us
 
-We found these while we built the smoke probes in `evals/probes/` (2026-11-02), before any real agent ran them. "Live" here means fetched from the web or run by hand in the sandbox image, not seen in an agent run. [`DOCS-AUDIT.md`](DOCS-AUDIT.md) has the fetched evidence for the docs items.
+We found these while we built and smoked the probes in `evals/probes/` (2026-11-02). "Live" here means fetched from the web or run by hand in the sandbox image; items seen in an agent run say "in the probe smoke". [`DOCS-AUDIT.md`](DOCS-AUDIT.md) has the fetched evidence for the docs items.
 
 ### Docs and rules files
 
@@ -143,6 +143,27 @@ We found these while we built the smoke probes in `evals/probes/` (2026-11-02), 
 - **The Go module path does not match the repository** (live). The repository moved to `github.com/genkit-ai/genkit`, but the module is still `github.com/firebase/genkit/go`. The proxy serves `github.com/genkit-ai/genkit/go`, but `go get` on it fails with "module declares its path as: github.com/firebase/genkit/go". The docs and the Go skill use the correct path. The risk is an agent that guesses the path from the repository URL.
 - **The Go agents API panics without `genkit.WithExperimental()`** (from source, v1.14.0). The `genkit/exp` constructors panic unless `genkit.Init` gets that option.
 
-## 7. Results
+## 7. Inline docs: TSDoc on agents
 
-To fill after the runs: which advice the agents followed, what each channel cost or saved, and which of the items above cost the arms time.
+Agents without a docs link read `.d.ts` files, not genkit.dev (section 2). The `inline-docs` probe ([`evals/probes/inline-docs/`](evals/probes/inline-docs/)) reruns the study's `build-triage` task with one variable: setup rewrites only doc comments in `node_modules`, and `tsc` still passes. The patched `AgentConfig` (`@genkit-ai/ai`) and beta `defineAgent` (`genkit`) docs say: "For agent hand-off, handoff, delegation, sub-agents, or routing between agents, add `agents()` from `@genkit-ai/middleware` to `use`. Genkit has no separate handoff API." The `agents()` docs in `@genkit-ai/middleware` get the same words and each option's default. The texts are in [`evals/probes/inline-docs/tsdoc/`](evals/probes/inline-docs/tsdoc/).
+
+- **A patch only in `@genkit-ai/middleware` is never seen** (live). The first run patched only the `agents()` docs: 0 of 12 patched Haiku runs opened that package (stock 1 of 12 used `agents()`, patched 0 of 12). The pointer has to sit where agents search, on `defineAgent` and `AgentConfig`.
+- **With the pointer there, the Claude models switch to `agents()` and no model does worse** (live). 12 attempts a side, stock against patched:
+
+| Agent | uses `agents()` | passes every check | median tokens | median tool calls |
+|---|---|---|---|---|
+| Claude Code, Haiku 5.5 | 2 -> 12 | 2 -> 8 | 508k -> 490k | 10 -> 10.5 |
+| Claude Code, Sonnet 5 | 4 -> 11 | 4 -> 10 | 1.48M -> 611k | 29.5 -> 14 |
+| Codex `gpt-5.6-luna` | 12 -> 12 | 9 -> 10 | 235k -> 188k | 8 -> 7 |
+| Cursor `composer-2.5` | 12 -> 12 | 6 -> 9 | 468k -> 352k | 35 -> 26 |
+| Antigravity `gemini-3.8-flash-medium` | 12 -> 12 | 12 -> 12 | 10.7M -> 10.0M | 105 -> 105 |
+
+- **Sonnet's token drop is not noise** (live). Per-run totals are 651k-1.83M stock against 407k-1.73M patched; a Mann-Whitney test gives p = 0.003 (patched lower in 123 of 144 pairs). Almost all of it is cache reads.
+- **Why the Claude models start low** (live). Claude Code rarely opens `@genkit-ai/middleware` on its own (3 or 4 of 12 runs). Codex, Cursor and Antigravity follow `package.json` into the middleware README in 12 of 12, so they find `agents()` either way.
+- **`resumes by session id` fails wherever agents use `agents()`** (live), in both arms and on every agent except Antigravity, so it is not caused by the TSDoc. The transcripts are recorded and not yet read.
+
+Runs: Haiku `20261103T101954Z_5623df0_jacob-cable_d0bb`, Sonnet `20261103T102848Z_d8879dc_jacob-cable_yvpa`, Codex, Cursor and Antigravity `20261103T122659Z_1e1b5ac_jacob-cable_r645`, the middleware-only first run `20261103T100703Z_64d83cc_jacob-cable_ej8t`, all in [`evals/probes/.history/`](evals/probes/.history/). Twelve a side shows direction and the large effects; the Codex and Cursor pass-rate gains are within noise at this size.
+
+## 8. Results
+
+To fill after the full study run: which advice the agents followed, what each channel cost or saved, and which of the items above cost the arms time.

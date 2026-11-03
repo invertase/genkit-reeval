@@ -1,16 +1,18 @@
 # Genkit agent tooling study
 
-Does Genkit's agent tooling help a coding agent? We put real agents on a Genkit app under four conditions: no help, `GENKIT.md` as project rules, the rules plus the `genkit mcp` server, and the `developing-genkit-js` skill. Ten smoke runs are in this repo; the full run of 2375 attempts has not happened yet. The smokes already say three things.
+Does Genkit's agent tooling help a coding agent? We put real agents (Claude Code, Codex, Cursor, Antigravity) on Genkit work in Docker sandboxes and compare what they are given: nothing, `GENKIT.md` as project rules, the rules plus the `genkit mcp` server, and the `developing-genkit-js` skill. Smoke probes extend this to the docs site, Go and Python, the CLI, and the TSDoc in `node_modules`. Every run cited here is recorded in this repo with its transcripts. The full study run of 2375 attempts has not happened yet.
 
-## Three things to act on
+## Four things to act on
 
-1. **`GENKIT.md` makes the agent cheaper, not better.** It fixes every bug the control fixes, at under half the tokens, by reading source instead of running the app. Its root-cause evidence is weaker. If the goal is a cheaper fix, ship the rules. If the goal is an agent that verifies, the rules push the wrong way. ([Sonnet, one bug, four conditions](evals/.history/20261020T124201Z_7589241_jacob-cable_bcx7/summary.md))
+1. **One TSDoc pointer makes agents use `agents()` for hand-off.** Agents without a docs link read `.d.ts` files, not genkit.dev, and `AgentConfig` never mentions delegation. We added one pointer to the `AgentConfig` and beta `defineAgent` doc comments: "For agent hand-off, handoff, delegation, sub-agents, or routing between agents, add `agents()` from `@genkit-ai/middleware` to `use`." Over 12 attempts a side, stock against patched, Claude Code went from 2 to 12 (Haiku) and 4 to 11 (Sonnet) runs that used `agents()`. Sonnet's median tokens fell from 1.48M to 611k. Codex, Cursor and Antigravity already found `agents()` every time, and no model did worse. ([table in FINDINGS](FINDINGS.md#7-inline-docs-tsdoc-on-agents), [suite](evals/probes/inline-docs/))
 
-2. **One docs page changes what the agent builds. Nothing today gets the agent to that page.** The arm that read `js/agents/multi-agent.md` used the `agents()` middleware; the rest grepped `node_modules` for "handoff" and hand-rolled delegation. `search_genkit_docs` and `genkit docs:search` both crash in 1.44.1 with `(doc.description || "").toLowerCase is not a function`, and `list_genkit_docs` is too large to read. Fix `searchDocs` and the server starts to pay for itself. ([Sonnet build](evals/.history/20261020T132814Z_c5f4f2b_jacob-cable_ffh4/summary.md), [Haiku build](evals/.history/20261020T135301Z_8d2bef2_jacob-cable_w1kj/summary.md), [search crash](evals/.history/20261020T130047Z_2a95bf1_jacob-cable_8wte/summary.md))
+2. **`GENKIT.md` makes the agent cheaper, not better.** It fixes every bug the control fixes, at under half the tokens, by reading source instead of running the app. Its root-cause evidence is weaker. If the goal is a cheaper fix, ship the rules. If the goal is an agent that verifies, the rules push the wrong way. ([Sonnet, one bug, four conditions](evals/.history/20261020T124201Z_7589241_jacob-cable_bcx7/summary.md))
 
-3. **The MCP server is installed but not used.** Claude Code hides its ten tools behind a tool search the model rarely runs, Antigravity used it on one bug in twelve, and `restart_runtime` kills it for the rest of the session with `invalid character '>' looking for beginning of value`. Meanwhile the rules forbid `genkit` commands and the skill prescribes them. Pick one story and make the server cheap to discover. ([probe](evals/.history/20261020T125134Z_7589241_jacob-cable_pcyg/summary.md), [Antigravity, 12 bugs](evals/.history/20261020T131412Z_2a95bf1_jacob-cable_sgps/summary.md))
+3. **One docs page changes what the agent builds. Nothing today gets the agent to that page.** The arm that read `js/agents/multi-agent.md` used the `agents()` middleware; the rest grepped `node_modules` for "handoff" and hand-rolled delegation. `search_genkit_docs` and `genkit docs:search` both crash in 1.44.1 with `(doc.description || "").toLowerCase is not a function`, and `list_genkit_docs` is too large to read. Fix `searchDocs` and the server starts to pay for itself. ([Sonnet build](evals/.history/20261020T132814Z_c5f4f2b_jacob-cable_ffh4/summary.md), [Haiku build](evals/.history/20261020T135301Z_8d2bef2_jacob-cable_w1kj/summary.md), [search crash](evals/.history/20261020T130047Z_2a95bf1_jacob-cable_8wte/summary.md))
 
-Every linked run holds the transcripts. [`FINDINGS.md`](FINDINGS.md) has the evidence in full, including the two things we knew before any run: `GENKIT.md` as the CLI writes it differs from the website copy, and it tells the agent not to run `genkit` commands while the skill tells it to run `genkit flow:run` and `genkit trace:get`.
+4. **The MCP server is installed but not used.** Claude Code hides its ten tools behind a tool search the model rarely runs, Antigravity used it on one bug in twelve, and `restart_runtime` kills it for the rest of the session with `invalid character '>' looking for beginning of value`. Meanwhile the rules forbid `genkit` commands and the skill prescribes them. Pick one story and make the server cheap to discover. ([probe](evals/.history/20261020T125134Z_7589241_jacob-cable_pcyg/summary.md), [Antigravity, 12 bugs](evals/.history/20261020T131412Z_2a95bf1_jacob-cable_sgps/summary.md))
+
+Every linked run holds the transcripts. [`FINDINGS.md`](FINDINGS.md) has the evidence in full: conflicting advice between `GENKIT.md` and the skill, agents-API gaps, MCP server and CLI bugs with repro scripts in [`evals/repro/`](evals/repro/), and docs-site problems backed by [`DOCS-AUDIT.md`](DOCS-AUDIT.md) and [`LLMS-URLS.md`](LLMS-URLS.md).
 
 ## See it yourself
 
@@ -18,7 +20,8 @@ The recorded runs are in this repo, so this needs no API key and no Docker:
 
 ```bash
 pnpm install
-pnpm reeval studio --open
+pnpm reeval studio --open                                  # the study, evals/.history/
+pnpm reeval studio --config reeval.probes.config.ts --open # the probes, evals/probes/.history/
 ```
 
 That opens reeval's studio over `evals/.history/`: every run, each cell's pass rate, lift and effort, the pairwise votes, and every attempt's transcript, diff, checks and judge input. `pnpm reeval show <run>` prints a run in the terminal; `pnpm reeval query lift` and friends answer SQL over all of them.
@@ -65,17 +68,18 @@ Scale: 19 cases x 5 arms x 5 agents (Claude Code on Sonnet 5 and on Haiku 5.5, A
 - Proves the checks before any agent runs: `pnpm oracle` applies the known fix and must pass 19/19, `pnpm canary` leaves the bug or writes a plausible wrong build and must fail 19/19.
 - Records runs into `evals/.history/` as files you commit, and serves them in the studio or as a static site.
 
-## Results
+## Probes
 
-The full run has not happened yet. Each cell holds `rules / mcp / skill`. `x` is the arm's median over the `control` median.
+[`evals/probes/`](evals/probes/) holds smoke probes outside the study, with their own configs (`reeval.probes.config.ts`), one attempt per cell unless a profile says otherwise:
 
-| Harness | Fix rate (control / rules / mcp / skill) | Build rate (control / rules / mcp / skill) | Tokens x | Time x | Tools x | Adoption |
-|---|---|---|---|---|---|---|
-| claude-code (sonnet 5) |  |  |  |  |  |  |
-| claude-code (haiku 5.5) |  |  |  |  |  |  |
-| antigravity |  |  |  |  |  |  |
-| cursor |  |  |  |  |  |  |
-| codex |  |  |  |  |  |  |
+| Suite | Question |
+|---|---|
+| [`docs`](evals/probes/docs/) | From an empty or seeded JS project, does the docs channel (open web, genkit.dev only, `llms.txt` first, a page index, or the hosted `GENKIT.js.md`) lead the agent to the current API? |
+| [`agents`](evals/probes/agents/) | Can the agent build with the Go and Python agents APIs, with and without the language skill? |
+| [`tooling`](evals/probes/tooling/) | CLI, MCP server and Dev UI plumbing on the fixture app: upgrades, `eval:flow`, two runtimes, a blocked genkit.dev. |
+| [`inline-docs`](evals/probes/inline-docs/) | Does a TSDoc pointer in `node_modules` change what the agent builds? 12 attempts a side on all five agents. |
+
+Findings are in [`FINDINGS.md`](FINDINGS.md) sections 6 and 7. The study results table fills from [`queries/`](queries/) after the full run; [`RUNBOOK.md`](RUNBOOK.md) says how.
 
 ## Run it yourself
 
