@@ -75,6 +75,33 @@ Scale: 19 cases x 5 arms x 5 agents (Claude Code on Sonnet 5 and on Haiku 5.5, A
 
 Findings are in [`FINDINGS.md`](docs/FINDINGS.md) sections 6 and 7. The study results table fills from [`queries/`](queries) after the full run; [`RUNBOOK.md`](docs/RUNBOOK.md) says how.
 
+## How this uses reeval
+
+To learn reeval from this repo, read the study files first, starting with [`evals/genkit.eval.ts`](evals/genkit.eval.ts). The probes are the more advanced, project-specific part.
+
+| reeval feature | Where |
+|---|---|
+| `defineConfig` with the harnesses, a Docker sandbox and named profiles | [`reeval.config.ts:23`](reeval.config.ts#L23), harnesses [L9](reeval.config.ts#L9), sandbox [L6](reeval.config.ts#L6), profiles [L30](reeval.config.ts#L30) |
+| `defineEnvironment` for the control arm | [`evals/environments.ts:10`](evals/environments.ts#L10) |
+| `secret.fromEnv` with `hosts`: the key reaches only the Gemini API | [`evals/environments.ts:13`](evals/environments.ts#L13) |
+| `extendEnvironment` chain: `control` to `rules` to `mcp` to `directed` | [`evals/environments.ts:24`](evals/environments.ts#L24), [L29](evals/environments.ts#L29), [L40](evals/environments.ts#L40) |
+| `mcp.stdio` for the `genkit mcp` server | [`evals/environments.ts:31`](evals/environments.ts#L31) |
+| `skill.git` for a skill pinned to a commit | [`evals/environments.ts:47`](evals/environments.ts#L47) |
+| `evaluate.each` over a case list | [`evals/genkit.eval.ts:33`](evals/genkit.eval.ts#L33), [`evals/build.eval.ts:26`](evals/build.eval.ts#L26) |
+| `compare: { baseline, variants, gate }` | [`evals/genkit.eval.ts:37`](evals/genkit.eval.ts#L37), [`evals/build.eval.ts:29`](evals/build.eval.ts#L29) |
+| Pairwise `questions` with `across: 'environment'` | [`evals/genkit.eval.ts:43`](evals/genkit.eval.ts#L43), [`evals/build.eval.ts:34`](evals/build.eval.ts#L34) |
+| `c.writeFile` to seed the workspace | [`evals/genkit.eval.ts:58`](evals/genkit.eval.ts#L58) |
+| `c.send` for one agent turn | [`evals/genkit.eval.ts:61`](evals/genkit.eval.ts#L61) |
+| `expect(c).not.toHaveChanged` | [`evals/genkit.eval.ts:65`](evals/genkit.eval.ts#L65) |
+| `expect(c.exec(...)).toSucceed()` for a hidden test | [`evals/genkit.eval.ts:73`](evals/genkit.eval.ts#L73) |
+| `c.judge` with `on` and its inputs (`transcript`, `diff`), recorded but not asserted | [`evals/genkit.eval.ts:79`](evals/genkit.eval.ts#L79) |
+| Oracle and canary: `fakeHarness` applies the fix or a cheat, `fakeJudge` needs no key | [`reeval.oracle.config.ts:23`](reeval.oracle.config.ts#L23), [L34](reeval.oracle.config.ts#L34), [L38](reeval.oracle.config.ts#L38) |
+| Egress policies built on `DEFAULT_EGRESS_ALLOW` | [`evals/probes/environments.ts:4`](evals/probes/environments.ts#L4), [L40](evals/probes/environments.ts#L40) |
+| `c.serve` to start a server before the agent | [`evals/probes/tooling/tooling.eval.ts:117`](evals/probes/tooling/tooling.eval.ts#L117) |
+| `c.observe` for recorded values that are not checks | [`evals/probes/tooling/tooling.eval.ts:54`](evals/probes/tooling/tooling.eval.ts#L54) |
+| `ExecRetry` for a check that calls a flaky provider | [`evals/probes/tooling/tooling.eval.ts:32`](evals/probes/tooling/tooling.eval.ts#L32) |
+| `reeval studio`, `reeval show` and `reeval query` over the recorded runs | [See it yourself](#see-it-yourself) |
+
 ## Run it yourself
 
 Needs Docker and keys for the agents and for Gemini. The sandbox images are not published: `pnpm reeval image build` builds them from [`evals/Dockerfile`](evals/Dockerfile) and [`evals/probes/images/`](evals/probes/images), with the Genkit packages pinned as [`FINDINGS.md`](docs/FINDINGS.md) section 5 lists.
