@@ -11,6 +11,7 @@ import { controlClaude, directedOffline, mcpOffline, mcpWrongRoot, skillClaude }
 import { admitsDocsFailed, cwdErrors, evalMetricErrors, evalRunErrors, expandMcpJson, genkitServers, type RanCall, registrationErrors, replyErrors, rootErrors } from './gates.ts'
 import { genkitMcp, observeClaudeSetup, observeTooling } from './observe.ts'
 
+// A one-case `evaluate.each` hashes the probe into the cell's `sources` fingerprint; a plain `evaluate` would not.
 const only = (...names: string[]): Probe[] => PROBES.filter((p) => names.includes(p.name))
 const read = (url: string) => fs.readFileSync(new URL(url, import.meta.url), 'utf8')
 

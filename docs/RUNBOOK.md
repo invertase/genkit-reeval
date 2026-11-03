@@ -66,7 +66,7 @@ pnpm -s tsx scripts/fetch-recheck.ts [<run>]  # per arm and harness: fetches, 40
 pnpm reeval record --config reeval.probes.config.ts <run>  # copy a probe run into evals/probes/.history/, apart from the study's evals/.history/
 ```
 
-The Go and Python probes build `evals/probes/images/{go,python}.Dockerfile` the first time they run. Several hidden checks call real Gemini, so the oracle needs `GOOGLE_GENERATIVE_AI_API_KEY`. `pnpm -s tsx evals/probes/registry.ts`, `evals/probes/docs/checks.ts`, `evals/probes/tooling/gates.ts`, `evals/probes/agents/imports.ts`, `evals/probes/agents/skills-gate.ts`, `evals/probes/inline-docs/checks.ts`, `evals/probes/inline-docs/environments.ts` and `evals/probes/transcript.ts` are self-checks: each prints `OK` or a pass count.
+The Go and Python probes build `evals/probes/images/{go,python}.Dockerfile` the first time they run. Several hidden checks call real Gemini, so the oracle needs `GOOGLE_GENERATIVE_AI_API_KEY`. `pnpm -s tsx evals/probes/registry.check.ts`, `evals/probes/docs/checks.ts`, `evals/probes/tooling/gates.ts`, `evals/probes/agents/imports.ts`, `evals/probes/agents/skills-gate.ts`, `evals/probes/inline-docs/checks.ts`, `evals/probes/inline-docs/environments.ts` and `evals/probes/transcript.check.ts` are self-checks: each prints `OK` or a pass count.
 
 ## Smoke
 
