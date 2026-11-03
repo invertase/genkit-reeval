@@ -1,0 +1,11 @@
+/**
+ * Configuration for `defineAgent`, which combines prompt definition and agent
+ * registration into a single call.
+ *
+ * Middleware goes in `use`, which this interface inherits from the prompt
+ * config. For agent hand-off, handoff, delegation, sub-agents, or routing
+ * between agents, add `agents()` from `@genkit-ai/middleware` to `use`.
+ * Genkit has no separate handoff API.
+ *
+ * @see {@link https://genkit.dev/docs/js/agents/multi-agent/ | Multi-agent delegation}
+ */

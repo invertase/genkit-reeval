@@ -6,26 +6,24 @@ import { fileURLToPath } from 'node:url'
 import { control } from '../../environments.ts'
 import { PROBES, TASK } from './cases.ts'
 
-const MIDDLEWARE = 'node_modules/@genkit-ai/middleware'
-
 /** The study's `control` arm as it is: the support-desk app with its pinned packages, no rules, skill, MCP server or docs link. */
 export const stock = control.extendEnvironment('stock', {})
 
+const PATCHED_PACKAGES = ['@genkit-ai/middleware', '@genkit-ai/ai', 'genkit']
+
+const DOCS = ['agents.txt', 'agents-options.txt', 'agent-config.txt', 'define-agent.txt']
+
 /**
- * `stock` with only the doc comments on `agents` and `AgentsOptions` in `@genkit-ai/middleware`'s
- * declaration files replaced by `tsdoc/agents.txt` and `tsdoc/agents-options.txt`. The setup fails the
- * attempt unless the files change in doc comments only, and removes the patch tooling before the agent starts.
+ * `stock` with only doc comments replaced by the files under `tsdoc/`: `agents` and `AgentsOptions` in
+ * `@genkit-ai/middleware`, `AgentConfig` in `@genkit-ai/ai`, and the beta `defineAgent` in `genkit`. The setup
+ * fails the attempt unless the files change in doc comments only, and removes the patch tooling before the agent starts.
  */
 export const tsdoc = stock.extendEnvironment('tsdoc', ({ file }) => ({
   files: {
     '~/.agents-tsdoc/patch-tsdoc.mjs': file('./sandbox/patch-tsdoc.mjs'),
-    '~/.agents-tsdoc/agents.txt': file('./tsdoc/agents.txt'),
-    '~/.agents-tsdoc/agents-options.txt': file('./tsdoc/agents-options.txt'),
+    ...Object.fromEntries(DOCS.map((doc) => [`~/.agents-tsdoc/${doc}`, file(`./tsdoc/${doc}`)])),
   },
-  setup: [
-    `node "$HOME/.agents-tsdoc/patch-tsdoc.mjs" ${MIDDLEWARE} "$HOME/.agents-tsdoc/agents.txt" "$HOME/.agents-tsdoc/agents-options.txt"`,
-    'rm -rf "$HOME/.agents-tsdoc"',
-  ],
+  setup: ['node "$HOME/.agents-tsdoc/patch-tsdoc.mjs" node_modules "$HOME/.agents-tsdoc"', 'rm -rf "$HOME/.agents-tsdoc"'],
 }))
 
 /** The words agents grep `node_modules` for when they look for delegation; the patched doc must contain each. */
@@ -51,14 +49,15 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       return dir
     }
     mkdirSync(path.join(dir, 'node_modules/@genkit-ai'), { recursive: true })
-    for (const e of readdirSync(modules)) if (e !== '@genkit-ai') symlinkSync(path.join(modules, e), path.join(dir, 'node_modules', e))
+    for (const e of readdirSync(modules)) if (e !== '@genkit-ai' && !PATCHED_PACKAGES.includes(e)) symlinkSync(path.join(modules, e), path.join(dir, 'node_modules', e))
     for (const e of readdirSync(path.join(modules, '@genkit-ai'))) {
       const from = path.join(modules, '@genkit-ai', e)
       const to = path.join(dir, 'node_modules/@genkit-ai', e)
-      if (e === 'middleware') cpSync(from, to, { recursive: true })
+      if (PATCHED_PACKAGES.includes(`@genkit-ai/${e}`)) cpSync(from, to, { recursive: true })
       else symlinkSync(from, to)
     }
-    execFileSync('node', [here('./sandbox/patch-tsdoc.mjs'), path.join(dir, MIDDLEWARE), here('./tsdoc/agents.txt'), here('./tsdoc/agents-options.txt')], { stdio: 'pipe' })
+    cpSync(path.join(modules, 'genkit'), path.join(dir, 'node_modules/genkit'), { recursive: true })
+    execFileSync('node', [here('./sandbox/patch-tsdoc.mjs'), path.join(dir, 'node_modules'), here('./tsdoc')], { stdio: 'pipe' })
     return dir
   }
   const typecheck = (what: string, dir: string) => {
@@ -71,15 +70,22 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   try {
     const start = Object.fromEntries(Object.entries(TASK.start).flatMap(([file, text]) => (text === null ? [] : [[file, text]])))
     const dir = appWith(start, true)
-    const stockLib = path.join(app, MIDDLEWARE, 'lib')
-    const patchedLib = path.join(dir, MIDDLEWARE, 'lib')
-    const files = readdirSync(stockLib, { recursive: true, withFileTypes: true }).filter((e) => e.isFile()).map((e) => path.relative(stockLib, path.join(e.parentPath, e.name)))
-    const changed = files.filter((f) => readFileSync(path.join(stockLib, f), 'utf8') !== readFileSync(path.join(patchedLib, f), 'utf8'))
-    if (changed.sort().join() !== 'agents.d.mts,agents.d.ts') errors.push(`the patch changed ${JSON.stringify(changed)}, not agents.d.ts and agents.d.mts`)
-    for (const f of changed) {
-      const text = readFileSync(path.join(patchedLib, f), 'utf8')
+    const lib = (root: string, pkg: string) => path.join(root, 'node_modules', pkg, 'lib')
+    const listed = (root: string, pkg: string) =>
+      readdirSync(lib(root, pkg), { recursive: true, withFileTypes: true }).filter((e) => e.isFile()).map((e) => path.relative(lib(root, pkg), path.join(e.parentPath, e.name)))
+    const changed = PATCHED_PACKAGES.flatMap((pkg) =>
+      listed(app, pkg).filter((f) => readFileSync(path.join(lib(app, pkg), f), 'utf8') !== readFileSync(path.join(lib(dir, pkg), f), 'utf8')).map((f) => `${pkg}/${f}`),
+    )
+    const want = ['@genkit-ai/middleware/agents.d.mts', '@genkit-ai/middleware/agents.d.ts', '@genkit-ai/ai/agent.d.mts', '@genkit-ai/ai/agent.d.ts', 'genkit/genkit-beta.d.mts', 'genkit/genkit-beta.d.ts']
+    if (changed.sort().join() !== [...want].sort().join()) errors.push(`the patch changed ${JSON.stringify(changed)}, not ${JSON.stringify(want)}`)
+    for (const f of changed.filter((f) => f.startsWith('@genkit-ai/middleware/'))) {
+      const text = readFileSync(path.join(dir, 'node_modules', f.replace(/^(@genkit-ai\/[^/]+|genkit)\//, '$1/lib/')), 'utf8')
       for (const word of SEARCH_WORDS) if (!text.toLowerCase().includes(word)) errors.push(`${f}: a grep for ${word} misses the patched doc`)
+    }
+    for (const f of changed) {
+      const text = readFileSync(path.join(dir, 'node_modules', f.replace(/^(@genkit-ai\/[^/]+|genkit)\//, '$1/lib/')), 'utf8')
       if (!text.includes('@see {@link https://genkit.dev/docs/js/agents/multi-agent/')) errors.push(`${f}: no @see link to the multi-agent page`)
+      if (!/`agents\(\)`[\s*]+from `@genkit-ai\/middleware`/.test(text) && !f.includes('/middleware/')) errors.push(`${f}: no pointer to agents() from @genkit-ai/middleware`)
     }
     typecheck('the start state with the patched declarations', dir)
     const [probe] = PROBES

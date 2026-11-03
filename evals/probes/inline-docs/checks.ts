@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import type { AttemptContext } from 'reeval'
 import { buildWorkspace, callsExport, type Workspace } from '../docs/checks.ts'
-import { observeGenkitCommands, observeWeb, printedIn } from '../transcript.ts'
+import { observeGenkitCommands, observeWeb, printedIn, squash } from '../transcript.ts'
 
 /** True when the project imports `agents` from `@genkit-ai/middleware` (any alias or `* as X`) and calls it. */
 export const usesAgentsMiddleware = (ws: Workspace): boolean => callsExport(ws.code, '@genkit-ai/middleware', 'agents')
@@ -122,11 +122,20 @@ export const declarationPaths = (calls: ToolCall[]): string[] => [...new Set(cal
 const here = (file: string) => readFileSync(new URL(file, import.meta.url), 'utf8')
 const NEW_WORDS = /hand-?off|subagent|multi-agent|transfer|router|genkit\.dev/i
 
-/** The lines of the patched doc comments that name what the stock ones do not: seeing one in a tool's output means the agent saw the patched doc. */
-export const PATCHED_LINES = [here('./tsdoc/agents.txt'), here('./tsdoc/agents-options.txt')]
-  .flatMap((doc) => doc.split('\n'))
-  .map((line) => line.replace(/^\s*\*\s?/, '').trim())
-  .filter((line) => NEW_WORDS.test(line))
+const patchedLines = (...files: string[]): string[] =>
+  files
+    .flatMap((file) => here(`./tsdoc/${file}`).split('\n'))
+    .map((line) => line.replace(/^\s*\*\s?/, '').trim())
+    .filter((line) => NEW_WORDS.test(line))
+
+const MIDDLEWARE_LINES = patchedLines('agents.txt', 'agents-options.txt')
+const OTHER_DOC_LINES = new Set([...MIDDLEWARE_LINES, ...patchedLines('define-agent.txt')].map(squash))
+
+/** The lines only the patched `AgentConfig` doc in `@genkit-ai/ai` has, not repeated in the other patched docs. */
+export const CONFIG_DOC_LINES = patchedLines('agent-config.txt').filter((line) => !OTHER_DOC_LINES.has(squash(line)))
+
+/** Every line of every patched doc comment that names what the stock ones do not: seeing one in a tool's output means the agent saw patched docs. */
+export const PATCHED_LINES = [...new Set([...MIDDLEWARE_LINES, ...patchedLines('agent-config.txt'), ...patchedLines('define-agent.txt')])]
 
 /** `c`'s tool calls with their inputs and the text each returned. */
 const toolCalls = (c: AttemptContext): ToolCall[] =>
@@ -138,7 +147,8 @@ const GENKIT_DEV = /https?:\/\/(?:[\w-]+\.)*genkit\.dev\S*/g
 /**
  * Records how the agent searched: `searched-dts-files` (the declaration files and globs its tool calls named),
  * `search-terms` (what it grepped for), `read-agents-declaration` (a tool returned the `agents` declaration),
- * `saw-patched-tsdoc` (a tool returned a line only the patched doc has; always false in `stock`),
+ * `saw-patched-tsdoc` (a tool returned a line only a patched doc has, in any of the patched files; always false in `stock`),
+ * `read-agent-config-doc` (a tool returned a line only the patched `AgentConfig` doc has; always false in `stock`),
  * `genkit-dev-urls` (genkit.dev pages it fetched or curled), the web activity and the Genkit commands it ran.
  */
 export function observeSearch(c: AttemptContext): void {
@@ -147,6 +157,7 @@ export function observeSearch(c: AttemptContext): void {
   c.observe('search-terms', searchTerms(calls).slice(0, 40))
   c.observe('read-agents-declaration', calls.some((call) => call.output.includes(AGENTS_DECLARATION)))
   c.observe('saw-patched-tsdoc', calls.some((call) => PATCHED_LINES.some((line) => printedIn(line, call.output))))
+  c.observe('read-agent-config-doc', calls.some((call) => CONFIG_DOC_LINES.some((line) => printedIn(line, call.output))))
   const fetched = c.turns.flatMap((t) => t.transcript.flatMap((e) => (e.type === 'web-fetch' && /genkit\.dev/.test(e.url) ? [e.url] : [])))
   const curled = calls.flatMap((call) => (isShellTool(call.tool) ? (field(call.input, 'command') ?? '').match(GENKIT_DEV) ?? [] : []))
   c.observe('genkit-dev-urls', [...new Set([...fetched, ...curled])].slice(0, 20))
@@ -203,19 +214,31 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   if (JSON.stringify(paths) !== JSON.stringify(wantPaths)) errors.push(`declarationPaths: ${JSON.stringify(paths)}, should be ${JSON.stringify(wantPaths)}`)
 
   if (PATCHED_LINES.length < 3) errors.push(`only ${PATCHED_LINES.length} patched doc lines to recognise`)
-  const stock = (() => {
+  if (CONFIG_DOC_LINES.length < 1) errors.push('no line only the patched AgentConfig doc has')
+  const stockFiles = ['@genkit-ai/middleware/lib/agents.d.ts', '@genkit-ai/ai/lib/agent.d.ts', 'genkit/lib/genkit-beta.d.ts']
+  for (const file of stockFiles) {
+    let stock: string | null = null
     try {
-      return readFileSync(new URL('../../app/node_modules/@genkit-ai/middleware/lib/agents.d.ts', import.meta.url), 'utf8')
-    } catch {
-      return null
-    }
-  })()
-  if (stock === null) errors.push('no evals/app/node_modules: run npm ci in evals/app first')
-  else for (const line of PATCHED_LINES) if (printedIn(line, stock)) errors.push(`the stock agents.d.ts already has the patched line ${JSON.stringify(line)}`)
-  const grepHit = `node_modules/@genkit-ai/middleware/lib/agents.d.ts:57: * Genkit builds a multi-agent system. Agent hand-off, handoff, transfer to a`
-  if (!PATCHED_LINES.some((line) => printedIn(line, grepHit))) errors.push('a grep hit on the patched doc is not recognised')
+      stock = readFileSync(new URL(`../../app/node_modules/${file}`, import.meta.url), 'utf8')
+    } catch {}
+    if (stock === null) errors.push('no evals/app/node_modules: run npm ci in evals/app first')
+    else for (const line of PATCHED_LINES) if (printedIn(line, stock)) errors.push(`the stock ${file} already has the patched line ${JSON.stringify(line)}`)
+  }
+  const [configLine] = CONFIG_DOC_LINES
+  const hits: [string, string, boolean, boolean][] = [
+    ['a middleware grep hit', 'node_modules/@genkit-ai/middleware/lib/agents.d.ts:57: * Genkit builds a multi-agent system. Agent hand-off, handoff, transfer to a', true, false],
+    ['an AgentConfig grep hit', `node_modules/@genkit-ai/ai/lib/agent.d.ts:366: * ${configLine ?? ''}`, true, true],
+    ['a read of the AgentConfig lines', `   364\t * config. For agent hand-off, handoff, delegation, sub-agents, or routing\n   365\t * between agents, add \`agents()\``, true, true],
+    ['a defineAgent doc line', '     * To delegate to other agents (hand-off, sub-agents, routing), add `agents()`', true, false],
+    ['the stock AgentConfig lead', ' * Configuration for `defineAgent`, which combines prompt definition and agent', false, false],
+    ['an unrelated grep hit', 'node_modules/@genkit-ai/ai/lib/agent.d.ts:12: import { Artifact } from "./agent-types.js"', false, false],
+  ]
+  for (const [name, output, saw, config] of hits) {
+    if (PATCHED_LINES.some((line) => printedIn(line, output)) !== saw) errors.push(`saw-patched-tsdoc on ${name}: should be ${saw}`)
+    if (CONFIG_DOC_LINES.some((line) => printedIn(line, output)) !== config) errors.push(`read-agent-config-doc on ${name}: should be ${config}`)
+  }
 
   for (const e of errors) console.error(e)
-  console.log(errors.length === 0 ? `inline-docs checks ok: ${uses.length + searches.length + 2} cases` : `inline-docs checks: ${errors.length} mismatches`)
+  console.log(errors.length === 0 ? `inline-docs checks ok: ${uses.length + searches.length + hits.length + 2} cases` : `inline-docs checks: ${errors.length} mismatches`)
   process.exit(errors.length === 0 ? 0 : 1)
 }
