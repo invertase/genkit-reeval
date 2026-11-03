@@ -15,7 +15,7 @@ type Repo = { repo: string; sha: string; paths: string[]; error?: string }
 
 type Finding = { rank: number; text: string }
 
-const OUT = fileURLToPath(new URL('../DOCS-AUDIT.md', import.meta.url))
+const OUT = fileURLToPath(new URL('../docs/DOCS-AUDIT.md', import.meta.url))
 const VENDORED_RULES = fileURLToPath(new URL('../evals/rules/GENKIT.md', import.meta.url))
 const PACKAGE_JSON = fileURLToPath(new URL('../package.json', import.meta.url))
 const LANGS = ['js', 'go', 'python', 'dart'] as const

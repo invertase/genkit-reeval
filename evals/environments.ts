@@ -1,6 +1,6 @@
 import { defineEnvironment } from 'reeval'
 
-/** What the eval holds fixed; FINDINGS.md lists the sources. */
+/** What the eval holds fixed; docs/FINDINGS.md lists the sources. */
 export const PINS = {
   genkitCli: '1.44.1',
   skillSha: 'd02d49da3a77687914715188d495999170bbf48b',

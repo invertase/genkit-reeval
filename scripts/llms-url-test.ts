@@ -1,5 +1,5 @@
 // Tests every URL form that https://genkit.dev/llms.txt documents, and the forms agents plausibly try, against the live site.
-// Usage: tsx scripts/llms-url-test.ts; rewrites LLMS-URLS.md. Exit 1 when a form llms.txt documents fails, 2 when only transient errors (network, 429, 5xx after retries) stopped a check.
+// Usage: tsx scripts/llms-url-test.ts; rewrites docs/LLMS-URLS.md. Exit 1 when a form llms.txt documents fails, 2 when only transient errors (network, 429, 5xx after retries) stopped a check.
 import { writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import {
@@ -20,7 +20,7 @@ import {
   sitemapLocs,
 } from './llms-urls.ts'
 
-const OUT = fileURLToPath(new URL('../LLMS-URLS.md', import.meta.url))
+const OUT = fileURLToPath(new URL('../docs/LLMS-URLS.md', import.meta.url))
 const CONCURRENCY = 4
 const DELAY_MS = 150
 const KB = (n: number): string => `${(n / 1024).toFixed(1)} KB`
@@ -248,7 +248,7 @@ async function main(): Promise<number> {
   ].join('\n')
   writeFileSync(OUT, md)
   console.log(verdicts.map((v) => `${v.id} ${v.verdict}`).join('\n'))
-  console.log(`llms-url-test: ${documentedFailures.length} documented forms fail (${results.length} checks); wrote LLMS-URLS.md`)
+  console.log(`llms-url-test: ${documentedFailures.length} documented forms fail (${results.length} checks); wrote docs/LLMS-URLS.md`)
   return documentedFailures.length > 0 ? 1 : inconclusive.length > 0 ? 2 : 0
 }
 

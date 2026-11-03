@@ -4,7 +4,7 @@ Does Genkit's agent tooling help a coding agent? We put real agents (Claude Code
 
 ## Four things to act on
 
-1. **One TSDoc pointer makes agents use `agents()` for hand-off.** Agents without a docs link read `.d.ts` files, not genkit.dev, and `AgentConfig` never mentions delegation. We added one pointer to the `AgentConfig` and beta `defineAgent` doc comments: "For agent hand-off, handoff, delegation, sub-agents, or routing between agents, add `agents()` from `@genkit-ai/middleware` to `use`." Over 12 attempts a side, stock against patched, Claude Code went from 2 to 12 (Haiku) and 4 to 11 (Sonnet) runs that used `agents()`. Sonnet's median tokens fell from 1.48M to 611k. Codex, Cursor and Antigravity already found `agents()` every time, and no model passed fewer runs overall. ([table in FINDINGS](FINDINGS.md#7-inline-docs-tsdoc-on-agents), [suite](evals/probes/inline-docs/))
+1. **One TSDoc pointer makes agents use `agents()` for hand-off.** Agents without a docs link read `.d.ts` files, not genkit.dev, and `AgentConfig` never mentions delegation. We added one pointer to the `AgentConfig` and beta `defineAgent` doc comments: "For agent hand-off, handoff, delegation, sub-agents, or routing between agents, add `agents()` from `@genkit-ai/middleware` to `use`." Over 12 attempts a side, stock against patched, Claude Code went from 2 to 12 (Haiku) and 4 to 11 (Sonnet) runs that used `agents()`. Sonnet's median tokens fell from 1.48M to 611k. Codex, Cursor and Antigravity already found `agents()` every time, and no model passed fewer runs overall. ([table in FINDINGS](docs/FINDINGS.md#7-inline-docs-tsdoc-on-agents), [suite](evals/probes/inline-docs))
 
 2. **`GENKIT.md` made the agent cheaper, not better.** On one bug, with one attempt per arm, the `rules` arm fixed it as the control did, at under half the tokens, by reading source instead of running the app. Its root-cause evidence was weaker. This is direction only; the full run will measure it. If it holds, the rules buy a cheaper fix but steer the agent away from verifying it. ([Sonnet, one bug, four conditions](evals/.history/20261020T124201Z_7589241_jacob-cable_bcx7/summary.md))
 
@@ -12,7 +12,7 @@ Does Genkit's agent tooling help a coding agent? We put real agents (Claude Code
 
 4. **The MCP server is installed but not used.** Claude Code hides its ten tools behind a tool search the model rarely runs, Antigravity used it on one bug in twelve, and `restart_runtime` kills it for the rest of the session with `invalid character '>' looking for beginning of value`. Meanwhile the rules forbid `genkit` commands and the skill prescribes them. Aligning the rules and the skill on the CLI, and making the server's tools easier to discover, would address both. ([probe](evals/.history/20261020T125134Z_7589241_jacob-cable_pcyg/summary.md), [Antigravity, 12 bugs](evals/.history/20261020T131412Z_2a95bf1_jacob-cable_sgps/summary.md))
 
-Every linked run holds the transcripts. [`FINDINGS.md`](FINDINGS.md) has the evidence in full: conflicting advice between `GENKIT.md` and the skill, agents-API gaps, MCP server and CLI bugs with repro scripts in [`evals/repro/`](evals/repro/), and docs-site problems backed by [`DOCS-AUDIT.md`](DOCS-AUDIT.md) and [`LLMS-URLS.md`](LLMS-URLS.md).
+Every linked run holds the transcripts. [`FINDINGS.md`](docs/FINDINGS.md) has the evidence in full: conflicting advice between `GENKIT.md` and the skill, agents-API gaps, MCP server and CLI bugs with repro scripts in [`evals/repro/`](evals/repro), and docs-site problems backed by [`DOCS-AUDIT.md`](docs/DOCS-AUDIT.md) and [`LLMS-URLS.md`](docs/LLMS-URLS.md).
 
 ## See it yourself
 
@@ -44,7 +44,7 @@ The server is never measured without the rules, because `GENKIT.md` is what tell
 
 Two families of cases, 19 in all. Twelve seeded bugs, six in the flows API and six in the agents API: the agent gets a bug report that never names Genkit tooling, must fix it and write `answer.json`. Seven build tasks: the app starts without a feature, and the agent must add an order desk, a refund desk with human approval, a front desk that delegates, order conversations a new process can resume, refund approvals answered in a later request, a refund receipt, or order lookups scoped to the signed-in customer. The agents API is newer than the models' training data, so the build tasks are where the tooling's knowledge should show.
 
-Pass is deterministic. A hidden `node:test` file is placed into the sandbox after the agent's turn and drives the flow or agent against real Gemini; the agent never sees it. More checks guard against cheating: the answer names the right file and quotes the broken text, the flows survive, and `package.json` is untouched. LLM judges and one pairwise question per family are recorded, never counted toward pass. Each attempt runs in its own Docker container, and API keys stay on the host: the sandbox sees placeholders, and a gateway swaps the real key in for the one host it is for. Before any agent runs, a fake agent applies the known fix (`pnpm oracle`) and a plausible wrong one (`pnpm canary`) to show that each check passes and fails when it should. [`STUDY.md`](STUDY.md) has the prompts, the bug table and the build-task table.
+Pass is deterministic. A hidden `node:test` file is placed into the sandbox after the agent's turn and drives the flow or agent against real Gemini; the agent never sees it. More checks guard against cheating: the answer names the right file and quotes the broken text, the flows survive, and `package.json` is untouched. LLM judges and one pairwise question per family are recorded, never counted toward pass. Each attempt runs in its own Docker container, and API keys stay on the host: the sandbox sees placeholders, and a gateway swaps the real key in for the one host it is for. Before any agent runs, a fake agent applies the known fix (`pnpm oracle`) and a plausible wrong one (`pnpm canary`) to show that each check passes and fails when it should. [`STUDY.md`](docs/STUDY.md) has the prompts, the bug table and the build-task table.
 
 The study itself is a few files, for anyone who wants to read what the agent is told and what counts as a pass:
 
@@ -64,20 +64,20 @@ Scale: 19 cases x 5 arms x 5 agents (Claude Code on Sonnet 5 and on Haiku 5.5, A
 
 ## Probes
 
-[`evals/probes/`](evals/probes/) holds smoke probes outside the study, with their own configs (`reeval.probes.config.ts`), one attempt per cell unless a profile says otherwise:
+[`evals/probes/`](evals/probes) holds smoke probes outside the study, with their own configs (`reeval.probes.config.ts`), one attempt per cell unless a profile says otherwise:
 
 | Suite | Question |
 |---|---|
-| [`docs`](evals/probes/docs/) | From an empty or seeded JS project, does the docs channel (open web, genkit.dev only, `llms.txt` first, a page index, or the hosted `GENKIT.js.md`) lead the agent to the current API? |
-| [`agents`](evals/probes/agents/) | Can the agent build with the Go and Python agents APIs, with and without the language skill? |
-| [`tooling`](evals/probes/tooling/) | CLI, MCP server and Dev UI plumbing on the fixture app: upgrades, `eval:flow`, two runtimes, a blocked genkit.dev. |
-| [`inline-docs`](evals/probes/inline-docs/) | Does a TSDoc pointer in `node_modules` change what the agent builds? 12 attempts a side on all five agents. |
+| [`docs`](evals/probes/docs) | From an empty or seeded JS project, does the docs channel (open web, genkit.dev only, `llms.txt` first, a page index, or the hosted `GENKIT.js.md`) lead the agent to the current API? |
+| [`agents`](evals/probes/agents) | Can the agent build with the Go and Python agents APIs, with and without the language skill? |
+| [`tooling`](evals/probes/tooling) | CLI, MCP server and Dev UI plumbing on the fixture app: upgrades, `eval:flow`, two runtimes, a blocked genkit.dev. |
+| [`inline-docs`](evals/probes/inline-docs) | Does a TSDoc pointer in `node_modules` change what the agent builds? 12 attempts a side on all five agents. |
 
-Findings are in [`FINDINGS.md`](FINDINGS.md) sections 6 and 7. The study results table fills from [`queries/`](queries/) after the full run; [`RUNBOOK.md`](RUNBOOK.md) says how.
+Findings are in [`FINDINGS.md`](docs/FINDINGS.md) sections 6 and 7. The study results table fills from [`queries/`](queries) after the full run; [`RUNBOOK.md`](docs/RUNBOOK.md) says how.
 
 ## Run it yourself
 
-Needs Docker and keys for the agents and for Gemini. The sandbox images are not published: `pnpm reeval image build` builds them from [`evals/Dockerfile`](evals/Dockerfile) and [`evals/probes/images/`](evals/probes/images/), with the Genkit packages pinned as [`FINDINGS.md`](FINDINGS.md) section 5 lists.
+Needs Docker and keys for the agents and for Gemini. The sandbox images are not published: `pnpm reeval image build` builds them from [`evals/Dockerfile`](evals/Dockerfile) and [`evals/probes/images/`](evals/probes/images), with the Genkit packages pinned as [`FINDINGS.md`](docs/FINDINGS.md) section 5 lists.
 
 ```bash
 cp env.example .env.local
@@ -90,4 +90,4 @@ pnpm reeval run --profile full claude-code:claude-sonnet-5
 pnpm reeval record <run>                  # copy a scratch run into evals/.history/ to commit it
 ```
 
-[`RUNBOOK.md`](RUNBOOK.md) has the full sequence, sizes and queries. [`FINDINGS.md`](FINDINGS.md) lists what building and smoking the study taught us about the tooling. [`STUDY.md`](STUDY.md) has the design detail.
+[`RUNBOOK.md`](docs/RUNBOOK.md) has the full sequence, sizes and queries. [`FINDINGS.md`](docs/FINDINGS.md) lists what building and smoking the study taught us about the tooling. [`STUDY.md`](docs/STUDY.md) has the design detail.
