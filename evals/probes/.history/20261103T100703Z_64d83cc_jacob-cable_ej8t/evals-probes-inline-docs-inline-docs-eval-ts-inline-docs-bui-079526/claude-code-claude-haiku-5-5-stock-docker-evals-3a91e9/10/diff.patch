@@ -1,0 +1,57 @@
+diff --git a/src/agents.ts b/src/agents.ts
+index 42df985..eae168c 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -51,3 +51,44 @@ export const refundAgent = ai.defineAgent({
+   maxTurns: 6,
+   store,
+ });
++
++const handOffToOrderAgent = ai.defineTool(
++  {
++    name: 'handOffToOrderAgent',
++    description: 'Passes an order question to the order desk, which answers it. Use for order status, delivery, tracking and totals.',
++    inputSchema: z.object({
++      request: z.string().describe('The customer question, including the order id such as A-1001 when the customer named one'),
++    }),
++    outputSchema: z.string(),
++  },
++  async ({ request }) => (await orderAgent.chat().send(request)).text,
++);
++
++const handOffToRefundAgent = ai.defineTool(
++  {
++    name: 'handOffToRefundAgent',
++    description: 'Passes a refund request to the refund desk. Refunds wait for human approval.',
++    inputSchema: z.object({
++      request: z.string().describe('The refund request, including the order id such as A-1001 when the customer named one'),
++    }),
++    outputSchema: z.string(),
++  },
++  async ({ request }) => {
++    const response = await refundAgent.chat().send(request);
++    return response.interrupts.length > 0 ? 'The refund is waiting for human approval.' : response.text;
++  },
++);
++
++/** Front desk agent customers talk to first; hands order and refund requests to the specialist agents. */
++export const triage = ai.defineAgent({
++  name: 'triage',
++  description: 'Front desk for customers. Hands order questions to the order desk and refund requests to the refund desk.',
++  system:
++    'You are the Northwind Supplies front desk. Never answer order or refund questions yourself. ' +
++    'Pass order questions to handOffToOrderAgent and refund requests to handOffToRefundAgent, and reply to the customer with what they return. ' +
++    'Put the order id from earlier in the conversation, such as A-1001, into the request when the customer named one; ' +
++    'ask the customer for an order id only when the conversation has none. Keep replies short.',
++  tools: [handOffToOrderAgent, handOffToRefundAgent],
++  maxTurns: 4,
++  store,
++});
+diff --git a/src/index.ts b/src/index.ts
+index 6eb2d9f..31fb90c 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1,2 +1,2 @@
+ export { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';
+-export { orderAgent, refundAgent } from './agents.js';
++export { orderAgent, refundAgent, triage } from './agents.js';

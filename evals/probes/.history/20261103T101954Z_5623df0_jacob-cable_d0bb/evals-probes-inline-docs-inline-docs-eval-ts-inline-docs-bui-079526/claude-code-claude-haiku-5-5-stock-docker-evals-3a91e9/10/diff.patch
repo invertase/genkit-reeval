@@ -1,0 +1,57 @@
+diff --git a/src/agents.ts b/src/agents.ts
+index 42df985..efd816b 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -51,3 +51,44 @@ export const refundAgent = ai.defineAgent({
+   maxTurns: 6,
+   store,
+ });
++
++const askOrderAgent = ai.defineTool(
++  {
++    name: 'askOrderAgent',
++    description:
++      'Hands an order question to the order desk and returns its answer. Put the order id in the question when the customer has named one.',
++    inputSchema: z.object({ question: z.string() }),
++    outputSchema: z.string(),
++  },
++  async ({ question }) => (await orderAgent.chat().send(question)).text,
++);
++
++const askRefundAgent = ai.defineTool(
++  {
++    name: 'askRefundAgent',
++    description:
++      'Hands a refund request to the refund desk and returns its reply. Put the order id in the request when the customer has named one.',
++    inputSchema: z.object({ request: z.string() }),
++    outputSchema: z.string(),
++  },
++  async ({ request }) => {
++    const response = await refundAgent.chat().send(request);
++    if (response.finishReason === 'interrupted') return 'This refund is waiting for human approval and has not been issued yet.';
++    return response.text;
++  },
++);
++
++/** Front desk agent: the first contact for a customer, handing order and refund questions to the desks. */
++export const triage = ai.defineAgent({
++  name: 'triage',
++  description: 'Front desk for Northwind Supplies customers. Routes order questions and refund requests to the right desk.',
++  system:
++    'You are the front desk of the Northwind Supplies support team. ' +
++    'For questions about an order (status, delivery, tracking code, total), call askOrderAgent. ' +
++    'For refund requests, call askRefundAgent. Never answer order or refund questions yourself. ' +
++    'Put the order id the customer named, or one from earlier in the conversation, into the question or request you pass on. ' +
++    'Relay the desk answers to the customer in one or two sentences. Ask a short question when it is unclear what the customer needs.',
++  tools: [askOrderAgent, askRefundAgent],
++  maxTurns: 4,
++  store,
++});
+diff --git a/src/index.ts b/src/index.ts
+index 6eb2d9f..31fb90c 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1,2 +1,2 @@
+ export { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';
+-export { orderAgent, refundAgent } from './agents.js';
++export { orderAgent, refundAgent, triage } from './agents.js';

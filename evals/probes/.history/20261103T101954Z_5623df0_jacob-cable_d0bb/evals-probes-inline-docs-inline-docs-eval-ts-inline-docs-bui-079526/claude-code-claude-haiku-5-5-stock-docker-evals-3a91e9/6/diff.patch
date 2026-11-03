@@ -1,0 +1,74 @@
+diff --git a/src/agents.ts b/src/agents.ts
+index 42df985..110832e 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -51,3 +51,61 @@ export const refundAgent = ai.defineAgent({
+   maxTurns: 6,
+   store,
+ });
++
++const TriageStateSchema = z.object({ orderSessionId: z.string().optional(), refundSessionId: z.string().optional() });
++
++const askOrderAgent = ai.defineTool(
++  {
++    name: 'askOrderAgent',
++    description:
++      'Hands an order question to the order desk: status, delivery date, tracking code or total. ' +
++      'Pass the full request, including any order id the customer gave earlier in the conversation.',
++    inputSchema: z.object({ request: z.string() }),
++    outputSchema: z.string(),
++  },
++  async ({ request }) => {
++    const session = ai.currentSession<z.infer<typeof TriageStateSchema>>();
++    const orderSessionId = session.getCustom()?.orderSessionId;
++    const chat = orderSessionId ? await orderAgent.loadChat({ sessionId: orderSessionId }) : orderAgent.chat();
++    const response = await chat.send(request);
++    session.updateCustom((state) => ({ ...state, orderSessionId: chat.sessionId }));
++    return response.text;
++  },
++);
++
++const askRefundAgent = ai.defineTool(
++  {
++    name: 'askRefundAgent',
++    description:
++      'Hands a refund request to the refund desk. Pass the full request, including the order id the customer gave earlier in the conversation.',
++    inputSchema: z.object({ request: z.string() }),
++    outputSchema: z.string(),
++  },
++  async ({ request }, { interrupt }) => {
++    const session = ai.currentSession<z.infer<typeof TriageStateSchema>>();
++    const refundSessionId = session.getCustom()?.refundSessionId;
++    const chat = refundSessionId ? await refundAgent.loadChat({ sessionId: refundSessionId }) : refundAgent.chat();
++    const response = await chat.send(request);
++    session.updateCustom((state) => ({ ...state, refundSessionId: chat.sessionId }));
++    if (response.interrupts.length > 0) {
++      interrupt({ refundSessionId: chat.sessionId, pending: response.interrupts.map((i) => i.input) });
++    }
++    return response.text;
++  },
++);
++
++/** Front desk the customer talks to first; routes order and refund requests to specialist agents. */
++export const triage = ai.defineAgent({
++  name: 'triage',
++  description: 'Front desk for Northwind Supplies customers. Routes order questions and refund requests to specialists.',
++  system:
++    'You are the Northwind Supplies front desk. Greet the customer and find out what they need. ' +
++    'Do not answer questions about order status, delivery, tracking or totals yourself: call askOrderAgent with the request. ' +
++    'Do not answer refund requests yourself: call askRefundAgent with the request. ' +
++    'In each request, include any order id the customer mentioned earlier in the conversation. ' +
++    'Keep replies to one or two sentences, and relay the specialist answer to the customer.',
++  tools: [askOrderAgent, askRefundAgent],
++  stateSchema: TriageStateSchema,
++  maxTurns: 4,
++  store,
++});
+diff --git a/src/index.ts b/src/index.ts
+index 6eb2d9f..31fb90c 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1,2 +1,2 @@
+ export { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';
+-export { orderAgent, refundAgent } from './agents.js';
++export { orderAgent, refundAgent, triage } from './agents.js';

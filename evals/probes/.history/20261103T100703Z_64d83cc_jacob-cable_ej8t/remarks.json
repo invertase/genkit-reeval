@@ -1,0 +1,25 @@
+{
+  "kind": "reeval-remarks",
+  "schemaVersion": 1,
+  "runId": "20261103T100703Z_64d83cc_jacob-cable_ej8t",
+  "createdAt": "2026-11-03T10:10:40.374Z",
+  "remarks": [
+    {
+      "id": "94be557355659c5e8883fbfab5215d9eab6c4b6f5d3f14e0cd6ce396c91cf3cc",
+      "evalId": "evals%2Fprobes%2Finline-docs%2Finline-docs.eval.ts › inline-docs: build-triage",
+      "kind": "too-few-tries",
+      "severity": "concern",
+      "text": "The tsdoc variant passed 0 of 12 runs and the baseline 1 of 12: worse by 8 points, but on too few runs for the difference to hold.",
+      "evidence": [
+        "evals%2Fprobes%2Finline-docs%2Finline-docs.eval.ts › inline-docs: build-triage/claude-code:claude-haiku-5-5+tsdoc+docker:evals",
+        "evals%2Fprobes%2Finline-docs%2Finline-docs.eval.ts › inline-docs: build-triage/claude-code:claude-haiku-5-5+stock+docker:evals"
+      ],
+      "fix": {
+        "at": "source:evals/probes/inline-docs/inline-docs.eval.ts",
+        "edit": "set runs: 54, where a difference this size would hold"
+      },
+      "firstSeenRun": "20261103T100703Z_64d83cc_jacob-cable_ej8t",
+      "printed": true
+    }
+  ]
+}

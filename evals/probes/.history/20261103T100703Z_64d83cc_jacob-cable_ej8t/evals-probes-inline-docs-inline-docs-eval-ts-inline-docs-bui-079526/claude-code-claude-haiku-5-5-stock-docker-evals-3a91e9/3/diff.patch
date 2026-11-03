@@ -1,0 +1,62 @@
+diff --git a/src/agents.ts b/src/agents.ts
+index 42df985..a1a03ab 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -39,6 +39,30 @@ export const orderAgent = ai.defineAgent({
+   store,
+ });
+ 
++const handToOrderAgent = ai.defineTool(
++  {
++    name: 'handToOrderAgent',
++    description:
++      'Hands an order question (status, delivery date, tracking code, total) to the order desk and returns its answer. ' +
++      'The order desk cannot see this conversation, so the request must include any order id the customer gave, such as A-1001.',
++    inputSchema: z.object({ request: z.string() }),
++    outputSchema: z.string(),
++  },
++  async ({ request }) => (await orderAgent.chat().send(request)).text,
++);
++
++const handToRefundAgent = ai.defineTool(
++  {
++    name: 'handToRefundAgent',
++    description:
++      'Hands a refund request to the refund desk and returns its answer. ' +
++      'The refund desk cannot see this conversation, so the request must include the order id, such as A-1001, and the customer\'s reason.',
++    inputSchema: z.object({ request: z.string() }),
++    outputSchema: z.string(),
++  },
++  async ({ request }) => (await refundAgent.chat().send(request)).text,
++);
++
+ /** Handles refund requests and pauses for human approval before refunding. */
+ export const refundAgent = ai.defineAgent({
+   name: 'refundAgent',
+@@ -51,3 +75,18 @@ export const refundAgent = ai.defineAgent({
+   maxTurns: 6,
+   store,
+ });
++
++/** Front desk: the first agent a customer talks to; passes order and refund questions on. */
++export const triage = ai.defineAgent({
++  name: 'triage',
++  description: 'Front desk for Northwind Supplies. Routes order questions and refund requests to specialists.',
++  system:
++    'You are the Northwind Supplies front desk. Greet the customer and handle small talk yourself. ' +
++    'For questions about an order (status, delivery, tracking, total), call handToOrderAgent. ' +
++    'For refund requests, call handToRefundAgent. Never answer order or refund questions yourself. ' +
++    'The specialists cannot see this conversation, so put the order id the customer gave earlier (for example A-1001) into every request you pass on. ' +
++    'Pass the specialist\'s answer on to the customer.',
++  tools: [handToOrderAgent, handToRefundAgent],
++  maxTurns: 4,
++  store,
++});
+diff --git a/src/index.ts b/src/index.ts
+index 6eb2d9f..31fb90c 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1,2 +1,2 @@
+ export { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';
+-export { orderAgent, refundAgent } from './agents.js';
++export { orderAgent, refundAgent, triage } from './agents.js';
