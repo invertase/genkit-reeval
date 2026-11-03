@@ -1,6 +1,6 @@
 # Genkit agent tooling study
 
-Does Genkit's agent tooling help a coding agent? We put real agents (Claude Code, Codex, Cursor, Antigravity) on Genkit work in Docker sandboxes and compare what they are given: nothing, `GENKIT.md` as project rules, the rules plus the `genkit mcp` server (with the stock rules, or with rules that name its tools), and the `developing-genkit-js` skill. Smoke probes extend this to the docs site, Go and Python, the CLI, and the TSDoc in `node_modules`. Every run cited here is recorded in this repo with its transcripts. The full study run of 2375 attempts has not happened yet. The study runs on [reeval](https://github.com/invertase/reeval), an open-source eval runner for coding agents that Invertase maintains.
+Does Genkit's agent tooling help a coding agent? We put real agents (Claude Code, Codex, Cursor, Antigravity) on Genkit work in Docker sandboxes and compare what they are given: nothing, `GENKIT.md` as project rules, the rules plus the `genkit mcp` server (with the stock rules, or with rules that name its tools), and the `developing-genkit-js` skill. Smoke probes extend this to the docs site, Go and Python, the CLI, and the TSDoc in `node_modules`. Every run cited here is recorded in this repo with its transcripts. The full study run of 2375 attempts has not happened yet. The study runs on [reeval](https://github.com/invertase/reeval), an open-source eval runner for coding agents that Invertase maintains. [How this uses reeval](#how-this-uses-reeval) maps each feature to the code that uses it.
 
 ## Four things to act on
 
@@ -62,19 +62,6 @@ The study itself is a few files, for anyone who wants to read what the agent is 
 
 Scale: 19 cases x 5 arms x 5 agents (Claude Code on Sonnet 5 and on Haiku 5.5, Antigravity, Cursor, Codex) x 5 attempts = 2375 attempts, about 14.3 hours at concurrency 8. Haiku is there because tooling should matter most to the agent that cannot hold the whole app in its head.
 
-## Probes
-
-[`evals/probes/`](evals/probes) holds smoke probes outside the study, with their own configs (`reeval.probes.config.ts`), one attempt per cell unless a profile says otherwise:
-
-| Suite | Question |
-|---|---|
-| [`docs`](evals/probes/docs) | From an empty or seeded JS project, does the docs channel (open web, genkit.dev only, `llms.txt` first, a page index, or the hosted `GENKIT.js.md`) lead the agent to the current API? |
-| [`agents`](evals/probes/agents) | Can the agent build with the Go and Python agents APIs, with and without the language skill? |
-| [`tooling`](evals/probes/tooling) | CLI, MCP server and Dev UI plumbing on the fixture app: upgrades, `eval:flow`, two runtimes, a blocked genkit.dev. |
-| [`inline-docs`](evals/probes/inline-docs) | Does a TSDoc pointer in `node_modules` change what the agent builds? 12 attempts a side on all five agents. |
-
-Findings are in [`FINDINGS.md`](docs/FINDINGS.md) sections 6 and 7. The study results table fills from [`queries/`](queries) after the full run; [`RUNBOOK.md`](docs/RUNBOOK.md) says how.
-
 ## How this uses reeval
 
 To learn reeval from this repo, read the study files first, starting with [`evals/genkit.eval.ts`](evals/genkit.eval.ts). The probes are the more advanced, project-specific part.
@@ -101,6 +88,19 @@ To learn reeval from this repo, read the study files first, starting with [`eval
 | `c.observe` for recorded values that are not checks | [`evals/probes/tooling/tooling.eval.ts:54`](evals/probes/tooling/tooling.eval.ts#L54) |
 | `ExecRetry` for a check that calls a flaky provider | [`evals/probes/tooling/tooling.eval.ts:32`](evals/probes/tooling/tooling.eval.ts#L32) |
 | `reeval studio`, `reeval show` and `reeval query` over the recorded runs | [See it yourself](#see-it-yourself) |
+
+## Probes
+
+[`evals/probes/`](evals/probes) holds smoke probes outside the study, with their own configs (`reeval.probes.config.ts`), one attempt per cell unless a profile says otherwise:
+
+| Suite | Question |
+|---|---|
+| [`docs`](evals/probes/docs) | From an empty or seeded JS project, does the docs channel (open web, genkit.dev only, `llms.txt` first, a page index, or the hosted `GENKIT.js.md`) lead the agent to the current API? |
+| [`agents`](evals/probes/agents) | Can the agent build with the Go and Python agents APIs, with and without the language skill? |
+| [`tooling`](evals/probes/tooling) | CLI, MCP server and Dev UI plumbing on the fixture app: upgrades, `eval:flow`, two runtimes, a blocked genkit.dev. |
+| [`inline-docs`](evals/probes/inline-docs) | Does a TSDoc pointer in `node_modules` change what the agent builds? 12 attempts a side on all five agents. |
+
+Findings are in [`FINDINGS.md`](docs/FINDINGS.md) sections 6 and 7. The study results table fills from [`queries/`](queries) after the full run; [`RUNBOOK.md`](docs/RUNBOOK.md) says how.
 
 ## Run it yourself
 
