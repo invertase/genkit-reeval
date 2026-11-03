@@ -15,7 +15,7 @@ Genkit gives agents guidance through two channels: `GENKIT.md`, which `genkit in
 - **`GENKIT.md` tells the agent not to run the CLI** (from source). Its "Important Guidelines" say: "Do not run Genkit commands (e.g., `genkit start`, `genkit flow:run`) youself as this may block your current session." Its "Running and Inspecting Flows" section tells the agent to call the `start_runtime` MCP tool and to "instruct the user to run `genkit start`".
 - **The skill tells the agent to run the CLI** (from source). It says: "Do **not** use `genkit start` as a blocking step in automated/non-interactive contexts; use `flow:run` (below) for that." It also recommends `genkit trace:get <traceId> --format json`, and says that running the app directly "does **not** capture dev traces".
 - **`GENKIT.md` assumes the MCP server** (from source). A project that has `GENKIT.md` but no MCP server (the `rules` arm) is told to use a `start_runtime` tool that it does not have, and not to run the CLI that it does have.
-- **`init:ai-tools` writes a different `GENKIT.md` from the website's** (from source). The CLI writes a string embedded in `genkit-cli`, not a download of `https://genkit.dev/GENKIT.js.md`. The two share the title and most examples but differ in 60-odd lines: the CLI copy adds "existing project" guidance (keep the structure, detect the package manager and ESM/CJS, do not refactor for Genkit), recommends Gemini 3 preview models where the website says `gemini-2.5-pro`, and is the only copy that mentions `start_runtime`. Both carry the same "Important Guidelines" block, including the typo `youself`. Both are titled `v1.20.0`.
+- **`init:ai-tools` writes a different `GENKIT.md` from the website's** (from source). The CLI writes a string embedded in `genkit-cli`, not a download of `https://genkit.dev/GENKIT.js.md`. The two share the title and most examples but differ in 129 lines (74 on one side and 55 on the other, by a plain line diff; [`DOCS-AUDIT.md`](DOCS-AUDIT.md)): the CLI copy adds "existing project" guidance (keep the structure, detect the package manager and ESM/CJS, do not refactor for Genkit), recommends Gemini 3 preview models where the website says `gemini-2.5-pro`, and is the only copy that mentions `start_runtime`. Both carry the same "Important Guidelines" block, including the typo `youself`. Both are titled `v1.20.0`.
 
 So the `rules` and `mcp` arms are told not to run `genkit flow:run` and to lean on the MCP server's `start_runtime` (which only `mcp` has); the `skill` arm is told to run `genkit flow:run ... --non-interactive` and `genkit trace:get <id> --format json` itself. Tool adoption is read from the transcript, so this is a finding to report, not something to normalise away. The quotes:
 
@@ -74,7 +74,7 @@ So the `rules` and `mcp` arms are told not to run `genkit flow:run` and to lean 
 
 ## 4. The MCP server
 
-Seen in the Antigravity smoke of the `mcp` arm (12 bugs, one attempt each, 2026-10-20). The agent reached for the server on one bug, `prompt-model-override`, and ran it into the ground in nine calls.
+Seen in the Antigravity smoke of the `mcp` arm (12 bugs, one attempt each, 2026-10-20). The agent reached for the server on one bug, `prompt-model-override`, and made nine calls to it on that bug.
 
 - **`list_flows` needs a runtime first** (live). The first call answers "No runtimes found. Make sure your app is running using the `start_runtime` MCP tool or the CLI". The agent then called `start_runtime` with `npm run dev` and `list_flows` worked. `genkit flow:run` starts the runtime for you; the MCP tools do not.
 - **`run_flow` wants its input as a JSON string** (live). The agent's first call passed `name` and an object `input` and got `Invalid arguments for tool run_flow: Required at flowName; Expected string, received object at input`. The second call, with `flowName` and `input: "{\"text\": ...}"`, ran the flow and returned the result and a trace id.
@@ -83,7 +83,7 @@ Seen in the Antigravity smoke of the `mcp` arm (12 bugs, one attempt each, 2026-
 - **Docs search is broken, in the MCP server and in the CLI** (live, reproduced on the host). `search_genkit_docs` and `genkit docs:search` both fail with `(doc.description || "").toLowerCase is not a function`. Cause: in the docs bundle the CLI serves (1.40.1 on the host, fetched by `docs:list`), the `js/app-frameworks/*.md` entries carry `description` as an object keyed by language, and `searchDocs` in `genkit-cli` `dist/utils/docs.js` calls `toLowerCase()` on it. Every search over the `js` docs reaches those pages, so every search fails. Both Sonnet `mcp` attempts that reached for docs hit it twice, then fell back to `list_genkit_docs`; the `skill` arm hit it through the CLI. No arm has had a working docs search.
 - **`list_genkit_docs` is 135 KB** (live). Claude Code refuses the result as over its token limit and saves it to a file, which the agent then has to grep.
 - **`read_genkit_docs` works and carries the agents API** (live). The Sonnet `mcp` arm read `js/agents/multi-agent.md` and `js/agents/define.md` and then built delegation with `agents()`. It guessed one path that does not exist, `js/agents/sessions-and-state.md`.
-- **Claude Code hides the Genkit tools behind its tool search** (live). With the server on, Claude Code 2.1.290 reports 22 deferred tools; the model sees names only until it calls `ToolSearch` for one. Across 9 Sonnet `mcp` attempts it did so twice, both times for the docs tools, never for `run_flow` or `get_trace`. Haiku never did. The `GENKIT.md` instruction to use `start_runtime` did not change that.
+- **Claude Code hides the Genkit tools behind its tool search** (live). With the server on, Claude Code 2.1.290 reports 22 deferred tools; the model sees names only until it calls `ToolSearch` for one. In the four recorded Sonnet `mcp` attempts on a bug or a build, it did so in two, both times for the docs tools, never for `run_flow` or `get_trace`. The two recorded Haiku `mcp` attempts never did. The `GENKIT.md` instruction to use `start_runtime` did not change that.
 - **Antigravity never ran the CLI** (live). Across the 12 bugs, zero `genkit` commands in 309 shell calls, in line with `GENKIT.md`'s instruction not to run them. It read source and wrote repro scripts instead.
 
 ## 5. Pins
@@ -109,7 +109,7 @@ What `genkit init:ai-tools --tool claude` installs around `GENKIT.md`, and how t
 - `GENKIT.md` at the project root, plus a `<genkit_prompts hash="71cd594d">` block appended to `CLAUDE.md` that reads `Genkit Framework Instructions:\n - @./GENKIT.md`. The eval gives the content as `rules: file('./rules/GENKIT.md')`, so the harness places it as `CLAUDE.md`, `AGENTS.md` or `.cursor/rules` directly. Same text, one hop fewer.
 - `.mcp.json` with `{ "command": "genkit", "args": ["mcp", "--no-update-notification"] }`. The eval's `mcp.stdio` adds `--project-root /reeval/workspace`, because the harness may start the server from another cwd.
 
-The skill is fetched with `skill.git('github:genkit-ai/skills', { ref, path: 'skills', only: ['developing-genkit-js'] })`. The `path` is required: reeval 0.9.0 looks for `SKILL.md` in the source directory or one level below it, and this repository keeps its skills under `skills/`. Without it every attempt fails as an infra error ("has no SKILL.md"). reeval's default skill exclude list removes nothing from this skill, so every `references/*.md` reaches the agent.
+The skill is fetched with `skill.git('github:genkit-ai/skills', { ref, path: 'skills', only: ['developing-genkit-js'] })`. The `path` is needed because this repository keeps its skills under `skills/`. reeval's default skill exclude list removes nothing from this skill, so every `references/*.md` reaches the agent.
 
 ## 6. What building the probes taught us
 
@@ -118,7 +118,7 @@ We found these while we built and smoked the probes in `evals/probes/` (2026-11-
 ### Docs and rules files
 
 - **Four docs examples still call `ai.chat(`** (live). `https://genkit.dev/llms-js.txt` uses `ai.chat(` in fenced code on four pages that are not marked deprecated: "Defining AI workflows", "Tool calling", "Pause generation using interrupts" and "Chat with a PDF file". The same bundle says "The `ai.chat()` API is deprecated."
-- **`GENKIT.js.md` has an old version in its title** (live). `https://genkit.dev/GENKIT.js.md`, which `llms.txt` gives to agents as the rules file, has the title `v1.20.0`. The current `genkit` is 1.43.0. The website copy and the copy that the CLI writes differ by about 130 lines (the exact count depends on how whitespace and the template's missing trailing newline are treated), but they have the same title.
+- **`GENKIT.js.md` has an old version in its title** (live). `https://genkit.dev/GENKIT.js.md`, which `llms.txt` gives to agents as the rules file, has the title `v1.20.0`. The current `genkit` is 1.43.0 (the study pins 1.42.0 so every run uses the same version). The website copy and the copy that the CLI writes differ by 129 lines (section 1), but they have the same title.
 - **The `llms-<lang>.txt` bundles have no page links** (live). Each bundle is one file of about 1 MB with every page in it. An agent that wants one page must guess its `.md` URL or read the sitemap. `llms.txt` itself links 2 of the 284 docs pages.
 - **The URL forms in `llms.txt` work only when an agent reads them as the examples show** (live, [`LLMS-URLS.md`](LLMS-URLS.md)). `llms.txt` says "Append `.md` to any docs URL". Canonical URLs end in `/`, so the literal result, such as `/docs/js/flows/.md`, is a 41.7 KB HTML 404 on all 284 pages. The examples drop the slash (`/docs/js/flows.md`), and that form works on all 284 pages. The 6 pages that are the same for every language (`mcp-server`, `react`, `flutter`, `client`, `feedback`, `roadmap`) return 404 at `/docs/<lang>/<page>.md`. `/docs/<page>.md` without a language returns the raw source for every language, with `<Lang>` blocks, on 79 of 104 pages. A page that does not exist in a language returns a 41.7 KB HTML 404, on all 138 such pairs.
 - **The JS develop-with-ai page prints no AGENTS.md block** (live). Only the Go variant of `/docs/<lang>/develop-with-ai` gives a block to paste ("Follow the API rules at https://genkit.dev/GENKIT.go.md", the page and the bundle). The JS variant only describes it. The probes' `hosted` arm uses the Go block, adapted to JS.
@@ -148,22 +148,18 @@ We found these while we built and smoked the probes in `evals/probes/` (2026-11-
 Agents without a docs link read `.d.ts` files, not genkit.dev (section 2). The `inline-docs` probe ([`evals/probes/inline-docs/`](evals/probes/inline-docs/)) reruns the study's `build-triage` task with one variable: setup rewrites only doc comments in `node_modules`, and `tsc` still passes. The patched `AgentConfig` (`@genkit-ai/ai`) and beta `defineAgent` (`genkit`) docs say: "For agent hand-off, handoff, delegation, sub-agents, or routing between agents, add `agents()` from `@genkit-ai/middleware` to `use`. Genkit has no separate handoff API." The `agents()` docs in `@genkit-ai/middleware` get the same words and each option's default. The texts are in [`evals/probes/inline-docs/tsdoc/`](evals/probes/inline-docs/tsdoc/).
 
 - **A patch only in `@genkit-ai/middleware` is never seen** (live). The first run patched only the `agents()` docs: 0 of 12 patched Haiku runs opened that package (stock 1 of 12 used `agents()`, patched 0 of 12). The pointer has to sit where agents search, on `defineAgent` and `AgentConfig`.
-- **With the pointer there, the Claude models switch to `agents()` and no model does worse** (live). 12 attempts a side, stock against patched:
+- **With the pointer there, the Claude models switch to `agents()` and no model passes fewer runs** (live). 12 attempts a side, stock against patched. Tokens are input, output and cache reads and writes, as reeval reports them:
 
 | Agent | uses `agents()` | passes every check | median tokens | median tool calls |
 |---|---|---|---|---|
 | Claude Code, Haiku 5.5 | 2 -> 12 | 2 -> 8 | 508k -> 490k | 10 -> 10.5 |
 | Claude Code, Sonnet 5 | 4 -> 11 | 4 -> 10 | 1.48M -> 611k | 29.5 -> 14 |
-| Codex `gpt-5.6-luna` | 12 -> 12 | 9 -> 10 | 235k -> 188k | 8 -> 7 |
-| Cursor `composer-2.5` | 12 -> 12 | 6 -> 9 | 468k -> 352k | 35 -> 26 |
-| Antigravity `gemini-3.8-flash-medium` | 12 -> 12 | 12 -> 12 | 10.7M -> 10.0M | 105 -> 105 |
+| Codex `gpt-5.6-luna` | 12 -> 12 | 9 -> 10 | 218k -> 181k | 8 -> 7 |
+| Cursor `composer-2.5` | 12 -> 12 | 6 -> 9 | 437k -> 352k | 34 -> 26 |
+| Antigravity `gemini-3.8-flash-medium` | 12 -> 12 | 12 -> 12 | 10.3M -> 9.8M | 103 -> 105 |
 
 - **Sonnet's token drop is not noise** (live). Per-run totals are 651k-1.83M stock against 407k-1.73M patched; a Mann-Whitney test gives p = 0.003 (patched lower in 123 of 144 pairs). Almost all of it is cache reads.
 - **Why the Claude models start low** (live). Claude Code rarely opens `@genkit-ai/middleware` on its own (3 or 4 of 12 runs). Codex, Cursor and Antigravity follow `package.json` into the middleware README in 12 of 12, so they find `agents()` either way.
-- **`resumes by session id` fails wherever agents use `agents()`** (live), in both arms and on every agent except Antigravity, so it is not caused by the TSDoc. The transcripts are recorded and not yet read.
+- **`resumes by session id` fails in some runs in both arms** (live). Passes, stock -> patched: Haiku 12 -> 9, Sonnet 12 -> 11, Codex 9 -> 10, Cursor 7 -> 9, Antigravity 12 -> 12. In all 17 failures the check's second turn runs in a new process and the app asks for the order ID again, so the build did not carry the conversation across processes. The Haiku and Sonnet drops are the one check where the patched arm did worse; at 12 a side we cannot tell them from noise.
 
 Runs: Haiku `20261103T101954Z_5623df0_jacob-cable_d0bb`, Sonnet `20261103T102848Z_d8879dc_jacob-cable_yvpa`, Codex, Cursor and Antigravity `20261103T122659Z_1e1b5ac_jacob-cable_r645`, the middleware-only first run `20261103T100703Z_64d83cc_jacob-cable_ej8t`, all in [`evals/probes/.history/`](evals/probes/.history/). Twelve a side shows direction and the large effects; the Codex and Cursor pass-rate gains are within noise at this size.
-
-## 8. Results
-
-To fill after the full study run: which advice the agents followed, what each channel cost or saved, and which of the items above cost the arms time.

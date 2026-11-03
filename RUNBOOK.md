@@ -30,7 +30,7 @@ pnpm reeval image build        # four images from evals/Dockerfile: genkit-cli@1
 
 `GOOGLE_GENERATIVE_AI_API_KEY` serves the app in the sandbox (brokered as `SUPPORT_DESK_GEMINI_API_KEY`), the judge and `reeval analyze`. `GEMINI_API_KEY` is for the Antigravity harness.
 
-Docker Desktop on this Mac sometimes drops an image tag reference: `docker images` lists the tag, `docker image inspect <tag>` says no such image, and every plan reports the image as not built. Re-tag it from its id with `docker tag <id> <repository:tag>` and re-run; no rebuild is needed.
+Docker Desktop sometimes drops an image tag reference: `docker images` lists the tag, `docker image inspect <tag>` says no such image, and every plan reports the image as not built. Re-tag it from its id with `docker tag <id> <repository:tag>` and re-run; no rebuild is needed.
 
 ## Oracle and canary
 
@@ -45,7 +45,7 @@ pnpm canary     # reeval reports 19 failed, then expect "canary-check: all 19 ce
 
 Each cell is a container that copies the baked `node_modules` in and makes a few Gemini calls, so allow a minute or two each at concurrency 8. The judge runs with `fakeJudge()` here: no key, no model call.
 
-If the oracle fails a bug, the check is wrong, not the fix: read `failing_attempts`. One exception: a Gemini stream error such as `Error aggregating stream chunks` is the model, not the check; rerun that bug alone with `pnpm oracle <bug>`. reeval 0.9.0 has no retry for a check, so in a full run that noise lands on whichever attempt it hits, in every arm alike. If the canary passes a bug, the bug does not reproduce with the real model. Two are most at risk: `order-id-case` (Gemini may upper-case `a-1001` before calling the tool) and `stop-sequence` (if the model writes the whole reply on one line). Re-run `pnpm canary <bug>` three times; a stable pass means the cell measures nothing, so redesign the bug in `evals/bugs.ts` and `evals/verify.mts` or drop it (the pooled lift needs at least 6 cases).
+If the oracle fails a bug, the check is wrong, not the fix: read `failing_attempts`. One exception: a Gemini stream error such as `Error aggregating stream chunks` is the model, not the check; rerun that bug alone with `pnpm oracle <bug>`. A check has no retry, so in a full run that noise lands on whichever attempt it hits, in every arm alike. If the canary passes a bug, the bug does not reproduce with the real model. Two are most at risk: `order-id-case` (Gemini may upper-case `a-1001` before calling the tool) and `stop-sequence` (if the model writes the whole reply on one line). Re-run `pnpm canary <bug>` three times; a stable pass means the cell measures nothing, so redesign the bug in `evals/bugs.ts` and `evals/verify.mts` or drop it (the pooled lift needs at least 6 cases).
 
 ## Probes
 
@@ -86,7 +86,7 @@ One case, five arms, one attempt each; then the `mcp` arm on Codex for all 19 ca
 - `skill`: the skill is placed and read (`pnpm reeval query skill_reads`).
 - Every arm: the real Gemini key appears nowhere under `.reeval/debug/<run>` or `.reeval/runs/<run>` (`grep -rl "$(grep GOOGLE_GENERATIVE_AI_API_KEY .env.local | cut -d= -f2)" .reeval/debug/<run> .reeval/runs/<run>` prints nothing), and the `gateway` lines in `debug.log` say `substituted` for `generativelanguage.googleapis.com`.
 - Codex `mcp`: Codex may not pass the sandbox proxy to stdio MCP servers. If `run_flow` results show 401 or `fetch failed`, the server cannot reach Gemini; record it as a harness limitation.
-- Every arm: no attempt reads the seeded change from reeval's snapshot git dir. reeval 0.9.0 left it readable in the workspace's parent, and Antigravity ran `git log -p` there on 6 of 12 bugs. reeval 0.18.0 keeps it in `/var/lib/reeval` (root, mode 700) as one commit with earlier content pruned. Check: `grep -rl /var/lib/reeval .reeval/runs/<run>/*/*/*/transcript.jsonl` prints nothing and `diff.patch` is still populated.
+- Every arm: no attempt reads the seeded change from reeval's snapshot git dir. reeval keeps it in `/var/lib/reeval` (root, mode 700) as one commit with earlier content pruned. Check: `grep -rl /var/lib/reeval .reeval/runs/<run>/*/*/*/transcript.jsonl` prints nothing and `diff.patch` is still populated.
 - Antigravity: the harness injects its own `GEMINI_API_KEY`, brokered only to its streaming endpoint; the app reads `SUPPORT_DESK_GEMINI_API_KEY`, so the harness key cannot shadow it. Check an Antigravity attempt starts and a flow run from the agent shell reaches Gemini.
 - Agents bug: does the `mcp` arm call `run_flow` on `tryTriage`/`tryRefundDesk`? Does `get_trace` output fit, or is it truncated? Does the agent read the interrupt's error-looking span as the bug?
 - Build task (`build-triage`): before the first turn `src/agents.ts` holds `orderAgent` and `refundAgent` only, and the agent's diff shows only what it wrote. Does it write `ai.chat()` or other API that is gone? Does the `mcp` or `skill` arm look up the agents API before it writes?
@@ -120,7 +120,7 @@ pnpm reeval analyze --save             # one LLM call over the digest, citations
 pnpm reeval studio build --out site    # static site with every transcript and diff (read before publishing)
 ```
 
-Before reading any rate, find the attempts the provider stopped: the `agent ran without provider errors` check fails when the transcript holds a billing, quota or rate-limit error (the Haiku run of 2026-10-20 had 38 of these, all `Credit balance is too low`, recorded as `fail`). reeval 0.9.0 and 0.11.0 give an eval no way to mark them `infra_error`, so they still count as failures in `lift`:
+Before reading any rate, find the attempts the provider stopped: the `agent ran without provider errors` check fails when the transcript holds a billing, quota or rate-limit error. These attempts count as failures in `lift`:
 
 ```bash
 pnpm reeval query -- "SELECT cell_key, attempt_key FROM assertions WHERE run_id = '<run id>' AND label = 'agent ran without provider errors' AND status = 'fail' ORDER BY 1, 2"
@@ -132,7 +132,7 @@ If it prints anything, do not cite the run. Fix the cause, rerun the affected ca
 
 Pass is every check, which is what `lift` and `family_lift` pool. Fix rate is the `flow works` check alone; build rate is the share of attempts that pass every requirement check. The judges are recorded, never asserted; a failed attempt with a low verdict shows `error_kind = 'judge'` in `failing_attempts`, so read `first_failed_check` for the real cause.
 
-The README tables come from the four queries in `queries/`. Each reads one run: find it with `SELECT run_id, profile, started_at, attempts FROM runs ORDER BY started_at DESC LIMIT 5`, then run a query with the id in place of `<run id>`:
+Once the full run is done, the results tables come from the four queries in `queries/`. Each reads one run: find it with `SELECT run_id, profile, started_at, attempts FROM runs ORDER BY started_at DESC LIMIT 5`, then run a query with the id in place of `<run id>`:
 
 ```bash
 pnpm reeval query "$(sed "s/<run id>/$RUN/g" queries/fix-rate.sql)"

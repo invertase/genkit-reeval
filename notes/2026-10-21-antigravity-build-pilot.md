@@ -1,6 +1,6 @@
 # Pilot: 7 build cases on Antigravity, 2026-10-21
 
-Run `20261021T180121Z_27922b1_jacob-cable_a90v`: the 7 build cases, 5 arms, 1 attempt per cell, Antigravity `gemini-3.8-flash-medium`, 41 minutes at concurrency 8. Summary at `.reeval/runs/20261021T180121Z_27922b1_jacob-cable_a90v/summary.md`. One attempt per cell, so every number below is direction, not evidence; lift reports "can't tell yet".
+Run `20261021T180121Z_27922b1_jacob-cable_a90v`: the 7 build cases, 5 arms, 1 attempt per cell, Antigravity `gemini-3.8-flash-medium`, 41 minutes at concurrency 8. The run was not recorded in this repo. One attempt per cell, so every number below is direction, not evidence; lift reports "can't tell yet".
 
 Four of the seven cases are new today: `build-order-memory`, `build-refund-resume`, `build-refund-receipt`, `build-customer-scope`. All seven have one check per requirement, a canary that writes a plausible wrong build, and an oracle that passed 19/19 and a canary that failed exactly its declared checks in three runs each before this pilot.
 
@@ -48,8 +48,8 @@ Rules, mcp and directed each cut agent time and tokens by roughly a fifth to a t
 3. No arm uses the runtime tools or the CLI to run the app, except the skill arm's two `flow:run` calls.
 4. Guidance arms save time and tokens; at this sample they do not change pass rate.
 
-## Before a full run
+## Open before a full run
 
 - Set the eval timeout to 25m for Antigravity.
 - Decide whether `build-customer-scope` should accept an error reply for a foreign order. The check requires not-found wording and no leaked facts; the control build leaked nothing but did not say not found.
-- Haiku five-arm full still waits on the Anthropic credit top-up; the Antigravity full was cancelled at 72 of 375 attempts on the old 15-case plan and needs rerunning on the 19-case plan.
+- Run the Haiku and Antigravity full runs on the 19-case plan.

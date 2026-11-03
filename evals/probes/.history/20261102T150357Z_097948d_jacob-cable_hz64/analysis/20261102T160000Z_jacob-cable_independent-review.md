@@ -1,6 +1,6 @@
 ## Independent review · 20261102T150357Z_097948d_jacob-cable_hz64
 
-An independent read of this run, written without the reeval analysis beside it, from the transcripts, diffs and check logs. Paths are relative to the run folder. One attempt per cell, so every finding is direction only.
+A read of this run from the transcripts, diffs and check logs. Paths are relative to the run folder. One attempt per cell, so every finding is direction only.
 
 ### Findings, ranked by trust
 
