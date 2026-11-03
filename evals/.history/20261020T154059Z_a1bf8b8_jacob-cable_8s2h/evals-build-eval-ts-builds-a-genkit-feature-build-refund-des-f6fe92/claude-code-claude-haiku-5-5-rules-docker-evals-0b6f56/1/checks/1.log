@@ -1,4 +1,0 @@
-$ rm src/agents.ts
-exit 0
---- stdout
---- stderr
