@@ -1,0 +1,61 @@
+diff --git a/src/agents.ts b/src/agents.ts
+index 42df985..d7a8da5 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -51,3 +51,48 @@ export const refundAgent = ai.defineAgent({
+   maxTurns: 6,
+   store,
+ });
++
++const askOrderAgent = ai.defineTool(
++  {
++    name: 'askOrderAgent',
++    description:
++      'Hands an order question to the order desk: status, delivery date, tracking code or total. Include the order id in the request.',
++    inputSchema: z.object({
++      request: z.string().describe('The full order question, including the order id, for example "Status of order A-1001"'),
++    }),
++    outputSchema: z.object({ answer: z.string() }),
++  },
++  async ({ request }) => {
++    const response = await orderAgent.chat().send(request);
++    return { answer: response.text };
++  },
++);
++
++const askRefundAgent = ai.defineTool(
++  {
++    name: 'askRefundAgent',
++    description: 'Hands a refund request to the refund desk. Include the order id and the reason in the request.',
++    inputSchema: z.object({
++      request: z.string().describe('The full refund request, including the order id and the reason'),
++    }),
++    outputSchema: z.object({ answer: z.string() }),
++  },
++  async ({ request }) => {
++    const response = await refundAgent.chat().send(request);
++    return { answer: response.text };
++  },
++);
++
++/** Front desk: the agent customers talk to first, routing order and refund requests to specialists. */
++export const triage = ai.defineAgent({
++  name: 'triage',
++  description: 'Front desk for Northwind Supplies customers. Routes order and refund questions to specialists.',
++  system:
++    'You are the front desk of Northwind Supplies. Greet customers and find out what they need. ' +
++    'Order status, delivery, tracking and total questions go to askOrderAgent. Refund requests go to askRefundAgent. ' +
++    'Never answer order or refund questions yourself. The specialists do not see this conversation, so include any order id the customer gave earlier in the request. ' +
++    'Relay the specialist answer to the customer in one or two sentences.',
++  tools: [askOrderAgent, askRefundAgent],
++  maxTurns: 6,
++  store,
++});
+diff --git a/src/index.ts b/src/index.ts
+index 6eb2d9f..31fb90c 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1,2 +1,2 @@
+ export { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';
+-export { orderAgent, refundAgent } from './agents.js';
++export { orderAgent, refundAgent, triage } from './agents.js';

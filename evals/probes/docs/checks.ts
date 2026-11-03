@@ -107,7 +107,7 @@ function namedImports(code: string, fromPackage: (name: string) => boolean): Bin
 const escape = (name: string) => name.replace(/\$/g, '\\$')
 
 /** True when `code` imports `name` from `pkg`, by name under any alias or through `* as X`, and calls it outside the import statements. */
-function callsExport(code: string, pkg: string, name: string): boolean {
+export function callsExport(code: string, pkg: string, name: string): boolean {
   const body = code.replace(IMPORT_STATEMENT, '')
   const namespaces = [...code.matchAll(IMPORT_STATEMENT)].flatMap((m) => (m[2] === pkg ? [...(m[1] ?? '').matchAll(/\*\s+as\s+([\w$]+)/g)].map((n) => n[1] ?? '') : []))
   return (

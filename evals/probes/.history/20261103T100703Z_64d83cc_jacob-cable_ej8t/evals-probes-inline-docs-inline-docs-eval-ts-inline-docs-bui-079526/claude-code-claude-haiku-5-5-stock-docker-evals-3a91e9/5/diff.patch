@@ -1,0 +1,57 @@
+diff --git a/src/agents.ts b/src/agents.ts
+index 42df985..6843bf1 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -51,3 +51,44 @@ export const refundAgent = ai.defineAgent({
+   maxTurns: 6,
+   store,
+ });
++
++const askOrderDesk = ai.defineTool(
++  {
++    name: 'askOrderDesk',
++    description:
++      'Hands an order question to the order desk and returns its answer. ' +
++      'Pass a self-contained request that names the order id, for example "Status of order A-1001?".',
++    inputSchema: z.object({ request: z.string() }),
++    outputSchema: z.string(),
++  },
++  async ({ request }) => (await orderAgent.chat().send(request)).text,
++);
++
++const askRefundDesk = ai.defineTool(
++  {
++    name: 'askRefundDesk',
++    description:
++      'Hands a refund request to the refund desk and returns its answer. ' +
++      'Pass a self-contained request that names the order id.',
++    inputSchema: z.object({ request: z.string() }),
++    outputSchema: z.string(),
++  },
++  async ({ request }) => {
++    const response = await refundAgent.chat().send(request);
++    return response.interrupts.length > 0 ? 'The refund is waiting for human approval.' : response.text;
++  },
++);
++
++/** Front desk: the first agent a customer talks to. Hands order and refund requests to specialists. */
++export const triage = ai.defineAgent({
++  name: 'triage',
++  description: 'Front desk for Northwind Supplies. Hands order questions and refund requests to specialist agents.',
++  system:
++    'You are the Northwind Supplies front desk. For any question about an order, call askOrderDesk. ' +
++    'For any refund request, call askRefundDesk. Never answer order or refund questions yourself. ' +
++    'Each request you hand off must name the order id, taken from earlier in the conversation when the customer does not repeat it. ' +
++    'Keep your own replies to one or two sentences.',
++  tools: [askOrderDesk, askRefundDesk],
++  maxTurns: 4,
++  store,
++});
+diff --git a/src/index.ts b/src/index.ts
+index 6eb2d9f..31fb90c 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1,2 +1,2 @@
+ export { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';
+-export { orderAgent, refundAgent } from './agents.js';
++export { orderAgent, refundAgent, triage } from './agents.js';

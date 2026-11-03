@@ -1,0 +1,24 @@
+/**
+ * Defines and registers an agent by creating a prompt and wiring it into a
+ * multi-turn agent in one step.
+ *
+ * This is a convenience shortcut that combines `definePrompt` and
+ * `definePromptAgent` into a single call.
+ *
+ * To delegate to other agents (hand-off, sub-agents, routing), add `agents()`
+ * from `@genkit-ai/middleware` to `use`; Genkit has no separate handoff API.
+ *
+ * ```ts
+ * const myAgent = ai.defineAgent({
+ *   name: 'myAgent',
+ *   model: 'googleai/gemini-2.5-flash',
+ *   system: 'Talk like a pirate.',
+ *   tools: [weatherTool],
+ *   store: new FileSessionStore('./.snapshots'),
+ * });
+ * ```
+ *
+ * @see {@link https://genkit.dev/docs/js/agents/multi-agent/ | Multi-agent delegation}
+ *
+ * @beta
+ */

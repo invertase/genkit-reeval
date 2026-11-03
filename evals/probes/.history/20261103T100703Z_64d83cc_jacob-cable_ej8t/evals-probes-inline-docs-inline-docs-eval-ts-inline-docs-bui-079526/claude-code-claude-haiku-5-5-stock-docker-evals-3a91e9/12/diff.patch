@@ -1,0 +1,50 @@
+diff --git a/src/agents.ts b/src/agents.ts
+index 42df985..d586fb6 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -51,3 +51,37 @@ export const refundAgent = ai.defineAgent({
+   maxTurns: 6,
+   store,
+ });
++
++const askOrderAgent = ai.defineTool(
++  {
++    name: 'askOrderAgent',
++    description: 'Hands an order question to the order desk and returns its answer.',
++    inputSchema: z.object({ request: z.string().describe('The customer question, including any order id they gave') }),
++    outputSchema: z.string(),
++  },
++  async ({ request }) => (await orderAgent.chat().send(request)).text,
++);
++
++const askRefundAgent = ai.defineTool(
++  {
++    name: 'askRefundAgent',
++    description: 'Hands a refund request to the refund desk and returns its answer.',
++    inputSchema: z.object({ request: z.string().describe('The refund request, including the order id the customer gave') }),
++    outputSchema: z.string(),
++  },
++  async ({ request }) => (await refundAgent.chat().send(request)).text,
++);
++
++/** Front desk agent: the first agent customers talk to. Routes order and refund requests to the specialists. */
++export const triage = ai.defineAgent({
++  name: 'triage',
++  description: 'Front desk agent. Answers general questions and hands order and refund requests to specialists.',
++  system:
++    'You are the Northwind Supplies front desk. Do not answer order status or refund questions yourself: ' +
++    'send order questions to askOrderAgent and refund requests to askRefundAgent. ' +
++    'The specialists only see the request you pass them, so include the order id from earlier in the conversation when the customer does not repeat it. ' +
++    'Answer greetings and general questions briefly yourself.',
++  tools: [askOrderAgent, askRefundAgent],
++  maxTurns: 4,
++  store,
++});
+diff --git a/src/index.ts b/src/index.ts
+index 6eb2d9f..31fb90c 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1,2 +1,2 @@
+ export { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';
+-export { orderAgent, refundAgent } from './agents.js';
++export { orderAgent, refundAgent, triage } from './agents.js';

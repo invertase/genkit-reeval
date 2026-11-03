@@ -1,0 +1,75 @@
+diff --git a/src/agents.ts b/src/agents.ts
+index 42df985..b22b756 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -51,3 +51,62 @@ export const refundAgent = ai.defineAgent({
+   maxTurns: 6,
+   store,
+ });
++
++const TriageStateSchema = z.object({
++  orderSessionId: z.string().optional(),
++  refundSessionId: z.string().optional(),
++});
++
++type TriageState = z.infer<typeof TriageStateSchema>;
++
++const askOrderAgent = ai.defineTool(
++  {
++    name: 'askOrderAgent',
++    description: 'Passes an order question from the customer to the order desk and returns its answer.',
++    inputSchema: z.object({ message: z.string() }),
++    outputSchema: z.string(),
++  },
++  async ({ message }) => {
++    const session = ai.currentSession<TriageState>();
++    const sessionId = session.getCustom()?.orderSessionId;
++    const chat = sessionId ? await orderAgent.loadChat({ sessionId }) : orderAgent.chat();
++    const response = await chat.send(message);
++    if (!sessionId && response.sessionId) {
++      session.updateCustom((custom) => ({ ...custom, orderSessionId: response.sessionId }));
++    }
++    return response.text;
++  },
++);
++
++const askRefundAgent = ai.defineTool(
++  {
++    name: 'askRefundAgent',
++    description: 'Passes a refund request from the customer to the refund desk and returns its reply.',
++    inputSchema: z.object({ message: z.string() }),
++    outputSchema: z.string(),
++  },
++  async ({ message }) => {
++    const session = ai.currentSession<TriageState>();
++    const sessionId = session.getCustom()?.refundSessionId;
++    const chat = sessionId ? await refundAgent.loadChat({ sessionId }) : refundAgent.chat();
++    const response = await chat.send(message);
++    if (!sessionId && response.sessionId) {
++      session.updateCustom((custom) => ({ ...custom, refundSessionId: response.sessionId }));
++    }
++    return response.text;
++  },
++);
++
++/** The front desk: answers greetings itself and hands order and refund questions to specialist agents. */
++export const triage = ai.defineAgent({
++  name: 'triage',
++  description: 'The first point of contact for customers. Routes order questions and refund requests to specialists.',
++  system:
++    'You are the Northwind Supplies front desk. Greet customers and answer general questions briefly. ' +
++    "Never answer order questions or refund requests yourself: send order questions to askOrderAgent and refund requests to askRefundAgent, " +
++    "passing the customer's message along, then relay the specialist's answer. Keep replies to one or two sentences.",
++  tools: [askOrderAgent, askRefundAgent],
++  stateSchema: TriageStateSchema,
++  maxTurns: 4,
++  store,
++});
+diff --git a/src/index.ts b/src/index.ts
+index 6eb2d9f..31fb90c 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1,2 +1,2 @@
+ export { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';
+-export { orderAgent, refundAgent } from './agents.js';
++export { orderAgent, refundAgent, triage } from './agents.js';

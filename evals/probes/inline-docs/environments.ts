@@ -1,0 +1,102 @@
+import { execFileSync } from 'node:child_process'
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { control } from '../../environments.ts'
+import { PROBES, TASK } from './cases.ts'
+
+/** The study's `control` arm as it is: the support-desk app with its pinned packages, no rules, skill, MCP server or docs link. */
+export const stock = control.extendEnvironment('stock', {})
+
+const PATCHED_PACKAGES = ['@genkit-ai/middleware', '@genkit-ai/ai', 'genkit']
+
+const DOCS = ['agents.txt', 'agents-options.txt', 'agent-config.txt', 'define-agent.txt']
+
+/**
+ * `stock` with only doc comments replaced by the files under `tsdoc/`: `agents` and `AgentsOptions` in
+ * `@genkit-ai/middleware`, `AgentConfig` in `@genkit-ai/ai`, and the beta `defineAgent` in `genkit`. The setup
+ * fails the attempt unless the files change in doc comments only, and removes the patch tooling before the agent starts.
+ */
+export const tsdoc = stock.extendEnvironment('tsdoc', ({ file }) => ({
+  files: {
+    '~/.agents-tsdoc/patch-tsdoc.mjs': file('./sandbox/patch-tsdoc.mjs'),
+    ...Object.fromEntries(DOCS.map((doc) => [`~/.agents-tsdoc/${doc}`, file(`./tsdoc/${doc}`)])),
+  },
+  setup: ['node "$HOME/.agents-tsdoc/patch-tsdoc.mjs" node_modules "$HOME/.agents-tsdoc"', 'rm -rf "$HOME/.agents-tsdoc"'],
+}))
+
+/** The words agents grep `node_modules` for when they look for delegation; the patched doc must contain each. */
+export const SEARCH_WORDS = ['hand-off', 'handoff', 'delegate', 'delegation', 'sub-agent', 'subagent', 'multi-agent', 'transfer', 'route']
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const here = (p: string) => fileURLToPath(new URL(p, import.meta.url))
+  const app = here('../../app/')
+  const modules = path.join(app, 'node_modules')
+  if (!existsSync(modules)) {
+    console.error(`no ${modules}: run npm ci in evals/app first`)
+    process.exit(1)
+  }
+  const errors: string[] = []
+  const scratch = mkdtempSync(path.join(tmpdir(), 'agents-tsdoc-'))
+  /** A copy of the app with `files` written over it; its `node_modules` links to the app's, except a patched copy of the middleware when `patched`. */
+  const appWith = (files: Record<string, string>, patched: boolean): string => {
+    const dir = mkdtempSync(path.join(scratch, 'app-'))
+    for (const entry of ['src', 'prompts', 'tsconfig.json', 'package.json']) cpSync(path.join(app, entry), path.join(dir, entry), { recursive: true })
+    for (const [file, text] of Object.entries(files)) writeFileSync(path.join(dir, file), text)
+    if (!patched) {
+      symlinkSync(modules, path.join(dir, 'node_modules'), 'dir')
+      return dir
+    }
+    mkdirSync(path.join(dir, 'node_modules/@genkit-ai'), { recursive: true })
+    for (const e of readdirSync(modules)) if (e !== '@genkit-ai' && !PATCHED_PACKAGES.includes(e)) symlinkSync(path.join(modules, e), path.join(dir, 'node_modules', e))
+    for (const e of readdirSync(path.join(modules, '@genkit-ai'))) {
+      const from = path.join(modules, '@genkit-ai', e)
+      const to = path.join(dir, 'node_modules/@genkit-ai', e)
+      if (PATCHED_PACKAGES.includes(`@genkit-ai/${e}`)) cpSync(from, to, { recursive: true })
+      else symlinkSync(from, to)
+    }
+    cpSync(path.join(modules, 'genkit'), path.join(dir, 'node_modules/genkit'), { recursive: true })
+    execFileSync('node', [here('./sandbox/patch-tsdoc.mjs'), path.join(dir, 'node_modules'), here('./tsdoc')], { stdio: 'pipe' })
+    return dir
+  }
+  const typecheck = (what: string, dir: string) => {
+    try {
+      execFileSync(path.join(modules, '.bin/tsc'), ['--noEmit', '-p', dir], { stdio: 'pipe' })
+    } catch (e) {
+      errors.push(`${what} does not typecheck:\n${e instanceof Error && 'stdout' in e ? String(e.stdout) : String(e)}`)
+    }
+  }
+  try {
+    const start = Object.fromEntries(Object.entries(TASK.start).flatMap(([file, text]) => (text === null ? [] : [[file, text]])))
+    const dir = appWith(start, true)
+    const lib = (root: string, pkg: string) => path.join(root, 'node_modules', pkg, 'lib')
+    const listed = (root: string, pkg: string) =>
+      readdirSync(lib(root, pkg), { recursive: true, withFileTypes: true }).filter((e) => e.isFile()).map((e) => path.relative(lib(root, pkg), path.join(e.parentPath, e.name)))
+    const changed = PATCHED_PACKAGES.flatMap((pkg) =>
+      listed(app, pkg).filter((f) => readFileSync(path.join(lib(app, pkg), f), 'utf8') !== readFileSync(path.join(lib(dir, pkg), f), 'utf8')).map((f) => `${pkg}/${f}`),
+    )
+    const want = ['@genkit-ai/middleware/agents.d.mts', '@genkit-ai/middleware/agents.d.ts', '@genkit-ai/ai/agent.d.mts', '@genkit-ai/ai/agent.d.ts', 'genkit/genkit-beta.d.mts', 'genkit/genkit-beta.d.ts']
+    if (changed.sort().join() !== [...want].sort().join()) errors.push(`the patch changed ${JSON.stringify(changed)}, not ${JSON.stringify(want)}`)
+    for (const f of changed.filter((f) => f.startsWith('@genkit-ai/middleware/'))) {
+      const text = readFileSync(path.join(dir, 'node_modules', f.replace(/^(@genkit-ai\/[^/]+|genkit)\//, '$1/lib/')), 'utf8')
+      for (const word of SEARCH_WORDS) if (!text.toLowerCase().includes(word)) errors.push(`${f}: a grep for ${word} misses the patched doc`)
+    }
+    for (const f of changed) {
+      const text = readFileSync(path.join(dir, 'node_modules', f.replace(/^(@genkit-ai\/[^/]+|genkit)\//, '$1/lib/')), 'utf8')
+      if (!text.includes('@see {@link https://genkit.dev/docs/js/agents/multi-agent/')) errors.push(`${f}: no @see link to the multi-agent page`)
+      if (!/`agents\(\)`[\s*]+from `@genkit-ai\/middleware`/.test(text) && !f.includes('/middleware/')) errors.push(`${f}: no pointer to agents() from @genkit-ai/middleware`)
+    }
+    typecheck('the start state with the patched declarations', dir)
+    const [probe] = PROBES
+    typecheck("the probe's oracle with the patched declarations", appWith({ ...start, ...probe?.oracle.files }, true))
+    typecheck("the probe's cheat", appWith({ ...start, ...probe?.cheat.files }, false))
+  } finally {
+    rmSync(scratch, { recursive: true, force: true })
+  }
+  if (errors.length > 0) {
+    console.error(errors.join('\n'))
+    process.exit(1)
+  }
+  console.log('OK')
+}

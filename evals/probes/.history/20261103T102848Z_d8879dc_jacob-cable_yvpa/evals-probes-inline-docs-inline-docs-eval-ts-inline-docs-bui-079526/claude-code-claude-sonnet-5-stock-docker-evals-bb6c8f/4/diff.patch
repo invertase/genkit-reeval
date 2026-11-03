@@ -1,0 +1,64 @@
+diff --git a/src/agents.ts b/src/agents.ts
+index 42df985..75d2f79 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -51,3 +51,51 @@ export const refundAgent = ai.defineAgent({
+   maxTurns: 6,
+   store,
+ });
++
++const askOrderAgent = ai.defineTool(
++  {
++    name: 'askOrderAgent',
++    description:
++      'Hands an order question (status, delivery ETA, tracking code or total) to the order desk. ' +
++      'Pass a self-contained question, including the order id if the customer mentioned it earlier in the conversation.',
++    inputSchema: z.object({ question: z.string() }),
++    outputSchema: z.string(),
++  },
++  async ({ question }) => {
++    const { text } = await orderAgent.chat().send(question);
++    return text;
++  },
++);
++
++const askRefundAgent = ai.defineTool(
++  {
++    name: 'askRefundAgent',
++    description:
++      'Hands a refund request to the refund desk. ' +
++      'Pass a self-contained request, including the order id if the customer mentioned it earlier in the conversation.',
++    inputSchema: z.object({ question: z.string() }),
++    outputSchema: z.string(),
++  },
++  async ({ question }) => {
++    const response = await refundAgent.chat().send(question);
++    if (response.finishReason === 'interrupted') {
++      return 'The refund needs human approval before it can be issued; it is now pending that approval.';
++    }
++    return response.text;
++  },
++);
++
++/** Front desk agent customers talk to first; routes to the order desk or refund desk instead of answering itself. */
++export const triage = ai.defineAgent({
++  name: 'triage',
++  description: 'The Northwind Supplies front desk. Routes order questions and refund requests to specialists.',
++  system:
++    'You are the Northwind Supplies front desk. You never answer order or refund questions yourself. ' +
++    'For order questions (status, delivery ETA, tracking code, total), call askOrderAgent. ' +
++    'For refund requests, call askRefundAgent. ' +
++    'The specialists cannot see this conversation, so when delegating, include the order id and any other relevant detail ' +
++    'the customer gave earlier in the conversation. Relay the specialist\'s answer back to the customer.',
++  tools: [askOrderAgent, askRefundAgent],
++  maxTurns: 4,
++  store,
++});
+diff --git a/src/index.ts b/src/index.ts
+index 6eb2d9f..31fb90c 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1,2 +1,2 @@
+ export { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';
+-export { orderAgent, refundAgent } from './agents.js';
++export { orderAgent, refundAgent, triage } from './agents.js';
