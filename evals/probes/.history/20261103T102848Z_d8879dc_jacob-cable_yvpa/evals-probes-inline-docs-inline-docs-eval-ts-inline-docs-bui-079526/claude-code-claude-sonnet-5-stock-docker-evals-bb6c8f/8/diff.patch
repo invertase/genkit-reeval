@@ -1,0 +1,62 @@
+diff --git a/src/agents.ts b/src/agents.ts
+index 42df985..743ba1c 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -51,3 +51,49 @@ export const refundAgent = ai.defineAgent({
+   maxTurns: 6,
+   store,
+ });
++
++const askOrderAgent = ai.defineTool(
++  {
++    name: 'askOrderAgent',
++    description:
++      "Hands a fully-specified order question (status, delivery, tracking or total) to the order desk. " +
++      'Include the order id in the question if the customer mentioned one earlier in the conversation.',
++    inputSchema: z.object({ question: z.string() }),
++    outputSchema: z.string(),
++  },
++  async ({ question }) => {
++    const response = await orderAgent.chat().send(question);
++    return response.text;
++  },
++);
++
++const askRefundAgent = ai.defineTool(
++  {
++    name: 'askRefundAgent',
++    description:
++      'Hands a fully-specified refund request to the refund desk. ' +
++      'Include the order id in the request if the customer mentioned one earlier in the conversation.',
++    inputSchema: z.object({ request: z.string() }),
++    outputSchema: z.string(),
++  },
++  async ({ request }) => {
++    const response = await refundAgent.chat().send(request);
++    if (response.finishReason === 'interrupted') return 'Your refund request is pending human approval.';
++    return response.text;
++  },
++);
++
++/** Front desk agent: the first point of contact for a customer, which routes their request instead of answering it itself. */
++export const triage = ai.defineAgent({
++  name: 'triage',
++  description: 'The front desk a customer talks to first. Routes order questions and refund requests to the right desk.',
++  system:
++    'You are the Northwind Supplies front desk. You never answer order or refund questions yourself. ' +
++    'For questions about an order (status, delivery, tracking, total), call askOrderAgent with a fully-specified question. ' +
++    'For refund requests, call askRefundAgent with a fully-specified request. ' +
++    'In both cases, include the order id in what you pass to the tool, using the order id the customer gave earlier in the conversation if they do not repeat it. ' +
++    'If no order id has been given yet, ask the customer for one before calling either tool.',
++  tools: [askOrderAgent, askRefundAgent],
++  maxTurns: 4,
++  store,
++});
+diff --git a/src/index.ts b/src/index.ts
+index 6eb2d9f..31fb90c 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1,2 +1,2 @@
+ export { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';
+-export { orderAgent, refundAgent } from './agents.js';
++export { orderAgent, refundAgent, triage } from './agents.js';

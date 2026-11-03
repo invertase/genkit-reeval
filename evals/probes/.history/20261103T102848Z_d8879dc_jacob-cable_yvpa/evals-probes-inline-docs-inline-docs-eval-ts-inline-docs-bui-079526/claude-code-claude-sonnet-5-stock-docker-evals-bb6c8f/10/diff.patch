@@ -1,0 +1,60 @@
+diff --git a/src/agents.ts b/src/agents.ts
+index 42df985..be9dc23 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -51,3 +51,47 @@ export const refundAgent = ai.defineAgent({
+   maxTurns: 6,
+   store,
+ });
++
++const askOrderAgent = ai.defineTool(
++  {
++    name: 'askOrderAgent',
++    description:
++      'Delegates an order question (status, delivery date, tracking code, total) to the order desk. ' +
++      'Pass the customer\'s question as-is, including the order id if one was mentioned earlier in the conversation.',
++    inputSchema: z.object({ question: z.string() }),
++    outputSchema: z.string(),
++  },
++  async ({ question }) => {
++    const { text } = await orderAgent.chat().send(question);
++    return text;
++  },
++);
++
++const askRefundAgent = ai.defineTool(
++  {
++    name: 'askRefundAgent',
++    description:
++      'Delegates a refund request to the refund desk. Pass the customer\'s request as-is, ' +
++      'including the order id if one was mentioned earlier in the conversation.',
++    inputSchema: z.object({ request: z.string() }),
++    outputSchema: z.string(),
++  },
++  async ({ request }) => {
++    const { text, finishReason } = await refundAgent.chat().send(request);
++    return finishReason === 'interrupted' ? 'The refund is pending human approval.' : text;
++  },
++);
++
++/** Front desk agent: greets the customer and routes their request to the right specialist. */
++export const triage = ai.defineAgent({
++  name: 'triage',
++  description: 'The first agent a customer talks to. Routes order questions and refund requests to specialists.',
++  system:
++    'You are the Northwind Supplies front desk. You do not answer order or refund questions yourself. ' +
++    'For questions about an order (status, delivery, tracking, total), call askOrderAgent. ' +
++    'For refund requests, call askRefundAgent. ' +
++    'When the customer does not repeat their order id, use the order id from earlier in the conversation when delegating.',
++  tools: [askOrderAgent, askRefundAgent],
++  maxTurns: 4,
++  store,
++});
+diff --git a/src/index.ts b/src/index.ts
+index 6eb2d9f..31fb90c 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1,2 +1,2 @@
+ export { chat, draftReply, greet, orderStatus, summarizeTicket } from './flows.js';
+-export { orderAgent, refundAgent } from './agents.js';
++export { orderAgent, refundAgent, triage } from './agents.js';
