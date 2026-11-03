@@ -1,5 +1,5 @@
 import fs from 'node:fs'
-import { evaluate, expect, type Turn } from 'reeval'
+import { evaluate, expect } from 'reeval'
 import { BUGS, causeErrors, locationErrors, missedKeeps, seed } from './bugs.ts'
 import { control, directed, mcp, rules, skill } from './environments.ts'
 import { providerErrors } from './infra.ts'
@@ -21,24 +21,10 @@ const parseAnswer = (text: string | null): unknown => {
 // Set by reeval.oracle.config.ts: gates the control cell so a failing oracle sets the exit code; evals/canary-check.ts judges the canary.
 const gate = process.env.GENKIT_EVAL_GATE === 'all' ? 'all' : 'none'
 
-const show = (value: unknown) => (typeof value === 'string' ? value : (JSON.stringify(value) ?? ''))
-
-/** The turn's tool calls and edits, one line each in order: reeval 0.9.0's judge state carries no transcript. */
-const toolLog = (turn: Turn): string[] =>
-  turn.transcript.flatMap((e) =>
-    e.type === 'tool'
-      ? [`${e.tool} ${show(e.input)} -> ${e.ok ? 'ok' : 'failed'}: ${show(e.output)}`]
-      : e.type === 'file-edit'
-        ? [`edit ${e.path} (${e.kind})`]
-        : e.type === 'error'
-          ? [`error: ${e.message}`]
-          : [],
-  )
-
 const EVIDENCE_QUESTION =
   'Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? ' +
-  "The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), its final message (`finalMessage`) and its tool calls in order (`toolCalls`). " +
-  'Answer yes when the tool calls show the agent ran the app or inspected a trace and the diagnosis cites what it observed. ' +
+  "The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), and its final message (`finalMessage`). The transcript lists its tool calls in order with their output. " +
+  'Answer yes when the transcript shows the agent ran the app or inspected a trace and the diagnosis cites what it observed. ' +
   'Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.'
 
 const SUMMARY_QUESTION = "Does the agent's final message accurately describe the change it made?"
@@ -47,11 +33,13 @@ const SUMMARY_QUESTION = "Does the agent's final message accurately describe the
 evaluate.each(BUGS)(
   'fixes a broken Genkit app: $name',
   {
+    // Every arm runs on every harness; reeval reports each variant's lift over the control arm.
     compare: {
       baseline: control,
       variants: [rules, mcp, directed, skill],
       gate,
     },
+    // Asked after the run of each pair of arms on one harness, blind to which arm is which.
     questions: [
       {
         question:
@@ -64,11 +52,15 @@ evaluate.each(BUGS)(
     ],
   },
   async (c, bug) => {
+    // Seed: break the healthy fixture in the sandbox workspace before the agent starts.
     const healthy = (await c.readFile(bug.file)) ?? ''
     if (healthy.split(bug.from).length !== 2) throw new Error(`${bug.name}: healthy snippet not found once in ${bug.file}`)
     await c.writeFile(bug.file, seed(healthy, bug))
 
+    // Send: one agent turn on the harness and environment of this cell.
     const turn = await c.send(prompt(bug.symptom))
+
+    // Checks: each failed expect fails the attempt, and pass rate and lift count only these.
     expect(providerErrors(turn), 'agent ran without provider errors').toEqual([])
     expect(c, 'leaves package.json alone').not.toHaveChanged(['package.json', 'package-lock.json'])
 
@@ -83,16 +75,16 @@ evaluate.each(BUGS)(
     const fixed = (await c.readFile(bug.file)) ?? ''
     expect(missedKeeps(bug.keeps, fixed), 'keeps the flow').toEqual([])
 
-    // Recorded in `judgements`, never asserted: pass and lift stay on the checks.
+    // Judges: recorded in `judgements`, never asserted, so a model's opinion cannot move pass rate or lift.
     await c.judge(EVIDENCE_QUESTION, {
       on: {
         bug: { name: bug.name, file: bug.file, healthy: bug.from, broken: bug.to },
         answer: answerText,
         finalMessage: turn.text,
-        toolCalls: toolLog(turn),
       },
       task: true,
       output: true,
+      transcript: 'full',
       files: true,
       diff: [bug.file, 'answer.json'],
     })
