@@ -126,7 +126,7 @@ Before reading any rate, find the attempts the provider stopped: the `agent ran 
 pnpm reeval query -- "SELECT cell_key, attempt_key FROM assertions WHERE run_id = '<run id>' AND label = 'agent ran without provider errors' AND status = 'fail' ORDER BY 1, 2"
 ```
 
-Runs recorded before this check existed have no such rows, so audit their transcripts instead: `grep -rl 'Credit balance is too low' evals/.history/<run id>/*/*/*/transcript.jsonl`.
+Runs recorded before this check existed have no such rows, so audit their transcripts instead: `grep -rliE 'credit balance|rate limit|quota' evals/.history/<run id>/*/*/*/transcript.jsonl`.
 
 If it prints anything, do not cite the run. Fix the cause, rerun the affected cases (`pnpm reeval run --profile full <harness> <case>...`), and cite the clean run; the stopped run stays in `evals/.history` as a record.
 
