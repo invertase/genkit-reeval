@@ -1,0 +1,53 @@
+$ node_modules/.bin/tsx --test --test-name-pattern '^prompt-model-override$' ~/.verify.mts
+exit 1
+--- stdout
+UNKNOWN: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 ] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ModelService.ListModels to see the list of available models and their supported methods. {
+  'exception.type': 'GenkitError',
+  'exception.message': 'UNKNOWN: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 ] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ModelService.ListModels to see the list of available models and their supported methods.',
+  'exception.stacktrace': 'GenkitError: UNKNOWN: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 ] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ModelService.ListModels to see the list of available models and their supported methods.\n' +
+    '    at makeRequest (/reeval/workspace/node_modules/@genkit-ai/google-genai/src/googleai/client.ts:598:13)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n' +
+    '    at async call (/reeval/workspace/node_modules/@genkit-ai/google-genai/src/googleai/client.ts:493:22)\n' +
+    '    at async <anonymous> (/reeval/workspace/node_modules/@genkit-ai/google-genai/src/googleai/gemini.ts:901:20)\n' +
+    '    at async <anonymous> (/reeval/workspace/node_modules/@genkit-ai/core/src/action.ts:603:26)\n' +
+    '    at async <anonymous> (/reeval/workspace/node_modules/@genkit-ai/core/src/tracing/instrumentation.ts:142:24)\n' +
+    '    at async runInNewSpan (/reeval/workspace/node_modules/@genkit-ai/core/src/tracing/instrumentation.ts:110:10)\n' +
+    '    at async actionFn.actionFn.run (/reeval/workspace/node_modules/@genkit-ai/core/src/action.ts:533:18)\n' +
+    '    at async dispatch (/reeval/workspace/node_modules/@genkit-ai/core/src/action.ts:418:24)\n' +
+    '    at async wrapped.wrapped.run (/reeval/workspace/node_modules/@genkit-ai/core/src/action.ts:447:22)'
+}
+✖ prompt-model-override (356.381916ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1183.356584
+
+✖ failing tests:
+
+test at ../../home/reeval/.verify.mts:42:1
+✖ prompt-model-override (356.381916ms)
+  Error [GenkitError]: UNKNOWN: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 ] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ModelService.ListModels to see the list of available models and their supported methods.
+      at makeRequest (/reeval/workspace/node_modules/@genkit-ai/google-genai/src/googleai/client.ts:598:13)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async call (/reeval/workspace/node_modules/@genkit-ai/google-genai/src/googleai/client.ts:493:22)
+      at async <anonymous> (/reeval/workspace/node_modules/@genkit-ai/google-genai/src/googleai/gemini.ts:901:20)
+      at async <anonymous> (/reeval/workspace/node_modules/@genkit-ai/core/src/action.ts:603:26)
+      at async <anonymous> (/reeval/workspace/node_modules/@genkit-ai/core/src/tracing/instrumentation.ts:142:24)
+      at async runInNewSpan (/reeval/workspace/node_modules/@genkit-ai/core/src/tracing/instrumentation.ts:110:10)
+      at async actionFn.actionFn.run (/reeval/workspace/node_modules/@genkit-ai/core/src/action.ts:533:18)
+      at async dispatch (/reeval/workspace/node_modules/@genkit-ai/core/src/action.ts:418:24)
+      at async wrapped.wrapped.run (/reeval/workspace/node_modules/@genkit-ai/core/src/action.ts:447:22) {
+    source: undefined,
+    status: 'UNKNOWN',
+    detail: { error: { code: 404, message: 'models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ModelService.ListModels to see the list of available models and their supported methods.', status: 'NOT_FOUND' } },
+    code: 500,
+    responseMetadata: undefined,
+    originalMessage: 'Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 ] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ModelService.ListModels to see the list of available models and their supported methods.',
+    traceId: '56b9b39000e960beed6d37885343a0f1',
+    ignoreFailedSpan: true
+  }
+--- stderr

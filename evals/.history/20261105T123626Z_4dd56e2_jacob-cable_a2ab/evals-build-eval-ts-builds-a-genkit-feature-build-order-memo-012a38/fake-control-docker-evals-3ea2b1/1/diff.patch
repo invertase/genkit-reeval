@@ -1,0 +1,12 @@
+diff --git a/src/agents.ts b/src/agents.ts
+index a5733cb..f915c9e 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -37,6 +37,7 @@ export const orderAgent = ai.defineAgent({
+     'When the customer does not name an order, use the order id from earlier in the conversation; ask for one only when the conversation has none.',
+   tools: [lookupOrder],
+   maxTurns: 4,
++  store,
+ });
+ 
+ /** Handles refund requests and pauses for human approval before refunding. */

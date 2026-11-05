@@ -1,0 +1,5 @@
+$ PY=$([ -x .venv/bin/python ] && echo .venv/bin/python || echo python3); timeout 300 "$PY" ~/.verify-py-imports.py .
+exit 0
+--- stdout
+PROBE_RESULT {"exp": ["./app.py"], "legacy": [], "unparsed": []}
+--- stderr

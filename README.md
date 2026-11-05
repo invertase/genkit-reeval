@@ -108,14 +108,14 @@ To learn reeval from this repo, read the study files first, starting with [`eval
 | `extendEnvironment` chain: `control` to `rules` to `mcp` to `directed` | [`evals/environments.ts:24`](evals/environments.ts#L24), [L29](evals/environments.ts#L29), [L40](evals/environments.ts#L40) |
 | `mcp.stdio` for the `genkit mcp` server | [`evals/environments.ts:31`](evals/environments.ts#L31) |
 | `skill.git` for a skill pinned to a commit | [`evals/environments.ts:47`](evals/environments.ts#L47) |
-| `evaluate.each` over a case list | [`evals/genkit.eval.ts:33`](evals/genkit.eval.ts#L33), [`evals/build.eval.ts:26`](evals/build.eval.ts#L26) |
-| `compare: { baseline, variants, gate }` | [`evals/genkit.eval.ts:37`](evals/genkit.eval.ts#L37), [`evals/build.eval.ts:29`](evals/build.eval.ts#L29) |
-| Pairwise `questions` with `across: 'environment'` | [`evals/genkit.eval.ts:43`](evals/genkit.eval.ts#L43), [`evals/build.eval.ts:34`](evals/build.eval.ts#L34) |
-| `c.writeFile` to seed the workspace | [`evals/genkit.eval.ts:58`](evals/genkit.eval.ts#L58) |
-| `c.send` for one agent turn | [`evals/genkit.eval.ts:61`](evals/genkit.eval.ts#L61) |
-| `expect(c).not.toHaveChanged` | [`evals/genkit.eval.ts:65`](evals/genkit.eval.ts#L65) |
-| `expect(c.exec(...)).toSucceed()` for a hidden test | [`evals/genkit.eval.ts:73`](evals/genkit.eval.ts#L73) |
-| `c.judge` with `on` and its inputs (`transcript`, `diff`), recorded but not asserted | [`evals/genkit.eval.ts:79`](evals/genkit.eval.ts#L79) |
+| `evaluate` with `cases` over a case list | [`evals/genkit.eval.ts:36`](evals/genkit.eval.ts#L36), [`evals/build.eval.ts:29`](evals/build.eval.ts#L29) |
+| `compare: { control, variants, gate }` | [`evals/genkit.eval.ts:38`](evals/genkit.eval.ts#L38), [`evals/build.eval.ts:30`](evals/build.eval.ts#L30) |
+| Pairwise `questions` with `across: 'environment'` | [`evals/genkit.eval.ts:44`](evals/genkit.eval.ts#L44), [`evals/build.eval.ts:35`](evals/build.eval.ts#L35) |
+| `c.writeFile` to seed the workspace | [`evals/genkit.eval.ts:59`](evals/genkit.eval.ts#L59) |
+| `c.send` for one agent turn | [`evals/genkit.eval.ts:62`](evals/genkit.eval.ts#L62) |
+| `expect(c).not.toHaveChanged` | [`evals/genkit.eval.ts:66`](evals/genkit.eval.ts#L66) |
+| `expect(c.exec(...)).toSucceed()` for a hidden test | [`evals/genkit.eval.ts:74`](evals/genkit.eval.ts#L74) |
+| `c.judge` with `on` and its inputs (`transcript`, `diff`), recorded but not asserted | [`evals/genkit.eval.ts:80`](evals/genkit.eval.ts#L80) |
 | Oracle and canary: `fakeHarness` applies the fix or a cheat, `fakeJudge` needs no key | [`reeval.oracle.config.ts:23`](reeval.oracle.config.ts#L23), [L34](reeval.oracle.config.ts#L34), [L38](reeval.oracle.config.ts#L38) |
 | Egress policies built on `DEFAULT_EGRESS_ALLOW` | [`evals/probes/environments.ts:4`](evals/probes/environments.ts#L4), [L40](evals/probes/environments.ts#L40) |
 | `c.serve` to start a server before the agent | [`evals/probes/tooling/tooling.eval.ts:117`](evals/probes/tooling/tooling.eval.ts#L117) |

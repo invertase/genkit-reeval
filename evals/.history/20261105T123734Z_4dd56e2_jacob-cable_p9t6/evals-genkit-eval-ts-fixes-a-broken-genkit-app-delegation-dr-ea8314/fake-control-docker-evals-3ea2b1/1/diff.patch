@@ -1,0 +1,12 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..a8ae2f3
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/flows.ts",
++  "snippet": "tags: z.string().describe('Up to three lowercase topic tags, comma separated'),",
++  "cause": "TicketSummarySchema declares tags as z.string() instead of z.array(z.string()), so summarizeTicket returns one comma-separated string where the dashboard expects a list.",
++  "evidence": "src/flows.ts contains \"tags: z.string().describe('Up to three lowercase topic tags, comma separated'),\"; the working text is \"tags: z.array(z.string()).describe('Up to three lowercase topic tags'),\"."
++}

@@ -1,0 +1,93 @@
+$ node_modules/.bin/tsx --test --test-reporter=tap --test-name-pattern '^build-order-desk:' ~/.verify-build.mts
+exit 1
+--- stdout
+TAP version 13
+# Subtest: build-order-desk: shipped order
+ok 1 - build-order-desk: shipped order
+  ---
+  duration_ms: 1124.659751
+  type: 'test'
+  ...
+# Subtest: build-order-desk: processing order
+not ok 2 - build-order-desk: processing order
+  ---
+  duration_ms: 763.197875
+  type: 'test'
+  location: '/home/reeval/.verify-build.mts:90:1'
+  failureType: 'testCodeFailure'
+  error: 'the reply does not say A-1002 is processing: "Great news! Your order A-1002 has shipped.\\n\\nYou can track its progress with code **NW-7F3K2Q**. The estimated arrival date is **2026-10-22**."'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    Great news! Your order A-1002 has shipped.
+    
+    You can track its progress with code **NW-7F3K2Q**. The estimated arrival date is **2026-10-22**.
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (/home/reeval/.verify-build.mts:92:10)
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: build-order-desk: unknown order
+not ok 3 - build-order-desk: unknown order
+  ---
+  duration_ms: 906.315875
+  type: 'test'
+  location: '/home/reeval/.verify-build.mts:97:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    the reply gives A-9999 a real order's facts or a tracking code: "Great news! Your order, A-9999, has shipped.\n\nYou can track its journey with code **NW-7F3K2Q**. We anticipate it will arrive by **2026-10-22**."
+    + actual - expected
+    
+    + [
+    +   'shipped',
+    +   'NW-7F3K2Q',
+    +   '2026-10-22'
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0: 'shipped'
+    1: 'NW-7F3K2Q'
+    2: '2026-10-22'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/reeval/.verify-build.mts:99:10)
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: build-order-desk: looks the order up
+not ok 4 - build-order-desk: looks the order up
+  ---
+  duration_ms: 1228.778459
+  type: 'test'
+  location: '/home/reeval/.verify-build.mts:102:1'
+  failureType: 'testCodeFailure'
+  error: 'the order desk never called lookupOrder: []'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (/home/reeval/.verify-build.mts:106:10)
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 1
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 5141.907544
+--- stderr

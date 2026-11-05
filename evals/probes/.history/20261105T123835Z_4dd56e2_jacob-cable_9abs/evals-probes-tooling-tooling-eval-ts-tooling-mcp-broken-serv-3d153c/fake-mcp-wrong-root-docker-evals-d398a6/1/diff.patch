@@ -1,0 +1,7 @@
+diff --git a/flows.json b/flows.json
+new file mode 100644
+index 0000000..33ea627
+--- /dev/null
++++ b/flows.json
+@@ -0,0 +1 @@
++["chat","draftReply","greet","orderStatus","summarizeTicket","tryRefundDesk","tryTriage"]

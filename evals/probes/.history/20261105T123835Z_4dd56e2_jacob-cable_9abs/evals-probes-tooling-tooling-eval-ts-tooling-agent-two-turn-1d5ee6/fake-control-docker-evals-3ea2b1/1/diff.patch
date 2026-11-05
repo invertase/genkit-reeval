@@ -1,0 +1,25 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..c0cf363
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,4 @@
++{
++  "turn1": "Order A-1001 is `shipped`. The ETA is `2026-10-22`. The tracking code is `NW-7F3K2Q`.",
++  "turn2": "The tracking code for order A-1001 is NW-7F3K2Q."
++}
+\ No newline at end of file
+diff --git a/two-turn.ts b/two-turn.ts
+new file mode 100644
+index 0000000..e94a86d
+--- /dev/null
++++ b/two-turn.ts
+@@ -0,0 +1,8 @@
++import { writeFileSync } from 'node:fs';
++import { triage } from './src/agents.js';
++
++const chat = triage.chat();
++const turn1 = (await chat.send('Where is order A-1001?')).text;
++const turn2 = (await chat.send('What is its tracking code?')).text;
++writeFileSync('answer.json', JSON.stringify({ turn1, turn2 }, null, 2));
++console.log(JSON.stringify({ turn1, turn2 }, null, 2));

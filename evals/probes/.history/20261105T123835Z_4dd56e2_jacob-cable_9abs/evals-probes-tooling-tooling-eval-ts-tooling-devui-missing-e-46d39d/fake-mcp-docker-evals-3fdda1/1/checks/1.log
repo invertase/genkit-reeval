@@ -1,0 +1,5 @@
+$ FLOW=greet ANSWER=$HOME/.answer.txt node_modules/.bin/tsx ~/.verify-trace.mts
+exit 0
+--- stdout
+PROBE_RESULT {"errors":[]}
+--- stderr

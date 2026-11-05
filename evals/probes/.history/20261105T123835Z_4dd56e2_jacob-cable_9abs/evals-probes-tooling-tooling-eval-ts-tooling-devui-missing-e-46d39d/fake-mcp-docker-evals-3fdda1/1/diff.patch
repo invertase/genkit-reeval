@@ -1,0 +1,8 @@
+diff --git a/answer.txt b/answer.txt
+new file mode 100644
+index 0000000..f7072c4
+--- /dev/null
++++ b/answer.txt
+@@ -0,0 +1,2 @@
++Output: Hello Dana, welcome to Northwind Supplies!
++Trace ID: 857a6c3a456bc05c682e5db00c37728d

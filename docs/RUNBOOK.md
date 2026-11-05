@@ -1,12 +1,12 @@
 # Runbook
 
-Run everything from the repo root. `pnpm reeval` is the pinned `reeval@0.18.0`. Order: keys, images, oracle, canary, smoke, full. Never run `full` before the first four pass.
+Run everything from the repo root. `pnpm reeval` is the pinned `reeval@0.20.0`. Order: keys, images, oracle, canary, smoke, full. Never run `full` before the first four pass.
 
 ## Sizes
 
-19 cases x 5 arms (`control`, `rules`, `mcp`, `directed`, `skill`) x 5 harnesses = 475 cells. There are two families. `evals/genkit.eval.ts` is one `evaluate.each` over the 12 bugs. `evals/build.eval.ts` is one `evaluate.each` over the 7 build tasks. Each family gets one lift per arm, paired by case.
+19 cases x 5 arms (`control`, `rules`, `mcp`, `directed`, `skill`) x 5 harnesses = 475 case cells. reeval counts a cell per eval, arm and harness, so it reports 50 cells for the same plan; this runbook and `evals/canary-check.ts` count per case. There are two evals. `evals/genkit.eval.ts` runs `cases` over the 12 bugs. `evals/build.eval.ts` runs `cases` over the 7 build tasks. Each eval gets one lift per arm, paired by case.
 
-| Command | Cells | Attempts | reeval's estimate at concurrency 8 |
+| Command | Case cells | Attempts | reeval's estimate at concurrency 8 |
 |---|---|---|---|
 | `pnpm reeval run --dry-run` | 475 | 475 | 172 min |
 | `... --profile smoke` | 95 | 95 | 31 min |
@@ -39,8 +39,8 @@ Docker Desktop sometimes drops an image tag reference: `docker images` lists the
 The canary's reeval run exits 1 when its cells fail, which is what a good canary does. So `pnpm canary` then runs `evals/canary-check.ts` on the run it recorded, and that script's exit code is the result. It passes only when every cell failed, every build cell failed exactly its task's `cheat.fails` among the requirement checks, and every bug cell failed `locates the file`, `names the cause` and `flow works`. It prints one line per cell: `ok` or `BAD`, the outcome and the requirement checks that failed, with the reason under each `BAD` line. If reeval recorded no new canary run, it fails rather than read an old one. To re-judge a recorded run: `node_modules/.bin/tsx evals/canary-check.ts <run id>`.
 
 ```bash
-pnpm oracle     # expect 19 passed, exit 0
-pnpm canary     # reeval reports 19 failed, then expect "canary-check: all 19 cells failed as they must", exit 0
+pnpm oracle     # expect "2 passed" (19 of 19 runs across the two evals), exit 0
+pnpm canary     # reeval reports "2 failed" (0 of 19 runs), then expect "canary-check: all 19 cells failed as they must", exit 0
 ```
 
 Each cell is a container that copies the baked `node_modules` in and makes a few Gemini calls, so allow a minute or two each at concurrency 8. The judge runs with `fakeJudge()` here: no key, no model call.
@@ -54,7 +54,7 @@ If the oracle fails a bug, the check is wrong, not the fix: read `failing_attemp
 Each probe in `evals/probes/<suite>/cases.ts` has a correct solution (`oracle`) and a plausible wrong one (`cheat`, with the checks it must fail). Under `reeval.probes.oracle.config.ts` the eval places both solutions under `~/.probe`, and the fake agent applies one of them. A real agent's sandbox has no `~/.probe`.
 
 ```bash
-pnpm probe:oracle                            # expect 22 passed
+pnpm probe:oracle                            # expect "17 passed" (22 of 22 runs across the 17 evals)
 pnpm probe:canary                            # expect "canary-check: all 22 cells failed as they must"
 pnpm probe --profile smoke                   # Claude Code Sonnet only: 77 cells
 pnpm probe                                   # all five harnesses: 385 cells

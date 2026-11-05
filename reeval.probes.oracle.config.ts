@@ -12,12 +12,12 @@ const controlOnly = { compare: false } as const
 
 export default defineConfig({
   include: ['evals/probes/**/*.eval.ts'],
-  harness: apply('good'),
+  harnesses: apply('good'),
   sandbox,
   judge: { model: fakeJudge() },
   defaultProfile: { local: 'oracle', ci: 'oracle' },
   profiles: {
     oracle: { limit: controlOnly },
-    canary: { defaults: { harness: apply('cheat') }, limit: controlOnly },
+    canary: { defaults: { harnesses: apply('cheat') }, limit: controlOnly },
   },
 })

@@ -1,0 +1,19 @@
+diff --git a/src/agents.ts b/src/agents.ts
+index 8102c68..d9969a2 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -1,5 +1,5 @@
+ import { agents } from '@genkit-ai/middleware';
+-import { FileSessionStore, z } from 'genkit/beta';
++import { FileSessionStore, InMemorySessionStore, z } from 'genkit/beta';
+ import { ai } from './ai.js';
+ import { createRefund } from './db.js';
+ import { lookupOrder } from './tools.js';
+@@ -50,6 +50,7 @@ export const refundAgent = ai.defineAgent({
+   tools: [lookupOrder, approveRefund, issueRefund],
+   toolChoice: 'auto',
+   maxTurns: 6,
++  store: new InMemorySessionStore(),
+ });
+ 
+ /** Routes each customer message to the right specialist agent. */

@@ -11,13 +11,14 @@ import { FIXED_CHECKS, TASKS } from './tasks.ts'
 /** The checks every canary bug cell must fail: its answer names a decoy bug and the bug stays in place. */
 const BUG_FAILS = ['locates the file', 'names the cause', 'flow works']
 
-type Cell = { name: string; file: string; outcome: string; attempts: number; failed: string[] }
+/** One cell of one case: `name` is what it prints as, `case` the bug, task or probe it ran. */
+type Cell = { name: string; case: string; file: string; outcome: string; attempts: number; failed: string[] }
 
 /** Why `cell` is not what the canary must produce; empty when it is. */
 export function cellErrors(cell: Cell): string[] {
   const errors = cell.outcome === 'fail' ? [] : [`outcome ${cell.outcome}, not fail`]
   if (cell.attempts === 0) errors.push('no attempt')
-  const name = cell.name.slice(cell.name.indexOf(': ') + 2)
+  const name = cell.case
   if (cell.file === 'evals/build.eval.ts') {
     const task = TASKS.find((t) => t.name === name)
     if (!task) return [...errors, `no build task ${name}`]
@@ -52,7 +53,8 @@ type RunRecord = {
     name: string
     file: string
     cells: { key: string; outcome: string }[]
-    attempts: { cell: string; assertions: { label: string; status: string }[] }[]
+    cases?: { key: string; cells: { key: string; outcome: string }[] }[]
+    attempts: { cell: string; case?: string; assertions?: { label: string; status: string }[] }[]
   }[]
 }
 
@@ -102,17 +104,24 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     console.error(`canary-check: the newest run ${runId} has profile ${profile}, not canary`)
     process.exit(1)
   }
-  const cells = run.evals
-    .flatMap((e) =>
-      e.cells.map((c) => {
-        const attempts = e.attempts.filter((a) => a.cell === c.key)
+  // An eval with `cases` keeps each case's cells under `cases`; a plain eval is named `<suite>: <probe>`.
+  const groups = run.evals.flatMap((e) =>
+    e.cases
+      ? e.cases.map((k) => ({ e, name: `${e.name} [${k.key}]`, case: k.key, cells: k.cells }))
+      : [{ e, name: e.name, case: e.name.slice(e.name.indexOf(': ') + 2), cells: e.cells }],
+  )
+  const cells = groups
+    .flatMap(({ e, name, case: key, cells }) =>
+      cells.map((c) => {
+        const attempts = e.attempts.filter((a) => a.cell === c.key && (e.cases === undefined || a.case === key))
         return {
-          name: e.name,
+          name,
+          case: key,
           file: e.file,
           key: c.key,
           outcome: c.outcome,
           attempts: attempts.length,
-          failed: attempts.flatMap((a) => a.assertions.filter((s) => s.status === 'fail').map((s) => s.label)),
+          failed: attempts.flatMap((a) => (a.assertions ?? []).filter((s) => s.status === 'fail').map((s) => s.label)),
         }
       }),
     )

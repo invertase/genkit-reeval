@@ -28,13 +28,13 @@ const controlOnly = { compare: false } as const
 
 export default defineConfig({
   include: ['evals/*.eval.ts'],
-  harness: oracle(),
+  harnesses: oracle(),
   sandbox,
   // The judge code path runs in the oracle too, with no key and no model call.
   judge: { model: fakeJudge() },
   defaultProfile: { local: 'oracle', ci: 'oracle' },
   profiles: {
     oracle: { limit: controlOnly },
-    canary: { defaults: { harness: oracle(' --cheat') }, limit: controlOnly },
+    canary: { defaults: { harnesses: oracle(' --cheat') }, limit: controlOnly },
   },
 })

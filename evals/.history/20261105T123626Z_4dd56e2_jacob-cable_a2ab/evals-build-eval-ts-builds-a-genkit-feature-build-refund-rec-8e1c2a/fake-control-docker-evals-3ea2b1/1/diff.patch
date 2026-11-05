@@ -1,0 +1,17 @@
+diff --git a/src/agents.ts b/src/agents.ts
+index 433ce08..f915c9e 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -13,7 +13,11 @@ const issueRefund = ai.defineTool(
+     inputSchema: z.object({ orderId: z.string(), amount: z.number() }),
+     outputSchema: z.object({ refundId: z.string() }),
+   },
+-  async ({ orderId, amount }) => ({ refundId: createRefund(orderId, amount) }),
++  async ({ orderId, amount }) => {
++    const refundId = createRefund(orderId, amount);
++    ai.currentSession().addArtifacts([{ name: `receipt-${refundId}`, parts: [{ data: { refundId, orderId, amount } }] }]);
++    return { refundId };
++  },
+ );
+ 
+ const approveRefund = ai.defineInterrupt({

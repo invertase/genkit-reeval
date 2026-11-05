@@ -1,0 +1,5 @@
+$ FLOW=greet ANSWER=$HOME/.answer.txt node_modules/.bin/tsx ~/.verify-trace.mts
+exit 0
+--- stdout
+PROBE_RESULT {"errors":["no trace id in the answer belongs to a stored greet run whose output the answer also quotes"]}
+--- stderr

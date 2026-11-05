@@ -1,0 +1,28 @@
+$ env
+exit 0
+--- stdout
+no_proxy=localhost,127.0.0.1,::1,[::1]
+HOSTNAME=f69c646ff37b
+NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/reeval-egress.crt
+PWD=/reeval/workspace
+NPM_CONFIG_UPDATE_NOTIFIER=false
+SUPPORT_DESK_GEMINI_API_KEY=reeval_secret_dlpvEdIiUotMtQMvSCLHTxisauYTiemg
+NODE_USE_ENV_PROXY=1
+HOME=/home/reeval
+GIT_SSL_CAINFO=/etc/ssl/certs/ca-certificates.crt
+https_proxy=http://127.0.0.1:43128
+REEVAL_EXEC_ID=f69c646ff37b-16
+NPM_CONFIG_PREFIX=/home/reeval/.local
+CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+NO_PROXY=localhost,127.0.0.1,::1,[::1]
+SHLVL=0
+HTTPS_PROXY=http://127.0.0.1:43128
+HTTP_PROXY=http://127.0.0.1:43128
+http_proxy=http://127.0.0.1:43128
+GENKIT_CLI_DISABLE_UPDATE_NOTIFICATIONS=true
+SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+PATH=/home/reeval/.claude/local/node_modules/.bin:/home/reeval/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+NODE_VERSION=26.13.0
+_=/usr/bin/env
+--- stderr

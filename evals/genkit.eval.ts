@@ -19,7 +19,7 @@ const parseAnswer = (text: string | null): unknown => {
 }
 
 // Set by reeval.oracle.config.ts: gates the control cell so a failing oracle sets the exit code; evals/canary-check.ts judges the canary.
-const gate = process.env.GENKIT_EVAL_GATE === 'all' ? 'all' : 'none'
+const gate = process.env.GENKIT_EVAL_GATE === 'all' ? 'all' : 'observe'
 
 const EVIDENCE_QUESTION =
   'Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? ' +
@@ -29,13 +29,14 @@ const EVIDENCE_QUESTION =
 
 const SUMMARY_QUESTION = "Does the agent's final message accurately describe the change it made?"
 
-// One family of 12 cases: the arms get one lift, paired by bug.
-evaluate.each(BUGS)(
-  'fixes a broken Genkit app: $name',
+// One eval over 12 cases: the arms get one lift, paired by bug.
+evaluate(
+  'fixes a broken Genkit app',
   {
+    cases: BUGS,
     // Every arm runs on every harness; reeval reports each variant's lift over the control arm.
     compare: {
-      baseline: control,
+      control,
       variants: [rules, mcp, directed, skill],
       gate,
     },

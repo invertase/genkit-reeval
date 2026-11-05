@@ -33,17 +33,17 @@ const run = async (c: AttemptContext, probe: Probe) => {
 
 const arms = (base: typeof empty, id: string) => {
   const { open, docsite, llms, index, hosted } = docsArms(base, 'js', id)
-  return { baseline: open, variants: [docsite, llms, index, hosted] }
+  return { control: open, variants: [docsite, llms, index, hosted] }
 }
 
-evaluate.each(PROBES.filter((p) => !SEEDED.includes(p.name)))(
-  'docs: $name',
-  { compare: { ...arms(empty, 'js-empty'), gate } },
+evaluate(
+  'docs: empty project',
+  { cases: PROBES.filter((p) => !SEEDED.includes(p.name)), compare: { ...arms(empty, 'js-empty'), gate } },
   run,
 )
 
-evaluate.each(PROBES.filter((p) => SEEDED.includes(p.name)))(
-  'docs: $name',
-  { compare: { ...arms(seeded, 'js-seed'), gate } },
+evaluate(
+  'docs: seeded project',
+  { cases: PROBES.filter((p) => SEEDED.includes(p.name)), compare: { ...arms(seeded, 'js-seed'), gate } },
   run,
 )

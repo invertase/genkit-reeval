@@ -1,0 +1,902 @@
+diff --git a/README.md b/README.md
+index 5a6a9c9..42469f1 100644
+--- a/README.md
++++ b/README.md
+@@ -108,14 +108,14 @@ To learn reeval from this repo, read the study files first, starting with [`eval
+ | `extendEnvironment` chain: `control` to `rules` to `mcp` to `directed` | [`evals/environments.ts:24`](evals/environments.ts#L24), [L29](evals/environments.ts#L29), [L40](evals/environments.ts#L40) |
+ | `mcp.stdio` for the `genkit mcp` server | [`evals/environments.ts:31`](evals/environments.ts#L31) |
+ | `skill.git` for a skill pinned to a commit | [`evals/environments.ts:47`](evals/environments.ts#L47) |
+-| `evaluate.each` over a case list | [`evals/genkit.eval.ts:33`](evals/genkit.eval.ts#L33), [`evals/build.eval.ts:26`](evals/build.eval.ts#L26) |
+-| `compare: { baseline, variants, gate }` | [`evals/genkit.eval.ts:37`](evals/genkit.eval.ts#L37), [`evals/build.eval.ts:29`](evals/build.eval.ts#L29) |
+-| Pairwise `questions` with `across: 'environment'` | [`evals/genkit.eval.ts:43`](evals/genkit.eval.ts#L43), [`evals/build.eval.ts:34`](evals/build.eval.ts#L34) |
+-| `c.writeFile` to seed the workspace | [`evals/genkit.eval.ts:58`](evals/genkit.eval.ts#L58) |
+-| `c.send` for one agent turn | [`evals/genkit.eval.ts:61`](evals/genkit.eval.ts#L61) |
+-| `expect(c).not.toHaveChanged` | [`evals/genkit.eval.ts:65`](evals/genkit.eval.ts#L65) |
+-| `expect(c.exec(...)).toSucceed()` for a hidden test | [`evals/genkit.eval.ts:73`](evals/genkit.eval.ts#L73) |
+-| `c.judge` with `on` and its inputs (`transcript`, `diff`), recorded but not asserted | [`evals/genkit.eval.ts:79`](evals/genkit.eval.ts#L79) |
++| `evaluate` with `cases` over a case list | [`evals/genkit.eval.ts:36`](evals/genkit.eval.ts#L36), [`evals/build.eval.ts:29`](evals/build.eval.ts#L29) |
++| `compare: { control, variants, gate }` | [`evals/genkit.eval.ts:38`](evals/genkit.eval.ts#L38), [`evals/build.eval.ts:30`](evals/build.eval.ts#L30) |
++| Pairwise `questions` with `across: 'environment'` | [`evals/genkit.eval.ts:44`](evals/genkit.eval.ts#L44), [`evals/build.eval.ts:35`](evals/build.eval.ts#L35) |
++| `c.writeFile` to seed the workspace | [`evals/genkit.eval.ts:59`](evals/genkit.eval.ts#L59) |
++| `c.send` for one agent turn | [`evals/genkit.eval.ts:62`](evals/genkit.eval.ts#L62) |
++| `expect(c).not.toHaveChanged` | [`evals/genkit.eval.ts:66`](evals/genkit.eval.ts#L66) |
++| `expect(c.exec(...)).toSucceed()` for a hidden test | [`evals/genkit.eval.ts:74`](evals/genkit.eval.ts#L74) |
++| `c.judge` with `on` and its inputs (`transcript`, `diff`), recorded but not asserted | [`evals/genkit.eval.ts:80`](evals/genkit.eval.ts#L80) |
+ | Oracle and canary: `fakeHarness` applies the fix or a cheat, `fakeJudge` needs no key | [`reeval.oracle.config.ts:23`](reeval.oracle.config.ts#L23), [L34](reeval.oracle.config.ts#L34), [L38](reeval.oracle.config.ts#L38) |
+ | Egress policies built on `DEFAULT_EGRESS_ALLOW` | [`evals/probes/environments.ts:4`](evals/probes/environments.ts#L4), [L40](evals/probes/environments.ts#L40) |
+ | `c.serve` to start a server before the agent | [`evals/probes/tooling/tooling.eval.ts:117`](evals/probes/tooling/tooling.eval.ts#L117) |
+diff --git a/docs/FINDINGS.md b/docs/FINDINGS.md
+index fea22dc..dee6206 100644
+--- a/docs/FINDINGS.md
++++ b/docs/FINDINGS.md
+@@ -96,7 +96,7 @@ Everything the study holds fixed, with where it came from. `evals/rules/GENKIT.m
+ | genkit (app dependency) | `1.42.0` | npm |
+ | @genkit-ai/google-genai (app dependency) | `1.42.0` | npm |
+ | @genkit-ai/middleware (app dependency) | `0.10.0` | npm |
+-| reeval (root devDependency) | `0.18.0` | npm |
++| reeval (root devDependency) | `0.20.0` | npm |
+ | genkit-ai/skills repository | `d02d49da3a77687914715188d495999170bbf48b` (`main` on 2026-10-20) | `gh api repos/genkit-ai/skills/commits/HEAD --jq .sha` |
+ | Skill directory in that repository | `skills/developing-genkit-js/` (`SKILL.md` plus `references/*.md`) | `gh api repos/genkit-ai/skills/git/trees/<sha>?recursive=1` |
+ | Skill's own CLI requirement | `genkit-cli >= 1.29.0`; `SKILL.md` metadata `version: "1.0.0"` | `SKILL.md` lines 14-15, `references/docs-and-cli.md` line 7 |
+diff --git a/docs/RUNBOOK.md b/docs/RUNBOOK.md
+index 616d959..5e1bd3c 100644
+--- a/docs/RUNBOOK.md
++++ b/docs/RUNBOOK.md
+@@ -1,10 +1,10 @@
+ # Runbook
+ 
+-Run everything from the repo root. `pnpm reeval` is the pinned `reeval@0.18.0`. Order: keys, images, oracle, canary, smoke, full. Never run `full` before the first four pass.
++Run everything from the repo root. `pnpm reeval` is the pinned `reeval@0.20.0`. Order: keys, images, oracle, canary, smoke, full. Never run `full` before the first four pass.
+ 
+ ## Sizes
+ 
+-19 cases x 5 arms (`control`, `rules`, `mcp`, `directed`, `skill`) x 5 harnesses = 475 cells. There are two families. `evals/genkit.eval.ts` is one `evaluate.each` over the 12 bugs. `evals/build.eval.ts` is one `evaluate.each` over the 7 build tasks. Each family gets one lift per arm, paired by case.
++19 cases x 5 arms (`control`, `rules`, `mcp`, `directed`, `skill`) x 5 harnesses = 475 cells. There are two evals. `evals/genkit.eval.ts` runs `cases` over the 12 bugs. `evals/build.eval.ts` runs `cases` over the 7 build tasks. Each eval gets one lift per arm, paired by case.
+ 
+ | Command | Cells | Attempts | reeval's estimate at concurrency 8 |
+ |---|---|---|---|
+diff --git a/evals/build.eval.ts b/evals/build.eval.ts
+index 1b289fd..a8c2560 100644
+--- a/evals/build.eval.ts
++++ b/evals/build.eval.ts
+@@ -8,7 +8,7 @@ import { requirementErrors, TASKS, verifyErrors } from './tasks.ts'
+ const verify = fs.readFileSync(new URL('./verify-build.mts', import.meta.url), 'utf8')
+ 
+ // Set by reeval.oracle.config.ts: gates the control cell so a failing oracle sets the exit code; evals/canary-check.ts judges the canary.
+-const gate = process.env.GENKIT_EVAL_GATE === 'all' ? 'all' : 'none'
++const gate = process.env.GENKIT_EVAL_GATE === 'all' ? 'all' : 'observe'
+ 
+ const IDIOM_QUESTION =
+   "Did the agent build the feature with Genkit's agents API (`ai.defineAgent`, `ai.defineInterrupt` for the approval step, the `agents()` middleware from `@genkit-ai/middleware` for delegation, a session store such as `FileSessionStore` for resumable conversations) " +
+@@ -22,12 +22,13 @@ const PAIR_QUESTION =
+   'Idiomatic means `ai.defineAgent`, `ai.defineInterrupt` for a human approval step, the `agents()` middleware from `@genkit-ai/middleware` (a real package, already in package.json) for delegation, ' +
+   'and a session store such as `FileSessionStore` for resumable conversations. Tools that wrap another agent\'s `.chat()`, hand-rolled `ai.generate` loops, and `ai.chat()` (removed from Genkit) are not idiomatic.'
+ 
+-// One family of 7 cases: the arms get one lift, paired by task.
+-evaluate.each(TASKS)(
+-  'builds a Genkit feature: $name',
++// One eval over 7 cases: the arms get one lift, paired by task.
++evaluate(
++  'builds a Genkit feature',
+   {
++    cases: TASKS,
+     compare: {
+-      baseline: control,
++      control,
+       variants: [rules, mcp, directed, skill],
+       gate,
+     },
+diff --git a/evals/canary-check.ts b/evals/canary-check.ts
+index aa98894..53ffc58 100644
+--- a/evals/canary-check.ts
++++ b/evals/canary-check.ts
+@@ -11,13 +11,14 @@ import { FIXED_CHECKS, TASKS } from './tasks.ts'
+ /** The checks every canary bug cell must fail: its answer names a decoy bug and the bug stays in place. */
+ const BUG_FAILS = ['locates the file', 'names the cause', 'flow works']
+ 
+-type Cell = { name: string; file: string; outcome: string; attempts: number; failed: string[] }
++/** One cell of one case: `name` is what it prints as, `case` the bug, task or probe it ran. */
++type Cell = { name: string; case: string; file: string; outcome: string; attempts: number; failed: string[] }
+ 
+ /** Why `cell` is not what the canary must produce; empty when it is. */
+ export function cellErrors(cell: Cell): string[] {
+   const errors = cell.outcome === 'fail' ? [] : [`outcome ${cell.outcome}, not fail`]
+   if (cell.attempts === 0) errors.push('no attempt')
+-  const name = cell.name.slice(cell.name.indexOf(': ') + 2)
++  const name = cell.case
+   if (cell.file === 'evals/build.eval.ts') {
+     const task = TASKS.find((t) => t.name === name)
+     if (!task) return [...errors, `no build task ${name}`]
+@@ -52,7 +53,8 @@ type RunRecord = {
+     name: string
+     file: string
+     cells: { key: string; outcome: string }[]
+-    attempts: { cell: string; assertions: { label: string; status: string }[] }[]
++    cases?: { key: string; cells: { key: string; outcome: string }[] }[]
++    attempts: { cell: string; case?: string; assertions?: { label: string; status: string }[] }[]
+   }[]
+ }
+ 
+@@ -102,17 +104,24 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
+     console.error(`canary-check: the newest run ${runId} has profile ${profile}, not canary`)
+     process.exit(1)
+   }
+-  const cells = run.evals
+-    .flatMap((e) =>
+-      e.cells.map((c) => {
+-        const attempts = e.attempts.filter((a) => a.cell === c.key)
++  // An eval with `cases` keeps each case's cells under `cases`; a plain eval is named `<suite>: <probe>`.
++  const groups = run.evals.flatMap((e) =>
++    e.cases
++      ? e.cases.map((k) => ({ e, name: `${e.name} [${k.key}]`, case: k.key, cells: k.cells }))
++      : [{ e, name: e.name, case: e.name.slice(e.name.indexOf(': ') + 2), cells: e.cells }],
++  )
++  const cells = groups
++    .flatMap(({ e, name, case: key, cells }) =>
++      cells.map((c) => {
++        const attempts = e.attempts.filter((a) => a.cell === c.key && (e.cases === undefined || a.case === key))
+         return {
+-          name: e.name,
++          name,
++          case: key,
+           file: e.file,
+           key: c.key,
+           outcome: c.outcome,
+           attempts: attempts.length,
+-          failed: attempts.flatMap((a) => a.assertions.filter((s) => s.status === 'fail').map((s) => s.label)),
++          failed: attempts.flatMap((a) => (a.assertions ?? []).filter((s) => s.status === 'fail').map((s) => s.label)),
+         }
+       }),
+     )
+diff --git a/evals/genkit.eval.ts b/evals/genkit.eval.ts
+index 970ea77..cacf063 100644
+--- a/evals/genkit.eval.ts
++++ b/evals/genkit.eval.ts
+@@ -19,7 +19,7 @@ const parseAnswer = (text: string | null): unknown => {
+ }
+ 
+ // Set by reeval.oracle.config.ts: gates the control cell so a failing oracle sets the exit code; evals/canary-check.ts judges the canary.
+-const gate = process.env.GENKIT_EVAL_GATE === 'all' ? 'all' : 'none'
++const gate = process.env.GENKIT_EVAL_GATE === 'all' ? 'all' : 'observe'
+ 
+ const EVIDENCE_QUESTION =
+   'Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? ' +
+@@ -29,13 +29,14 @@ const EVIDENCE_QUESTION =
+ 
+ const SUMMARY_QUESTION = "Does the agent's final message accurately describe the change it made?"
+ 
+-// One family of 12 cases: the arms get one lift, paired by bug.
+-evaluate.each(BUGS)(
+-  'fixes a broken Genkit app: $name',
++// One eval over 12 cases: the arms get one lift, paired by bug.
++evaluate(
++  'fixes a broken Genkit app',
+   {
++    cases: BUGS,
+     // Every arm runs on every harness; reeval reports each variant's lift over the control arm.
+     compare: {
+-      baseline: control,
++      control,
+       variants: [rules, mcp, directed, skill],
+       gate,
+     },
+diff --git a/evals/probes/agents/agents.eval.ts b/evals/probes/agents/agents.eval.ts
+index cc0d3ef..21c0b23 100644
+--- a/evals/probes/agents/agents.eval.ts
++++ b/evals/probes/agents/agents.eval.ts
+@@ -107,7 +107,7 @@ const goNewApp = probe('go-new-app')
+   const docs = docsArms(control, 'go', 'go-new')
+   evaluate(
+     `agents: ${goNewApp.name}`,
+-    { compare: { baseline: control, variants: [skill, docs.open, docs.docsite, docs.llms, docs.index], gate } },
++    { compare: { control, variants: [skill, docs.open, docs.docsite, docs.llms, docs.index], gate } },
+     async (c) => {
+       await placeSolutions(c, goNewApp)
+       const turn = await c.send(goNewApp.prompt)
+@@ -148,7 +148,7 @@ const goAgentSession = probe('go-agent-session')
+   const { index } = docsArms(control, 'go', 'go-session')
+   evaluate(
+     `agents: ${goAgentSession.name}`,
+-    { compare: { baseline: control, variants: [skill, index], gate }, questions: [{ question: AGENT_QUESTION, across: 'environment', task: true, diff: ['*.go'] }] },
++    { compare: { control, variants: [skill, index], gate }, questions: [{ question: AGENT_QUESTION, across: 'environment', task: true, diff: ['*.go'] }] },
+     async (c) => {
+       await placeSolutions(c, goAgentSession)
+       const turn = await c.send(goAgentSession.prompt)
+@@ -183,7 +183,7 @@ const pyToolCalling = probe('py-tool-calling')
+   const docs = docsArms(control, 'python', 'py-tool')
+   evaluate(
+     `agents: ${pyToolCalling.name}`,
+-    { compare: { baseline: control, variants: [skill, docs.open, docs.docsite, docs.llms, docs.index], gate } },
++    { compare: { control, variants: [skill, docs.open, docs.docsite, docs.llms, docs.index], gate } },
+     async (c) => {
+       await placeSolutions(c, pyToolCalling)
+       const turn = await c.send(pyToolCalling.prompt)
+@@ -214,7 +214,7 @@ const pyAgentSession = probe('py-agent-session')
+   const { index } = docsArms(control, 'python', 'py-session')
+   evaluate(
+     `agents: ${pyAgentSession.name}`,
+-    { compare: { baseline: control, variants: [skill, index], gate }, questions: [{ question: AGENT_QUESTION, across: 'environment', task: true, diff: ['*.py'] }] },
++    { compare: { control, variants: [skill, index], gate }, questions: [{ question: AGENT_QUESTION, across: 'environment', task: true, diff: ['*.py'] }] },
+     async (c) => {
+       await placeSolutions(c, pyAgentSession)
+       const turn = await c.send(pyAgentSession.prompt)
+@@ -261,7 +261,7 @@ const pySkillSetup = probe('py-skill-setup')
+   evaluate(
+     `agents: ${pySkillSetup.name}`,
+     {
+-      compare: { baseline: control, variants: [skill, index], gate },
++      compare: { control, variants: [skill, index], gate },
+       questions: [{ question: 'Did the agent set the project up from official Genkit tooling (a Genkit skill, `genkit init:ai-tools`, the `genkit mcp` server or genkit.dev docs) rather than writing generic notes from memory?', across: 'environment', task: true, transcript: 'tools' }],
+     },
+     async (c) => {
+diff --git a/evals/probes/agents/skills-gate.check.ts b/evals/probes/agents/skills-gate.check.ts
+index c720453..16cc132 100644
+--- a/evals/probes/agents/skills-gate.check.ts
++++ b/evals/probes/agents/skills-gate.check.ts
+@@ -2,20 +2,20 @@ import { type AttemptContext, evaluate, expect } from 'reeval'
+ import { CASES } from './skills-gate.cases.ts'
+ import { asSkillSubject, checkSkills, GENKIT_SKILLS, skillsCalled } from './skills.ts'
+ 
+-const harness = CASES.map((c) => c.harness)
++const harnesses = CASES.map((c) => c.harness)
+ const session = async (c: AttemptContext) => {
+   await c.send('first')
+   await c.send('second')
+ }
+ 
+-evaluate('gate', { harness }, async (c) => {
++evaluate('gate', { harnesses }, async (c) => {
+   await session(c)
+   c.observe('skills-called', [...new Set(c.turns.flatMap((t) => skillsCalled(t)))])
+   checkSkills(c.turns)
+ })
+ 
+ for (const name of GENKIT_SKILLS) {
+-  evaluate(`matcher ${name}`, { harness }, async (c) => {
++  evaluate(`matcher ${name}`, { harnesses }, async (c) => {
+     await session(c)
+     c.observe('skills-called', [...new Set(c.turns.flatMap((t) => skillsCalled(t)))])
+     expect(asSkillSubject({ transcript: c.turns.flatMap((t) => t.transcript), unreported: [] }), 'called').toHaveCalledSkill(name)
+diff --git a/evals/probes/docs/docs.eval.ts b/evals/probes/docs/docs.eval.ts
+index a43e158..0e7eb2d 100644
+--- a/evals/probes/docs/docs.eval.ts
++++ b/evals/probes/docs/docs.eval.ts
+@@ -33,17 +33,17 @@ const run = async (c: AttemptContext, probe: Probe) => {
+ 
+ const arms = (base: typeof empty, id: string) => {
+   const { open, docsite, llms, index, hosted } = docsArms(base, 'js', id)
+-  return { baseline: open, variants: [docsite, llms, index, hosted] }
++  return { control: open, variants: [docsite, llms, index, hosted] }
+ }
+ 
+-evaluate.each(PROBES.filter((p) => !SEEDED.includes(p.name)))(
+-  'docs: $name',
+-  { compare: { ...arms(empty, 'js-empty'), gate } },
++evaluate(
++  'docs: empty project',
++  { cases: PROBES.filter((p) => !SEEDED.includes(p.name)), compare: { ...arms(empty, 'js-empty'), gate } },
+   run,
+ )
+ 
+-evaluate.each(PROBES.filter((p) => SEEDED.includes(p.name)))(
+-  'docs: $name',
+-  { compare: { ...arms(seeded, 'js-seed'), gate } },
++evaluate(
++  'docs: seeded project',
++  { cases: PROBES.filter((p) => SEEDED.includes(p.name)), compare: { ...arms(seeded, 'js-seed'), gate } },
+   run,
+ )
+diff --git a/evals/probes/inline-docs/inline-docs.eval.ts b/evals/probes/inline-docs/inline-docs.eval.ts
+index 8fd5d57..8a6ccd8 100644
+--- a/evals/probes/inline-docs/inline-docs.eval.ts
++++ b/evals/probes/inline-docs/inline-docs.eval.ts
+@@ -10,9 +10,9 @@ import { stock, tsdoc } from './environments.ts'
+ 
+ const verify = readFileSync(new URL('../../verify-build.mts', import.meta.url), 'utf8')
+ 
+-evaluate.each(PROBES)(
+-  'inline-docs: $name',
+-  { compare: { baseline: stock, variants: [tsdoc], gate }, tags: ['agents-tsdoc'] },
++evaluate(
++  'inline-docs',
++  { cases: PROBES, compare: { control: stock, variants: [tsdoc], gate }, tags: ['agents-tsdoc'] },
+   async (c, probe) => {
+     for (const [file, text] of Object.entries(TASK.start)) {
+       if (text === null) throw new Error(`${TASK.name}: removes ${file}, which this eval does not place`)
+diff --git a/evals/probes/probe.ts b/evals/probes/probe.ts
+index 08461db..8163cf0 100644
+--- a/evals/probes/probe.ts
++++ b/evals/probes/probe.ts
+@@ -50,7 +50,7 @@ export function parseResult(run: { exitCode: number; stdout: string; stderr: str
+ export const ORACLE = process.env.GENKIT_PROBE_ORACLE === '1'
+ 
+ /** Compare gate: every cell under the oracle and canary, report-only in real runs. */
+-export const gate = ORACLE ? 'all' : 'none'
++export const gate = ORACLE ? 'all' : 'observe'
+ 
+ const ORACLE_DIR = '~/.probe'
+ 
+diff --git a/evals/probes/registry.ts b/evals/probes/registry.ts
+index b1e98e9..8dc5c01 100644
+--- a/evals/probes/registry.ts
++++ b/evals/probes/registry.ts
+@@ -7,7 +7,7 @@ import { PROBES as TOOLING } from './tooling/cases.ts'
+ /** Every suite's probes, keyed by the suite directory under `evals/probes/`. */
+ export const SUITES: Record<string, Probe[]> = { agents: AGENTS, docs: DOCS, 'inline-docs': INLINE_DOCS, tooling: TOOLING }
+ 
+-/** The probe a recorded eval is a case of, from its file and `evaluate.each` case name; undefined when none. */
++/** The probe a recorded eval is a case of, from its file and case key; undefined when none. */
+ export function probeFor(file: string, caseName: string): Probe | undefined {
+   const suite = /^evals\/probes\/([^/]+)\//.exec(file)?.[1]
+   return suite === undefined ? undefined : SUITES[suite]?.find((p) => p.name === caseName)
+diff --git a/evals/probes/tooling/tooling.eval.ts b/evals/probes/tooling/tooling.eval.ts
+index 15a4ad9..36bb6ea 100644
+--- a/evals/probes/tooling/tooling.eval.ts
++++ b/evals/probes/tooling/tooling.eval.ts
+@@ -11,7 +11,7 @@ import { controlClaude, directedOffline, mcpOffline, mcpWrongRoot, skillClaude }
+ import { admitsDocsFailed, cwdErrors, evalMetricErrors, evalRunErrors, expandMcpJson, genkitServers, type RanCall, registrationErrors, replyErrors, rootErrors } from './gates.ts'
+ import { genkitMcp, observeClaudeSetup, observeTooling } from './observe.ts'
+ 
+-// A one-case `evaluate.each` hashes the probe into the cell's `sources` fingerprint; a plain `evaluate` would not.
++// A one-case `cases` list hashes the probe into the cell's `sources` fingerprint; a plain `evaluate` would not.
+ const only = (...names: string[]): Probe[] => PROBES.filter((p) => names.includes(p.name))
+ const read = (url: string) => fs.readFileSync(new URL(url, import.meta.url), 'utf8')
+ 
+@@ -39,9 +39,9 @@ async function reported(c: AttemptContext, turn: Turn, file: string): Promise<st
+   return `${(await c.readFile(file)) ?? ''}\n${turn.text}`
+ }
+ 
+-evaluate.each(only('cli-verify'))(
+-  'tooling: $name',
+-  { compare: { baseline: control, variants: [skill, directed], gate } },
++evaluate(
++  'tooling: cli-verify',
++  { cases: only('cli-verify'), compare: { control, variants: [skill, directed], gate } },
+   async (c, p) => {
+     await placeSolutions(c, p)
+     const turn = await c.send(p.prompt)
+@@ -59,9 +59,9 @@ evaluate.each(only('cli-verify'))(
+ )
+ 
+ // "latest" is genkit 1.43.0 and @genkit-ai/middleware 0.11.0 on 2026-11-02, and middleware 0.11.0 needs genkit ^1.43.0.
+-evaluate.each(only('cli-upgrade'))(
+-  'tooling: $name',
+-  { compare: { baseline: control, variants: [skill], gate } },
++evaluate(
++  'tooling: cli-upgrade',
++  { cases: only('cli-upgrade'), compare: { control, variants: [skill], gate } },
+   async (c, p) => {
+     await placeSolutions(c, p)
+     const turn = await c.send(p.prompt)
+@@ -77,9 +77,9 @@ evaluate.each(only('cli-upgrade'))(
+ )
+ 
+ // @genkit-ai/evaluator 1.43.0 needs genkit ^1.43.0, so a plain `npm install` of it fails on this app's genkit 1.42.0.
+-evaluate.each(only('cli-add-eval'))(
+-  'tooling: $name',
+-  { compare: { baseline: control, variants: [skill], gate } },
++evaluate(
++  'tooling: cli-add-eval',
++  { cases: only('cli-add-eval'), compare: { control, variants: [skill], gate } },
+   async (c, p) => {
+     await placeSolutions(c, p)
+     const turn = await c.send(p.prompt)
+@@ -109,9 +109,9 @@ evaluate.each(only('cli-add-eval'))(
+ )
+ 
+ // the app runs as the user's own server without GENKIT_ENV=dev, so it writes no runtime file; `genkit mcp` and the CLI start their own runtimes with GENKIT_ENV=dev.
+-evaluate.each(only('devui-missing-env'))(
+-  'tooling: $name',
+-  { compare: { baseline: mcp, variants: [directed], gate } },
++evaluate(
++  'tooling: devui-missing-env',
++  { cases: only('devui-missing-env'), compare: { control: mcp, variants: [directed], gate } },
+   async (c, p) => {
+     await c.writeFile('~/.user-app/server.mts', read('./sandbox/user-server.mts'))
+     await c.serve('node_modules/.bin/tsx ~/.user-app/server.mts', 4100)
+@@ -173,9 +173,9 @@ const secondAppErrors = (reported: string, answer: string, code: string): string
+ ]
+ 
+ // Two dev runtimes; `genkit mcp` watches one project root, so the second app is out of its reach.
+-evaluate.each(only('devui-two-runtimes'))(
+-  'tooling: $name',
+-  { compare: { baseline: mcp, variants: [skill], gate } },
++evaluate(
++  'tooling: devui-two-runtimes',
++  { cases: only('devui-two-runtimes'), compare: { control: mcp, variants: [skill], gate } },
+   async (c, p) => {
+     const code = `ZEPHYR-${randomBytes(4).toString('hex')}`
+     for (const file of SECOND_APP_FILES) await c.writeFile(`second-app/${file}`, read(`../../app/${file}`))
+@@ -205,9 +205,9 @@ evaluate.each(only('devui-two-runtimes'))(
+ const STREAM_CORRECT = (text: string) => /\bstreamFlow\b/.test(text) || (/\bsendChunk\b/.test(text) && /\.stream\(/.test(text))
+ 
+ // `genkit mcp` loads the docs bundle before it connects, so with a cold cache and genkit.dev blocked it exits and every tool is gone, not only the docs tools.
+-evaluate.each(only('mcp-offline-docs'))(
+-  'tooling: $name',
+-  { compare: { baseline: mcpOffline, variants: [directedOffline], gate } },
++evaluate(
++  'tooling: mcp-offline-docs',
++  { cases: only('mcp-offline-docs'), compare: { control: mcpOffline, variants: [directedOffline], gate } },
+   async (c, p) => {
+     await placeSolutions(c, p)
+     const turn = await c.send(p.prompt)
+@@ -255,7 +255,7 @@ function missing(text: string | null): string[] {
+ }
+ 
+ // the server's project root is wrong, so `list_flows` finds no runtime and `start_runtime` waits 30 s and fails with "Error: {}".
+-evaluate.each(only('mcp-broken-server'))('tooling: $name', { environment: mcpWrongRoot }, async (c, p) => {
++evaluate('tooling: mcp-broken-server', { cases: only('mcp-broken-server'), environments: mcpWrongRoot }, async (c, p) => {
+   await placeSolutions(c, p)
+   const turn = await c.send(p.prompt)
+   noProviderErrors(turn)
+@@ -280,9 +280,9 @@ evaluate.each(only('mcp-broken-server'))('tooling: $name', { environment: mcpWro
+ })
+ 
+ // Claude Code expands `${VAR}` in `.mcp.json` when it starts a server, so the checks read the file expanded.
+-evaluate.each(only('mcp-setup-claude'))(
+-  'tooling: $name',
+-  { compare: { baseline: controlClaude, variants: [skillClaude], gate } },
++evaluate(
++  'tooling: mcp-setup-claude',
++  { cases: only('mcp-setup-claude'), compare: { control: controlClaude, variants: [skillClaude], gate } },
+   async (c, p) => {
+     await placeSolutions(c, p)
+     const turn = await c.send(p.prompt)
+@@ -320,9 +320,9 @@ function unrun(c: AttemptContext, text: string | null): string[] {
+ }
+ 
+ // `genkit flow:run` and `run_flow` address /flow/ actions only, and each `tryTriage` call starts a new conversation.
+-evaluate.each(only('agent-two-turn'))(
+-  'tooling: $name',
+-  { compare: { baseline: control, variants: [skill, mcp], gate } },
++evaluate(
++  'tooling: agent-two-turn',
++  { cases: only('agent-two-turn'), compare: { control, variants: [skill, mcp], gate } },
+   async (c, p) => {
+     await placeSolutions(c, p)
+     const turn = await c.send(p.prompt)
+diff --git a/package.json b/package.json
+index d5d24ef..d7d9e1b 100644
+--- a/package.json
++++ b/package.json
+@@ -15,7 +15,7 @@
+   "packageManager": "pnpm@10.18.3",
+   "devDependencies": {
+     "genkit-cli": "1.44.1",
+-    "reeval": "0.18.0",
++    "reeval": "0.20.0",
+     "tsx": "^4.23.15",
+     "typescript": "^5.9.3"
+   },
+diff --git a/pnpm-lock.yaml b/pnpm-lock.yaml
+index 09d2d2d..2da9cb8 100644
+--- a/pnpm-lock.yaml
++++ b/pnpm-lock.yaml
+@@ -12,8 +12,8 @@ importers:
+         specifier: 1.44.1
+         version: 1.44.1(@cfworker/json-schema@4.1.1)(@types/node@26.6.5)(zod@4.6.7)
+       reeval:
+-        specifier: 0.18.0
+-        version: 0.18.0
++        specifier: 0.20.0
++        version: 0.20.0
+       tsx:
+         specifier: ^4.23.15
+         version: 4.23.15
+@@ -23,38 +23,38 @@ importers:
+ 
+ packages:
+ 
+-  '@ai-sdk/anthropic@4.0.91':
+-    resolution: {integrity: sha512-X6MoxvTXyLCyq4wyCTCrou9SXRQrDB+4nNAMkgbCHs8A0FQNHIUW57DdkiFGY9ctpsg9Brmd2o3nMVOOxd5xyw==}
++  '@ai-sdk/anthropic@4.0.95':
++    resolution: {integrity: sha512-Wll6N+hnBPbkg4amg0FCsI9ePP/oUE/GRmrBh7rG8xZWtQQ9B5p8RGQeo2vdOCPbv+FZMfCnCmTqTFbyP1EBxw==}
+     engines: {node: '>=22'}
+     peerDependencies:
+       zod: ^3.25.76 || ^4.1.8
+ 
+-  '@ai-sdk/gateway@4.0.129':
+-    resolution: {integrity: sha512-8JvaQBaIfM8jo54kg+picQpY9qBzP/hG+YIXJO9KDL+9RpdoTjzp0/mH7XjfaqNMHAf85dM2/tCBDOOyBN7Bgg==}
++  '@ai-sdk/gateway@4.0.134':
++    resolution: {integrity: sha512-peyVRIn7rD7zm8kcnKrRnSiIuOXVp93vrrjqdK5TtRCBv4oBomVH5WQ9MinXkWVs5UdWEURJmTIM/qsGLnz65A==}
+     engines: {node: '>=22'}
+     peerDependencies:
+       zod: ^3.25.76 || ^4.1.8
+ 
+-  '@ai-sdk/google-vertex@5.0.126':
+-    resolution: {integrity: sha512-ZjjiPWfhD/DZ9rTQS2Rem9MBPCauCnlNz9NJ4n3J8SSTfJOEbC3ZxObyZJV9qzCok+jyXd36WYCGjlBWNqGPZw==}
++  '@ai-sdk/google-vertex@5.0.130':
++    resolution: {integrity: sha512-1+6kjhr9sZkNMo9yDphuDtv3UqlreIKJjT7r8xB9dUuVbi8ccQ/5KtiqdC99XhFF+ogyaKGy1mB4Qmi6f74VMQ==}
+     engines: {node: '>=22'}
+     peerDependencies:
+       zod: ^3.25.76 || ^4.1.8
+ 
+-  '@ai-sdk/google@4.0.107':
+-    resolution: {integrity: sha512-BB3a85erZ8VN3aUzHawFfArKjCeqARRiC5xiNB3vc7Sw7Wshvv2LA+41VF2EJbnz5gCjZUmqdmOPFZ4Oz0MmQQ==}
++  '@ai-sdk/google@4.0.110':
++    resolution: {integrity: sha512-67OoyFgog82zpUd7+AZ8EdlCz7z96YMUcvOKJ/j6XN92CRw3nkZDYDyupvdwMYOJMqRkQaqJGoE8zYliq/QJYQ==}
+     engines: {node: '>=22'}
+     peerDependencies:
+       zod: ^3.25.76 || ^4.1.8
+ 
+-  '@ai-sdk/harness-acp@1.0.106':
+-    resolution: {integrity: sha512-rPUnicdRuMaWMpCRtLE+wONfbDW+bB64MdcnM1tMrRV1dBw3j8s+uWLMHJI6+nUzlFFUshHs78CUFMmsaL6o5A==}
++  '@ai-sdk/harness-acp@1.0.112':
++    resolution: {integrity: sha512-WZCeEJ5WxJ+bXnUha80BvAaA9RLX/c1yKrMcIzwXLZonSp6y7lo8Thf/1so8BZU+r3nukCApvbQU181+qSuzDg==}
+     engines: {node: '>=22'}
+     peerDependencies:
+       zod: ^3.25.76 || ^4.1.8
+ 
+-  '@ai-sdk/harness@1.0.167':
+-    resolution: {integrity: sha512-LeB1cTKVhdMvY1cm8AHeCiZJIFsrFRj3rv+FAEwL9wb7Q2WtvrUKVLHpPfnWzMIPSq2/KG/lOjSWFgynHS366w==}
++  '@ai-sdk/harness@1.0.172':
++    resolution: {integrity: sha512-BFtSu0wPCWzheMcKHLhhudk6UAOl5az768TZozyuWKwCBzfX5xbAZyhUhlcnRtbs0SyvGEXFd2TApH6vaD5pEQ==}
+     engines: {node: '>=22'}
+     peerDependencies:
+       ws: ^8.21.0
+@@ -63,30 +63,30 @@ packages:
+       ws:
+         optional: true
+ 
+-  '@ai-sdk/openai-compatible@3.0.80':
+-    resolution: {integrity: sha512-FoFoYodwufDyuOlPrFBnGD6HNA8nIB5a6HofyTJoPUJn9NBtDmloWudbNDyf4hYV8YTPOyR5iPfn1ufK2XD2Zg==}
++  '@ai-sdk/openai-compatible@3.0.83':
++    resolution: {integrity: sha512-GwdsZXi1veW0Yi7tAc6JnYWyTp5aoDg0ZLtJSclf3MPFH66KqImq7ULvYnWAkulEBn09QxVKo90pS8s8gsey/w==}
+     engines: {node: '>=22'}
+     peerDependencies:
+       zod: ^3.25.76 || ^4.1.8
+ 
+-  '@ai-sdk/openai@4.0.104':
+-    resolution: {integrity: sha512-8oPwGh/zAdFrgyeGjTHlJMRm+DBwby3GkdGzN3vcNv4OwVtc1767mcM+7B2+gOxtloasZH+03gl+HPngQyQTMg==}
++  '@ai-sdk/openai@4.0.107':
++    resolution: {integrity: sha512-xVzyy2+AkiE7JwpY6JM8sc8C9DvRcclfm9AHu3XclrrK4jnU9QpNu/Sbd6CeGn4crFX96HfcTj9aI55sFoCouw==}
+     engines: {node: '>=22'}
+     peerDependencies:
+       zod: ^3.25.76 || ^4.1.8
+ 
+-  '@ai-sdk/provider-utils@5.0.70':
+-    resolution: {integrity: sha512-nU213UNVHWDoEKIZ5Hm3uGPmfW7EBHC2GkIJJEDKh4HLQWgh/eizrW2jmY4efxWf7Tf/yTzKD0t6sd4kVUKlyQ==}
++  '@ai-sdk/provider-utils@5.0.73':
++    resolution: {integrity: sha512-sGdkbTjGMi5V9C+OWsx7yW3CWHiYMNSeiNl/vrtS8n5P6zkpYX/KndKBlIsd8Nn5Tr9rd0Nvrr6cVLwTKImptQ==}
+     engines: {node: '>=22'}
+     peerDependencies:
+       zod: ^3.25.76 || ^4.1.8
+ 
+-  '@ai-sdk/provider@4.0.34':
+-    resolution: {integrity: sha512-Ip7ZQBq/FiGpM1mmOVseTtX9PBjnzo0bLC41WTgBSBBRUBz6LhNFGbYaNUzI6hPm6ll1oNSPOAZc/q/z+3QZEQ==}
++  '@ai-sdk/provider@4.0.35':
++    resolution: {integrity: sha512-yBz6fmLS8MSCIzy7NiHEUAq56ZLD4ZA1GR6bpXBxgbwUacP1La7LuwAr/xy9jSzthem4F8Xu2OrhvU/JrE9fYA==}
+     engines: {node: '>=22'}
+ 
+-  '@ai-sdk/typesafe-ai@3.0.29':
+-    resolution: {integrity: sha512-YobM4P1PGoJkUJcfIspB5Vpje7AsnaTe1VAmnJNMmtkyrjcgw23NQhhNYXu+71bqh5Jf9nH+aHbSx70/SWbPhQ==}
++  '@ai-sdk/typesafe-ai@3.0.32':
++    resolution: {integrity: sha512-yU3YKHan5Q31XABwJdKSOHDzmnQTS3cL3JYmRnJDkbB25mgHdHhWnzc4e1uJ67Ar1shFj++5kQFsnYOG8MQdfg==}
+     engines: {node: '>=22'}
+     peerDependencies:
+       zod: ^3.25.76 || ^4.1.8
+@@ -716,8 +716,8 @@ packages:
+     resolution: {integrity: sha512-MnA+YT8fwfJPgBx3m60MNqakm30XOkyIoH1y6huTQvC0PwZG7ki8NacLBcrPbNoo8vEZy7Jpuk7+jMO+CUovTQ==}
+     engines: {node: '>= 14'}
+ 
+-  ai@7.0.156:
+-    resolution: {integrity: sha512-qtXze+Go5L2K4nOhrrg75ETZN++FVB2dWipm0bGo1bCh4JtMZ7xD6zSAZNSv/94e3Ks4LUZ5IWoBOIa+KHiIng==}
++  ai@7.0.161:
++    resolution: {integrity: sha512-DcHxTJKuAqGFZST4RgE5nCfciY+P6ym9/TKq/5UHh0U/0d4V1k+1xvYSpMR5Rq+akjeerw5teL6AXJVwmoludg==}
+     engines: {node: '>=22'}
+     peerDependencies:
+       zod: ^3.25.76 || ^4.1.8
+@@ -1787,10 +1787,15 @@ packages:
+     resolution: {integrity: sha512-hOS089on8RduqdbhvQ5Z37A0ESjsqz6qnRcffsMU3495FuTdqSm+7bhJ29JvIOsBDEEnan5DPu9t3To9VRlMzA==}
+     engines: {node: '>=8.10.0'}
+ 
+-  reeval@0.18.0:
+-    resolution: {integrity: sha512-02I69XxpKmJdvN7Mrh8PMzMjHmS2iUOJO/KNRlgUHN4bEyZZSAweBtv9wNVj+Ha9z6fnUNIC9RzXdvk7Nwdy+g==}
++  reeval@0.20.0:
++    resolution: {integrity: sha512-e9c2FxS1HZfrHq5+7uLuI5QfyjguBJ7s1j3mOKHuiMvRzActPfINYEylYm+mROFJFWSTCYDWOrfmuykPN03AlA==}
+     engines: {node: '>=22.13'}
+     hasBin: true
++    peerDependencies:
++      '@boatdev/sdk': ^1.13.0
++    peerDependenciesMeta:
++      '@boatdev/sdk':
++        optional: true
+ 
+   require-directory@2.1.1:
+     resolution: {integrity: sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q==}
+@@ -2179,85 +2184,85 @@ packages:
+ 
+ snapshots:
+ 
+-  '@ai-sdk/anthropic@4.0.91(zod@4.6.7)':
++  '@ai-sdk/anthropic@4.0.95(zod@4.6.7)':
+     dependencies:
+-      '@ai-sdk/provider': 4.0.34
+-      '@ai-sdk/provider-utils': 5.0.70(zod@4.6.7)
++      '@ai-sdk/provider': 4.0.35
++      '@ai-sdk/provider-utils': 5.0.73(zod@4.6.7)
+       zod: 4.6.7
+ 
+-  '@ai-sdk/gateway@4.0.129(zod@4.6.7)':
++  '@ai-sdk/gateway@4.0.134(zod@4.6.7)':
+     dependencies:
+-      '@ai-sdk/provider': 4.0.34
+-      '@ai-sdk/provider-utils': 5.0.70(zod@4.6.7)
++      '@ai-sdk/provider': 4.0.35
++      '@ai-sdk/provider-utils': 5.0.73(zod@4.6.7)
+       '@vercel/oidc': 3.2.0
+       zod: 4.6.7
+ 
+-  '@ai-sdk/google-vertex@5.0.126(zod@4.6.7)':
++  '@ai-sdk/google-vertex@5.0.130(zod@4.6.7)':
+     dependencies:
+-      '@ai-sdk/anthropic': 4.0.91(zod@4.6.7)
+-      '@ai-sdk/google': 4.0.107(zod@4.6.7)
+-      '@ai-sdk/openai-compatible': 3.0.80(zod@4.6.7)
+-      '@ai-sdk/provider': 4.0.34
+-      '@ai-sdk/provider-utils': 5.0.70(zod@4.6.7)
++      '@ai-sdk/anthropic': 4.0.95(zod@4.6.7)
++      '@ai-sdk/google': 4.0.110(zod@4.6.7)
++      '@ai-sdk/openai-compatible': 3.0.83(zod@4.6.7)
++      '@ai-sdk/provider': 4.0.35
++      '@ai-sdk/provider-utils': 5.0.73(zod@4.6.7)
+       google-auth-library: 11.3.1
+       zod: 4.6.7
+     transitivePeerDependencies:
+       - supports-color
+ 
+-  '@ai-sdk/google@4.0.107(zod@4.6.7)':
++  '@ai-sdk/google@4.0.110(zod@4.6.7)':
+     dependencies:
+-      '@ai-sdk/provider': 4.0.34
+-      '@ai-sdk/provider-utils': 5.0.70(zod@4.6.7)
++      '@ai-sdk/provider': 4.0.35
++      '@ai-sdk/provider-utils': 5.0.73(zod@4.6.7)
+       zod: 4.6.7
+ 
+-  '@ai-sdk/harness-acp@1.0.106(zod@4.6.7)':
++  '@ai-sdk/harness-acp@1.0.112(zod@4.6.7)':
+     dependencies:
+-      '@ai-sdk/harness': 1.0.167(ws@8.22.0)(zod@4.6.7)
+-      '@ai-sdk/provider-utils': 5.0.70(zod@4.6.7)
++      '@ai-sdk/harness': 1.0.172(ws@8.22.0)(zod@4.6.7)
++      '@ai-sdk/provider-utils': 5.0.73(zod@4.6.7)
+       ws: 8.22.0
+       zod: 4.6.7
+     transitivePeerDependencies:
+       - bufferutil
+       - utf-8-validate
+ 
+-  '@ai-sdk/harness@1.0.167(ws@8.22.0)(zod@4.6.7)':
++  '@ai-sdk/harness@1.0.172(ws@8.22.0)(zod@4.6.7)':
+     dependencies:
+-      '@ai-sdk/provider': 4.0.34
+-      '@ai-sdk/provider-utils': 5.0.70(zod@4.6.7)
+-      ai: 7.0.156(zod@4.6.7)
++      '@ai-sdk/provider': 4.0.35
++      '@ai-sdk/provider-utils': 5.0.73(zod@4.6.7)
++      ai: 7.0.161(zod@4.6.7)
+       zod: 4.6.7
+     optionalDependencies:
+       ws: 8.22.0
+ 
+-  '@ai-sdk/openai-compatible@3.0.80(zod@4.6.7)':
++  '@ai-sdk/openai-compatible@3.0.83(zod@4.6.7)':
+     dependencies:
+-      '@ai-sdk/provider': 4.0.34
+-      '@ai-sdk/provider-utils': 5.0.70(zod@4.6.7)
++      '@ai-sdk/provider': 4.0.35
++      '@ai-sdk/provider-utils': 5.0.73(zod@4.6.7)
+       zod: 4.6.7
+ 
+-  '@ai-sdk/openai@4.0.104(zod@4.6.7)':
++  '@ai-sdk/openai@4.0.107(zod@4.6.7)':
+     dependencies:
+-      '@ai-sdk/provider': 4.0.34
+-      '@ai-sdk/provider-utils': 5.0.70(zod@4.6.7)
++      '@ai-sdk/provider': 4.0.35
++      '@ai-sdk/provider-utils': 5.0.73(zod@4.6.7)
+       zod: 4.6.7
+ 
+-  '@ai-sdk/provider-utils@5.0.70(zod@4.6.7)':
++  '@ai-sdk/provider-utils@5.0.73(zod@4.6.7)':
+     dependencies:
+-      '@ai-sdk/provider': 4.0.34
++      '@ai-sdk/provider': 4.0.35
+       '@standard-schema/spec': 1.1.0
+       '@workflow/serde': 4.1.0
+       eventsource-parser: 3.1.1
+       undici: 7.30.0
+       zod: 4.6.7
+ 
+-  '@ai-sdk/provider@4.0.34':
++  '@ai-sdk/provider@4.0.35':
+     dependencies:
+       json-schema: 0.4.0
+ 
+-  '@ai-sdk/typesafe-ai@3.0.29(zod@4.6.7)':
++  '@ai-sdk/typesafe-ai@3.0.32(zod@4.6.7)':
+     dependencies:
+-      '@ai-sdk/provider': 4.0.34
+-      '@ai-sdk/provider-utils': 5.0.70(zod@4.6.7)
++      '@ai-sdk/provider': 4.0.35
++      '@ai-sdk/provider-utils': 5.0.73(zod@4.6.7)
+       zod: 4.6.7
+ 
+   '@alcalzone/ansi-tokenize@0.3.1':
+@@ -2627,9 +2632,9 @@ snapshots:
+       '@modelcontextprotocol/core': 2.4.0
+       zod: 4.6.7
+ 
+-  '@openrouter/ai-sdk-provider@3.1.0(ai@7.0.156(zod@4.6.7))(zod@4.6.7)':
++  '@openrouter/ai-sdk-provider@3.1.0(ai@7.0.161(zod@4.6.7))(zod@4.6.7)':
+     dependencies:
+-      ai: 7.0.156(zod@4.6.7)
++      ai: 7.0.161(zod@4.6.7)
+       zod: 4.6.7
+ 
+   '@opentelemetry/api-logs@0.52.1':
+@@ -2910,11 +2915,11 @@ snapshots:
+ 
+   agent-base@7.1.4: {}
+ 
+-  ai@7.0.156(zod@4.6.7):
++  ai@7.0.161(zod@4.6.7):
+     dependencies:
+-      '@ai-sdk/gateway': 4.0.129(zod@4.6.7)
+-      '@ai-sdk/provider': 4.0.34
+-      '@ai-sdk/provider-utils': 5.0.70(zod@4.6.7)
++      '@ai-sdk/gateway': 4.0.134(zod@4.6.7)
++      '@ai-sdk/provider': 4.0.35
++      '@ai-sdk/provider-utils': 5.0.73(zod@4.6.7)
+       zod: 4.6.7
+ 
+   ajv-formats@3.0.1(ajv@8.20.0):
+@@ -4081,24 +4086,24 @@ snapshots:
+     dependencies:
+       picomatch: 2.3.2
+ 
+-  reeval@0.18.0:
+-    dependencies:
+-      '@ai-sdk/anthropic': 4.0.91(zod@4.6.7)
+-      '@ai-sdk/google': 4.0.107(zod@4.6.7)
+-      '@ai-sdk/google-vertex': 5.0.126(zod@4.6.7)
+-      '@ai-sdk/harness': 1.0.167(ws@8.22.0)(zod@4.6.7)
+-      '@ai-sdk/harness-acp': 1.0.106(zod@4.6.7)
+-      '@ai-sdk/openai': 4.0.104(zod@4.6.7)
+-      '@ai-sdk/provider': 4.0.34
+-      '@ai-sdk/provider-utils': 5.0.70(zod@4.6.7)
+-      '@ai-sdk/typesafe-ai': 3.0.29(zod@4.6.7)
++  reeval@0.20.0:
++    dependencies:
++      '@ai-sdk/anthropic': 4.0.95(zod@4.6.7)
++      '@ai-sdk/google': 4.0.110(zod@4.6.7)
++      '@ai-sdk/google-vertex': 5.0.130(zod@4.6.7)
++      '@ai-sdk/harness': 1.0.172(ws@8.22.0)(zod@4.6.7)
++      '@ai-sdk/harness-acp': 1.0.112(zod@4.6.7)
++      '@ai-sdk/openai': 4.0.107(zod@4.6.7)
++      '@ai-sdk/provider': 4.0.35
++      '@ai-sdk/provider-utils': 5.0.73(zod@4.6.7)
++      '@ai-sdk/typesafe-ai': 3.0.32(zod@4.6.7)
+       '@balena/dockerignore': 1.0.2
+       '@hono/node-server': 2.1.5(hono@4.13.13)
+       '@modelcontextprotocol/server': 2.4.0
+-      '@openrouter/ai-sdk-provider': 3.1.0(ai@7.0.156(zod@4.6.7))(zod@4.6.7)
++      '@openrouter/ai-sdk-provider': 3.1.0(ai@7.0.161(zod@4.6.7))(zod@4.6.7)
+       '@vitest/expect': 5.0.5
+       '@vitest/utils': 5.0.5
+-      ai: 7.0.156(zod@4.6.7)
++      ai: 7.0.161(zod@4.6.7)
+       commander: 15.0.0
+       get-tsconfig: 4.14.3
+       google-auth-library: 11.3.1
+@@ -4108,6 +4113,7 @@ snapshots:
+       picomatch: 4.0.7
+       react: 19.3.1
+       std-env: 4.3.0
++      string-width: 8.3.0
+       tinyglobby: 0.2.17
+       ws: 8.22.0
+       yaml: 2.9.1
+diff --git a/reeval.config.ts b/reeval.config.ts
+index 97b776d..5df7f0b 100644
+--- a/reeval.config.ts
++++ b/reeval.config.ts
+@@ -6,7 +6,7 @@ import { docker } from 'reeval/sandbox'
+ export const sandbox = docker({ dockerfile: './evals/Dockerfile' })
+ 
+ /** The five agents every study and probe run compares. */
+-export const harness = [
++export const harnesses = [
+   claudeCode({ model: 'claude-sonnet-5' }),
+   claudeCode({ model: 'claude-haiku-5-5' }),
+   antigravity({ model: 'gemini-3.8-flash-medium' }),
+@@ -23,14 +23,14 @@ export const analysis = { model: 'google/gemini-3.8-flash' }
+ export default defineConfig({
+   include: ['evals/*.eval.ts'],
+   sandbox,
+-  harness,
++  harnesses,
+   timeout: '15m',
+   judge,
+   analysis,
+   profiles: {
+-    smoke: { limit: { runs: 1, harness: ['claude-code:claude-sonnet-5'] } },
+-    haiku: { limit: { runs: 1, harness: ['claude-code:claude-haiku-5-5'] } },
+-    antigravity: { limit: { runs: 1, harness: ['antigravity:gemini-3.8-flash-medium'] } },
++    smoke: { limit: { runs: 1, harnesses: ['claude-code:claude-sonnet-5'] } },
++    haiku: { limit: { runs: 1, harnesses: ['claude-code:claude-haiku-5-5'] } },
++    antigravity: { limit: { runs: 1, harnesses: ['antigravity:gemini-3.8-flash-medium'] } },
+     full: { defaults: { runs: 5 }, record: 'always', budget: { attempts: 2500, duration: '16h' } },
+   },
+ })
+diff --git a/reeval.oracle.config.ts b/reeval.oracle.config.ts
+index 47156e9..406aeb2 100644
+--- a/reeval.oracle.config.ts
++++ b/reeval.oracle.config.ts
+@@ -28,13 +28,13 @@ const controlOnly = { compare: false } as const
+ 
+ export default defineConfig({
+   include: ['evals/*.eval.ts'],
+-  harness: oracle(),
++  harnesses: oracle(),
+   sandbox,
+   // The judge code path runs in the oracle too, with no key and no model call.
+   judge: { model: fakeJudge() },
+   defaultProfile: { local: 'oracle', ci: 'oracle' },
+   profiles: {
+     oracle: { limit: controlOnly },
+-    canary: { defaults: { harness: oracle(' --cheat') }, limit: controlOnly },
++    canary: { defaults: { harnesses: oracle(' --cheat') }, limit: controlOnly },
+   },
+ })
+diff --git a/reeval.probes.config.ts b/reeval.probes.config.ts
+index ba0680e..4ca4cd2 100644
+--- a/reeval.probes.config.ts
++++ b/reeval.probes.config.ts
+@@ -1,20 +1,20 @@
+ // Smoke probes of Genkit tooling beyond the study: one attempt per cell, report only. See evals/probes/.
+ import { defineConfig } from 'reeval'
+-import { analysis, harness, judge, sandbox } from './reeval.config.ts'
++import { analysis, harnesses, judge, sandbox } from './reeval.config.ts'
+ 
+ export default defineConfig({
+   include: ['evals/probes/**/*.eval.ts'],
+   sandbox,
+-  harness,
++  harnesses,
+   timeout: '25m',
+   judge,
+   analysis,
+   defaultProfile: { local: 'probe', ci: 'probe' },
+   profiles: {
+     probe: { defaults: { runs: 1 } },
+-    smoke: { defaults: { runs: 1 }, limit: { harness: ['claude-code:claude-sonnet-5'] } },
+-    antigravity: { defaults: { runs: 1 }, limit: { harness: ['antigravity:gemini-3.8-flash-medium'] } },
+-    cursor: { defaults: { runs: 1 }, limit: { harness: ['cursor:composer-2.5'] } },
+-    'agents-tsdoc': { defaults: { runs: 12 }, limit: { harness: ['claude-code:claude-haiku-5-5', 'claude-code:claude-sonnet-5', 'codex:gpt-5.6-luna', 'cursor:composer-2.5', 'antigravity:gemini-3.8-flash-medium'] }, tags: ['agents-tsdoc'] },
++    smoke: { defaults: { runs: 1 }, limit: { harnesses: ['claude-code:claude-sonnet-5'] } },
++    antigravity: { defaults: { runs: 1 }, limit: { harnesses: ['antigravity:gemini-3.8-flash-medium'] } },
++    cursor: { defaults: { runs: 1 }, limit: { harnesses: ['cursor:composer-2.5'] } },
++    'agents-tsdoc': { defaults: { runs: 12 }, limit: { harnesses: ['claude-code:claude-haiku-5-5', 'claude-code:claude-sonnet-5', 'codex:gpt-5.6-luna', 'cursor:composer-2.5', 'antigravity:gemini-3.8-flash-medium'] }, tags: ['agents-tsdoc'] },
+   },
+ })
+diff --git a/reeval.probes.oracle.config.ts b/reeval.probes.oracle.config.ts
+index 8a541b8..5b7a7cb 100644
+--- a/reeval.probes.oracle.config.ts
++++ b/reeval.probes.oracle.config.ts
+@@ -12,12 +12,12 @@ const controlOnly = { compare: false } as const
+ 
+ export default defineConfig({
+   include: ['evals/probes/**/*.eval.ts'],
+-  harness: apply('good'),
++  harnesses: apply('good'),
+   sandbox,
+   judge: { model: fakeJudge() },
+   defaultProfile: { local: 'oracle', ci: 'oracle' },
+   profiles: {
+     oracle: { limit: controlOnly },
+-    canary: { defaults: { harness: apply('cheat') }, limit: controlOnly },
++    canary: { defaults: { harnesses: apply('cheat') }, limit: controlOnly },
+   },
+ })

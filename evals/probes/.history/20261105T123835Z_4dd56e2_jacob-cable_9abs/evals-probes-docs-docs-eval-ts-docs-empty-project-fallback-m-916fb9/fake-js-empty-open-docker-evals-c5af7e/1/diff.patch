@@ -1,0 +1,34 @@
+[reeval: dropped package-lock.json: lockfile, 7195 changed lines]
+diff --git a/package.json b/package.json
+index e41aac9..923a473 100644
+--- a/package.json
++++ b/package.json
+@@ -10,5 +10,10 @@
+     "@types/node": "22.20.5",
+     "tsx": "4.23.15",
+     "typescript": "5.9.3"
++  },
++  "dependencies": {
++    "genkit": "1.43.0",
++    "@genkit-ai/google-genai": "1.43.0",
++    "@genkit-ai/middleware": "0.11.0"
+   }
+ }
+diff --git a/src/index.ts b/src/index.ts
+index 336ce12..b2ca654 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1 +1,12 @@
+-export {}
++import { genkit } from 'genkit'
++import { googleAI } from '@genkit-ai/google-genai'
++import { fallback } from '@genkit-ai/middleware'
++
++const ai = genkit({ plugins: [googleAI()] })
++
++const { text } = await ai.generate({
++  model: googleAI.model('gemini-flash-latest'),
++  prompt: 'Tell me a short joke about programmers.',
++  use: [fallback({ models: [googleAI.model('gemini-flash-lite-latest')] })],
++})
++console.log(text)

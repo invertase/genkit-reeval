@@ -1,0 +1,7 @@
+$ FLOW=summarizeTicket2 FIELDS=summary node_modules/.bin/tsx ~/.verify-flow.mts
+exit 0, passed on try 1 of 3
+
+try 1 of 3: exit 0 after 658ms
+--- stdout
+PROBE_RESULT {"errors":["priority is not low, medium or high in {\"summary\":\"I was charged twice for order A-1001 and I cannot place a new order until it is \"}","priority is not low, medium or high in {\"summary\":\"Could you add a gift receipt option to the checkout page? No rush.\"}"]}
+--- stderr

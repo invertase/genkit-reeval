@@ -50,7 +50,7 @@ export function parseResult(run: { exitCode: number; stdout: string; stderr: str
 export const ORACLE = process.env.GENKIT_PROBE_ORACLE === '1'
 
 /** Compare gate: every cell under the oracle and canary, report-only in real runs. */
-export const gate = ORACLE ? 'all' : 'none'
+export const gate = ORACLE ? 'all' : 'observe'
 
 const ORACLE_DIR = '~/.probe'
 

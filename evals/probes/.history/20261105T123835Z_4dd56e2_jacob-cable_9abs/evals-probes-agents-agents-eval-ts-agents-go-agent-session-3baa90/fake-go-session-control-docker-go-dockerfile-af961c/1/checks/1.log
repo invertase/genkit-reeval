@@ -1,0 +1,4 @@
+$ grep -rEq --include=*.go --exclude=*_test.go --exclude-dir=.git 'genkit/go/(genkit|ai)/exp"' .
+exit 0
+--- stdout
+--- stderr

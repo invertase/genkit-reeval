@@ -107,7 +107,7 @@ const goNewApp = probe('go-new-app')
   const docs = docsArms(control, 'go', 'go-new')
   evaluate(
     `agents: ${goNewApp.name}`,
-    { compare: { baseline: control, variants: [skill, docs.open, docs.docsite, docs.llms, docs.index], gate } },
+    { compare: { control, variants: [skill, docs.open, docs.docsite, docs.llms, docs.index], gate } },
     async (c) => {
       await placeSolutions(c, goNewApp)
       const turn = await c.send(goNewApp.prompt)
@@ -148,7 +148,7 @@ const goAgentSession = probe('go-agent-session')
   const { index } = docsArms(control, 'go', 'go-session')
   evaluate(
     `agents: ${goAgentSession.name}`,
-    { compare: { baseline: control, variants: [skill, index], gate }, questions: [{ question: AGENT_QUESTION, across: 'environment', task: true, diff: ['*.go'] }] },
+    { compare: { control, variants: [skill, index], gate }, questions: [{ question: AGENT_QUESTION, across: 'environment', task: true, diff: ['*.go'] }] },
     async (c) => {
       await placeSolutions(c, goAgentSession)
       const turn = await c.send(goAgentSession.prompt)
@@ -183,7 +183,7 @@ const pyToolCalling = probe('py-tool-calling')
   const docs = docsArms(control, 'python', 'py-tool')
   evaluate(
     `agents: ${pyToolCalling.name}`,
-    { compare: { baseline: control, variants: [skill, docs.open, docs.docsite, docs.llms, docs.index], gate } },
+    { compare: { control, variants: [skill, docs.open, docs.docsite, docs.llms, docs.index], gate } },
     async (c) => {
       await placeSolutions(c, pyToolCalling)
       const turn = await c.send(pyToolCalling.prompt)
@@ -214,7 +214,7 @@ const pyAgentSession = probe('py-agent-session')
   const { index } = docsArms(control, 'python', 'py-session')
   evaluate(
     `agents: ${pyAgentSession.name}`,
-    { compare: { baseline: control, variants: [skill, index], gate }, questions: [{ question: AGENT_QUESTION, across: 'environment', task: true, diff: ['*.py'] }] },
+    { compare: { control, variants: [skill, index], gate }, questions: [{ question: AGENT_QUESTION, across: 'environment', task: true, diff: ['*.py'] }] },
     async (c) => {
       await placeSolutions(c, pyAgentSession)
       const turn = await c.send(pyAgentSession.prompt)
@@ -261,7 +261,7 @@ const pySkillSetup = probe('py-skill-setup')
   evaluate(
     `agents: ${pySkillSetup.name}`,
     {
-      compare: { baseline: control, variants: [skill, index], gate },
+      compare: { control, variants: [skill, index], gate },
       questions: [{ question: 'Did the agent set the project up from official Genkit tooling (a Genkit skill, `genkit init:ai-tools`, the `genkit mcp` server or genkit.dev docs) rather than writing generic notes from memory?', across: 'environment', task: true, transcript: 'tools' }],
     },
     async (c) => {

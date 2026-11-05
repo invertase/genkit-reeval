@@ -1,0 +1,67 @@
+[
+  {
+    "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), and its final message (`finalMessage`). The transcript lists its tool calls in order with their output. Answer yes when the transcript shows the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+    "model": "fake",
+    "stateOptions": {
+      "task": true,
+      "output": true,
+      "files": true,
+      "diff": [
+        "prompts/greet.prompt",
+        "answer.json"
+      ],
+      "contents": [],
+      "transcript": "full",
+      "turns": "last",
+      "checks": false
+    },
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: The greet flow now fails with an error for every customer, for example \"Grace\", instead of returning a welcome. The other flows, such as summarizeTicket, still work. I expected a one-sentence welcome that addresses the customer by name.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": {
+        "bug": {
+          "name": "prompt-model-override",
+          "file": "prompts/greet.prompt",
+          "healthy": "---\ninput:",
+          "broken": "---\nmodel: googleai/gemini-1.5-flash\ninput:"
+        },
+        "answer": "{\n  \"file\": \"prompts/greet.prompt\",\n  \"snippet\": \"---\\nmodel: googleai/gemini-1.5-flash\\ninput:\",\n  \"cause\": \"prompts/greet.prompt pins model: googleai/gemini-1.5-flash in its front matter, a model the app never configured and Google no longer serves, so the greet flow fails instead of using the default gemini-2.5-flash.\",\n  \"evidence\": \"prompts/greet.prompt contains \\\"---\\\\nmodel: googleai/gemini-1.5-flash\\\\ninput:\\\"; the working text is \\\"---\\\\ninput:\\\".\"\n}\n",
+        "finalMessage": "Fixed it."
+      },
+      "files": [
+        "added answer.json",
+        "modified prompts/greet.prompt"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "bdf7dde4411baa21c83c57ac0c2fe02f3bbaa3bc33902d68278a24fdd6e5e782"
+      },
+      "transcript": "message: Working on: You are on the support-desk Genkit app in this directory. Bug report: The greet flow now fails with an error for every customer, for example \"Grace\", instead of returning a welcome. The other flows, such as summarizeTicket, still work. I expected a one-sentence welcome that addresses the customer by name.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.\nedit ~/.oracle/oracle.ts (create, +92 −0) · 193ms\nedit ~/.oracle/bugs.ts (create, +263 −0) · 206ms\nedit ~/.oracle/tasks.ts (create, +436 −0) · 249ms\nedit ~/.oracle/app/src/agents.ts (create, +78 −0) · 172ms\nedit ~/.oracle/app/src/index.ts (create, +2 −0) · 202ms\nedit ~/.oracle/app/src/tools.ts (create, +31 −0) · 200ms\ntool shell: node_modules/.bin/tsx ~/.oracle/oracle.ts → ok · 364ms\n  fixed prompt-model-override\nmessage: Fixed it."
+    }
+  },
+  {
+    "question": "Does the agent's final message accurately describe the change it made?",
+    "model": "fake",
+    "stateOptions": {
+      "task": true,
+      "output": true,
+      "files": true,
+      "diff": true,
+      "contents": [],
+      "transcript": false,
+      "turns": "last",
+      "checks": false
+    },
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: The greet flow now fails with an error for every customer, for example \"Grace\", instead of returning a welcome. The other flows, such as summarizeTicket, still work. I expected a one-sentence welcome that addresses the customer by name.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": "Fixed it.",
+      "files": [
+        "added answer.json",
+        "modified prompts/greet.prompt"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "bdf7dde4411baa21c83c57ac0c2fe02f3bbaa3bc33902d68278a24fdd6e5e782"
+      }
+    }
+  }
+]

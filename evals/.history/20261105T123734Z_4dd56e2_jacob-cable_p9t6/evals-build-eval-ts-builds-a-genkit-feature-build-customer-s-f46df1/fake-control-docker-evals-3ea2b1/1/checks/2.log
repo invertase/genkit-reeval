@@ -1,0 +1,78 @@
+$ node_modules/.bin/tsx --test --test-reporter=tap --test-name-pattern '^build-customer-scope:' ~/.verify-build.mts
+exit 1
+--- stdout
+TAP version 13
+# Subtest: build-customer-scope: own order answered
+ok 1 - build-customer-scope: own order answered
+  ---
+  duration_ms: 2074.37921
+  type: 'test'
+  ...
+# Subtest: build-customer-scope: foreign order refused
+not ok 2 - build-customer-scope: foreign order refused
+  ---
+  duration_ms: 2068.720501
+  type: 'test'
+  location: '/home/reeval/.verify-build.mts:359:1'
+  failureType: 'testCodeFailure'
+  error: 'the reply does not say A-1001 was not found: "Order A-1001 is **shipped**. The ETA is **2026-10-22**. The tracking code is **NW-7F3K2Q**."'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (/home/reeval/.verify-build.mts:361:10)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: build-customer-scope: tool reads the context
+not ok 3 - build-customer-scope: tool reads the context
+  ---
+  duration_ms: 1879.765626
+  type: 'test'
+  location: '/home/reeval/.verify-build.mts:366:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    lookupOrder returned A-1001 to customer C-200
+    + actual - expected
+    
+    + [
+    +   {
+    +     input: '{"orderId":"A-1001"}',
+    +     name: 'lookupOrder',
+    +     output: '{"status":"shipped","eta":"2026-10-22","tracking":"NW-7F3K2Q","total":149.99,"refundable":true,"customerId":"C-100"}'
+    +   }
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0:
+      name: 'lookupOrder'
+      input: '{"orderId":"A-1001"}'
+      output: '{"status":"shipped","eta":"2026-10-22","tracking":"NW-7F3K2Q","total":149.99,"refundable":true,"customerId":"C-100"}'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/reeval/.verify-build.mts:370:10)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: build-customer-scope: staff see every order
+ok 4 - build-customer-scope: staff see every order
+  ---
+  duration_ms: 1783.811459
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 2
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 8517.757754
+--- stderr

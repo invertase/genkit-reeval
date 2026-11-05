@@ -11,7 +11,7 @@ import { controlClaude, directedOffline, mcpOffline, mcpWrongRoot, skillClaude }
 import { admitsDocsFailed, cwdErrors, evalMetricErrors, evalRunErrors, expandMcpJson, genkitServers, type RanCall, registrationErrors, replyErrors, rootErrors } from './gates.ts'
 import { genkitMcp, observeClaudeSetup, observeTooling } from './observe.ts'
 
-// A one-case `evaluate.each` hashes the probe into the cell's `sources` fingerprint; a plain `evaluate` would not.
+// A one-case `cases` list hashes the probe into the cell's `sources` fingerprint; a plain `evaluate` would not.
 const only = (...names: string[]): Probe[] => PROBES.filter((p) => names.includes(p.name))
 const read = (url: string) => fs.readFileSync(new URL(url, import.meta.url), 'utf8')
 
@@ -39,9 +39,9 @@ async function reported(c: AttemptContext, turn: Turn, file: string): Promise<st
   return `${(await c.readFile(file)) ?? ''}\n${turn.text}`
 }
 
-evaluate.each(only('cli-verify'))(
-  'tooling: $name',
-  { compare: { baseline: control, variants: [skill, directed], gate } },
+evaluate(
+  'tooling: cli-verify',
+  { cases: only('cli-verify'), compare: { control, variants: [skill, directed], gate } },
   async (c, p) => {
     await placeSolutions(c, p)
     const turn = await c.send(p.prompt)
@@ -59,9 +59,9 @@ evaluate.each(only('cli-verify'))(
 )
 
 // "latest" is genkit 1.43.0 and @genkit-ai/middleware 0.11.0 on 2026-11-02, and middleware 0.11.0 needs genkit ^1.43.0.
-evaluate.each(only('cli-upgrade'))(
-  'tooling: $name',
-  { compare: { baseline: control, variants: [skill], gate } },
+evaluate(
+  'tooling: cli-upgrade',
+  { cases: only('cli-upgrade'), compare: { control, variants: [skill], gate } },
   async (c, p) => {
     await placeSolutions(c, p)
     const turn = await c.send(p.prompt)
@@ -77,9 +77,9 @@ evaluate.each(only('cli-upgrade'))(
 )
 
 // @genkit-ai/evaluator 1.43.0 needs genkit ^1.43.0, so a plain `npm install` of it fails on this app's genkit 1.42.0.
-evaluate.each(only('cli-add-eval'))(
-  'tooling: $name',
-  { compare: { baseline: control, variants: [skill], gate } },
+evaluate(
+  'tooling: cli-add-eval',
+  { cases: only('cli-add-eval'), compare: { control, variants: [skill], gate } },
   async (c, p) => {
     await placeSolutions(c, p)
     const turn = await c.send(p.prompt)
@@ -109,9 +109,9 @@ evaluate.each(only('cli-add-eval'))(
 )
 
 // the app runs as the user's own server without GENKIT_ENV=dev, so it writes no runtime file; `genkit mcp` and the CLI start their own runtimes with GENKIT_ENV=dev.
-evaluate.each(only('devui-missing-env'))(
-  'tooling: $name',
-  { compare: { baseline: mcp, variants: [directed], gate } },
+evaluate(
+  'tooling: devui-missing-env',
+  { cases: only('devui-missing-env'), compare: { control: mcp, variants: [directed], gate } },
   async (c, p) => {
     await c.writeFile('~/.user-app/server.mts', read('./sandbox/user-server.mts'))
     await c.serve('node_modules/.bin/tsx ~/.user-app/server.mts', 4100)
@@ -173,9 +173,9 @@ const secondAppErrors = (reported: string, answer: string, code: string): string
 ]
 
 // Two dev runtimes; `genkit mcp` watches one project root, so the second app is out of its reach.
-evaluate.each(only('devui-two-runtimes'))(
-  'tooling: $name',
-  { compare: { baseline: mcp, variants: [skill], gate } },
+evaluate(
+  'tooling: devui-two-runtimes',
+  { cases: only('devui-two-runtimes'), compare: { control: mcp, variants: [skill], gate } },
   async (c, p) => {
     const code = `ZEPHYR-${randomBytes(4).toString('hex')}`
     for (const file of SECOND_APP_FILES) await c.writeFile(`second-app/${file}`, read(`../../app/${file}`))
@@ -205,9 +205,9 @@ evaluate.each(only('devui-two-runtimes'))(
 const STREAM_CORRECT = (text: string) => /\bstreamFlow\b/.test(text) || (/\bsendChunk\b/.test(text) && /\.stream\(/.test(text))
 
 // `genkit mcp` loads the docs bundle before it connects, so with a cold cache and genkit.dev blocked it exits and every tool is gone, not only the docs tools.
-evaluate.each(only('mcp-offline-docs'))(
-  'tooling: $name',
-  { compare: { baseline: mcpOffline, variants: [directedOffline], gate } },
+evaluate(
+  'tooling: mcp-offline-docs',
+  { cases: only('mcp-offline-docs'), compare: { control: mcpOffline, variants: [directedOffline], gate } },
   async (c, p) => {
     await placeSolutions(c, p)
     const turn = await c.send(p.prompt)
@@ -255,7 +255,7 @@ function missing(text: string | null): string[] {
 }
 
 // the server's project root is wrong, so `list_flows` finds no runtime and `start_runtime` waits 30 s and fails with "Error: {}".
-evaluate.each(only('mcp-broken-server'))('tooling: $name', { environment: mcpWrongRoot }, async (c, p) => {
+evaluate('tooling: mcp-broken-server', { cases: only('mcp-broken-server'), environments: mcpWrongRoot }, async (c, p) => {
   await placeSolutions(c, p)
   const turn = await c.send(p.prompt)
   noProviderErrors(turn)
@@ -280,9 +280,9 @@ evaluate.each(only('mcp-broken-server'))('tooling: $name', { environment: mcpWro
 })
 
 // Claude Code expands `${VAR}` in `.mcp.json` when it starts a server, so the checks read the file expanded.
-evaluate.each(only('mcp-setup-claude'))(
-  'tooling: $name',
-  { compare: { baseline: controlClaude, variants: [skillClaude], gate } },
+evaluate(
+  'tooling: mcp-setup-claude',
+  { cases: only('mcp-setup-claude'), compare: { control: controlClaude, variants: [skillClaude], gate } },
   async (c, p) => {
     await placeSolutions(c, p)
     const turn = await c.send(p.prompt)
@@ -320,9 +320,9 @@ function unrun(c: AttemptContext, text: string | null): string[] {
 }
 
 // `genkit flow:run` and `run_flow` address /flow/ actions only, and each `tryTriage` call starts a new conversation.
-evaluate.each(only('agent-two-turn'))(
-  'tooling: $name',
-  { compare: { baseline: control, variants: [skill, mcp], gate } },
+evaluate(
+  'tooling: agent-two-turn',
+  { cases: only('agent-two-turn'), compare: { control, variants: [skill, mcp], gate } },
   async (c, p) => {
     await placeSolutions(c, p)
     const turn = await c.send(p.prompt)

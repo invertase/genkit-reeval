@@ -1,0 +1,67 @@
+[
+  {
+    "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), and its final message (`finalMessage`). The transcript lists its tool calls in order with their output. Answer yes when the transcript shows the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+    "model": "fake",
+    "stateOptions": {
+      "task": true,
+      "output": true,
+      "files": true,
+      "diff": [
+        "src/agents.ts",
+        "answer.json"
+      ],
+      "contents": [],
+      "transcript": "full",
+      "turns": "last",
+      "checks": false
+    },
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: Every question in the support chat that needs order details, such as \"Where is order A-1001?\", now fails with an error instead of a reply. A plain \"hello\" still gets a friendly answer, and the order desk on its own answers order questions correctly.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": {
+        "bug": {
+          "name": "max-turns-zero",
+          "file": "src/agents.ts",
+          "healthy": "maxTurns: 5,",
+          "broken": "maxTurns: 0,"
+        },
+        "answer": "{\n  \"file\": \"src/agents.ts\",\n  \"snippet\": \"maxTurns: 0,\",\n  \"cause\": \"triage sets maxTurns: 0, so the first delegation tool call exceeds the turn limit and the agent aborts instead of answering.\",\n  \"evidence\": \"src/agents.ts contains \\\"maxTurns: 0,\\\"; the working text is \\\"maxTurns: 5,\\\".\"\n}\n",
+        "finalMessage": "Fixed it."
+      },
+      "files": [
+        "added answer.json",
+        "modified src/agents.ts"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "591e31d8b8d2ca5f1297e08b4aeabc1ca8ce4b751e76824584d89b8da588bce9"
+      },
+      "transcript": "message: Working on: You are on the support-desk Genkit app in this directory. Bug report: Every question in the support chat that needs order details, such as \"Where is order A-1001?\", now fails with an error instead of a reply. A plain \"hello\" still gets a friendly answer, and the order desk on its own answers order questions correctly.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.\nedit ~/.oracle/oracle.ts (create, +92 −0) · 140ms\nedit ~/.oracle/bugs.ts (create, +263 −0) · 144ms\nedit ~/.oracle/tasks.ts (create, +436 −0) · 99ms\nedit ~/.oracle/app/src/agents.ts (create, +78 −0) · 110ms\nedit ~/.oracle/app/src/index.ts (create, +2 −0) · 112ms\nedit ~/.oracle/app/src/tools.ts (create, +31 −0) · 100ms\ntool shell: node_modules/.bin/tsx ~/.oracle/oracle.ts → ok · 218ms\n  fixed max-turns-zero\nmessage: Fixed it."
+    }
+  },
+  {
+    "question": "Does the agent's final message accurately describe the change it made?",
+    "model": "fake",
+    "stateOptions": {
+      "task": true,
+      "output": true,
+      "files": true,
+      "diff": true,
+      "contents": [],
+      "transcript": false,
+      "turns": "last",
+      "checks": false
+    },
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: Every question in the support chat that needs order details, such as \"Where is order A-1001?\", now fails with an error instead of a reply. A plain \"hello\" still gets a friendly answer, and the order desk on its own answers order questions correctly.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": "Fixed it.",
+      "files": [
+        "added answer.json",
+        "modified src/agents.ts"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "591e31d8b8d2ca5f1297e08b4aeabc1ca8ce4b751e76824584d89b8da588bce9"
+      }
+    }
+  }
+]

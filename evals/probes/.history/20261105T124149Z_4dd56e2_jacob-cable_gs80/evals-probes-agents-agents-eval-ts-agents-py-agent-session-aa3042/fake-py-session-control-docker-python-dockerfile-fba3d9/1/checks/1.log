@@ -1,0 +1,4 @@
+$ grep -rEq --include=*.py --exclude-dir=.venv 'define_agent\(' .
+exit 0
+--- stdout
+--- stderr

@@ -1,0 +1,6 @@
+{"ts":"2026-11-05T12:41:04.900Z","atMs":0,"turn":0,"type":"prompt","text":"List the flows (not agents) this app defines. Write their names as a JSON array to `flows.json`."}
+{"turn":0,"ts":"2026-11-05T12:41:04.900Z","atMs":0,"type":"text","text":"Working on: List the flows (not agents) this app defines. Write their names as a JSON array to `flows.json`.","durationMs":0}
+{"turn":0,"ts":"2026-11-05T12:41:04.900Z","atMs":0,"type":"text","text":"Loaded mcp: genkit","durationMs":0}
+{"turn":0,"ts":"2026-11-05T12:41:04.900Z","atMs":0,"type":"tool","toolCallId":"call_1","tool":"shell","input":{"command":"sh ~/.probe/run.sh good"},"output":"","ok":true,"durationMs":87}
+{"turn":0,"ts":"2026-11-05T12:41:04.987Z","atMs":87,"type":"text","text":"Done.","durationMs":0}
+{"ts":"2026-11-05T12:41:04.987Z","atMs":87,"turn":0,"type":"turn-end","status":"completed","durationMs":87}

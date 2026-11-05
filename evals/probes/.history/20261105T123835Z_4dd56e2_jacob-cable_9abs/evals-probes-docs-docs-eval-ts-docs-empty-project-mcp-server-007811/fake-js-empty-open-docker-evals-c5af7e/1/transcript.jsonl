@@ -1,0 +1,5 @@
+{"ts":"2026-11-05T12:39:19.121Z","atMs":0,"turn":0,"type":"prompt","text":"Using Genkit, define a tool named `add` that adds two numbers `a` and `b`, and expose it as an MCP server over stdio. `npm run mcp` must start the server."}
+{"turn":0,"ts":"2026-11-05T12:39:19.121Z","atMs":0,"type":"text","text":"Working on: Using Genkit, define a tool named `add` that adds two numbers `a` and `b`, and expose it as an MCP server over stdio. `npm run mcp` must start the server.","durationMs":0}
+{"turn":0,"ts":"2026-11-05T12:39:19.121Z","atMs":0,"type":"tool","toolCallId":"call_1","tool":"shell","input":{"command":"sh ~/.probe/run.sh good"},"output":"\nadded 574 packages in 1m\n","ok":true,"durationMs":75856}
+{"turn":0,"ts":"2026-11-05T12:40:34.977Z","atMs":75856,"type":"text","text":"Done.","durationMs":0}
+{"ts":"2026-11-05T12:40:34.977Z","atMs":75856,"turn":0,"type":"turn-end","status":"completed","durationMs":75856}

@@ -1,0 +1,30 @@
+$ node_modules/.bin/tsx --test --test-name-pattern '^tool-requests-returned$' ~/.verify.mts
+exit 1
+--- stdout
+✖ tool-requests-returned (1057.413876ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1745.229
+
+✖ failing tests:
+
+test at ../../home/reeval/.verify.mts:52:1
+✖ tool-requests-returned (1057.413876ms)
+  AssertionError [ERR_ASSERTION]: reply has no tracking code: ""
+      at TestContext.<anonymous> (/home/reeval/.verify.mts:54:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+--- stderr

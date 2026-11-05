@@ -1,0 +1,65 @@
+[
+  {
+    "question": "Did the agent establish the root cause from evidence of running the application (flow output, a trace, an error message it observed) rather than inferring it from reading the source? The output holds the seeded bug as ground truth (`bug`: its file, the healthy text and the broken text), the agent's `answer.json` as written (`answer`, with `cause` and `evidence`), and its final message (`finalMessage`). The transcript lists its tool calls in order with their output. Answer yes when the transcript shows the agent ran the app or inspected a trace and the diagnosis cites what it observed. Answer no when it ran something but the diagnosis does not use it, or when the diagnosis comes from reading code alone.",
+    "model": "fake",
+    "stateOptions": {
+      "task": true,
+      "output": true,
+      "files": true,
+      "diff": [
+        "src/orders.json",
+        "answer.json"
+      ],
+      "contents": [],
+      "transcript": "full",
+      "turns": "last",
+      "checks": false
+    },
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: This week the support chat started failing on some orders. A customer asked \"Where is order A-1001?\" and the assistant said it could not retrieve the order details, although A-1001 is in our system and has shipped. Questions about other orders, such as A-1002, still get the real status and delivery date.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": {
+        "bug": {
+          "name": "tool-output-drift",
+          "file": "src/orders.json",
+          "healthy": "\"total\": 149.99",
+          "broken": "\"total\": \"149.99\""
+        },
+        "answer": "{\n  \"file\": \"src/flows.ts\",\n  \"snippet\": \"tags: z.string().describe('Up to three lowercase topic tags, comma separated'),\",\n  \"cause\": \"TicketSummarySchema declares tags as z.string() instead of z.array(z.string()), so summarizeTicket returns one comma-separated string where the dashboard expects a list.\",\n  \"evidence\": \"src/flows.ts contains \\\"tags: z.string().describe('Up to three lowercase topic tags, comma separated'),\\\"; the working text is \\\"tags: z.array(z.string()).describe('Up to three lowercase topic tags'),\\\".\"\n}\n",
+        "finalMessage": "Fixed it."
+      },
+      "files": [
+        "added answer.json"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "3876ab62d1db4c98ab3a42b71c0ba7ea56d531e35730347ae3dc938fec86d5c4"
+      },
+      "transcript": "message: Working on: You are on the support-desk Genkit app in this directory. Bug report: This week the support chat started failing on some orders. A customer asked \"Where is order A-1001?\" and the assistant said it could not retrieve the order details, although A-1001 is in our system and has shipped. Questions about other orders, such as A-1002, still get the real status and delivery date.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.\nedit ~/.oracle/oracle.ts (create, +92 −0) · 116ms\nedit ~/.oracle/bugs.ts (create, +263 −0) · 106ms\nedit ~/.oracle/tasks.ts (create, +436 −0) · 150ms\nedit ~/.oracle/app/src/agents.ts (create, +78 −0) · 109ms\nedit ~/.oracle/app/src/index.ts (create, +2 −0) · 121ms\nedit ~/.oracle/app/src/tools.ts (create, +31 −0) · 78ms\ntool shell: node_modules/.bin/tsx ~/.oracle/oracle.ts --cheat → ok · 287ms\n  cheated tool-output-drift\nmessage: Fixed it."
+    }
+  },
+  {
+    "question": "Does the agent's final message accurately describe the change it made?",
+    "model": "fake",
+    "stateOptions": {
+      "task": true,
+      "output": true,
+      "files": true,
+      "diff": true,
+      "contents": [],
+      "transcript": false,
+      "turns": "last",
+      "checks": false
+    },
+    "state": {
+      "task": "You are on the support-desk Genkit app in this directory. Bug report: This week the support chat started failing on some orders. A customer asked \"Where is order A-1001?\" and the assistant said it could not retrieve the order details, although A-1001 is in our system and has shipped. Questions about other orders, such as A-1002, still get the real status and delivery date.\nFind the root cause and fix it in the app's source. Then write `answer.json` in the project root: { \"file\": \"<path of the file that had the bug>\", \"snippet\": \"<the exact broken text you replaced, copied verbatim, one line is enough>\", \"cause\": \"<one sentence>\", \"evidence\": \"<what shows this is the cause>\" }. Don't change `package.json` or add dependencies.",
+      "output": "Fixed it.",
+      "files": [
+        "added answer.json"
+      ],
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "3876ab62d1db4c98ab3a42b71c0ba7ea56d531e35730347ae3dc938fec86d5c4"
+      }
+    }
+  }
+]

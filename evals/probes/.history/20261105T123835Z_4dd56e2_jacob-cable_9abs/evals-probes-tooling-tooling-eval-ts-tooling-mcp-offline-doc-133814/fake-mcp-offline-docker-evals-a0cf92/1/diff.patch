@@ -1,0 +1,19 @@
+diff --git a/answer.md b/answer.md
+new file mode 100644
+index 0000000..5568541
+--- /dev/null
++++ b/answer.md
+@@ -0,0 +1,13 @@
++# Streaming a flow
++
++The Genkit docs tools failed in this sandbox (no network), so this is from memory, not from the docs.
++
++Declare `streamSchema` on the flow and call `sendChunk(chunk)` from the flow function:
++
++    ai.defineFlow({ name: 'f', inputSchema: z.string(), streamSchema: z.string() }, async (input, { sendChunk }) => { sendChunk(input); return input })
++
++The caller uses `flow.stream(input)`, iterates `stream` and awaits `output`:
++
++    const { stream, output } = f.stream('x')
++    for await (const chunk of stream) console.log(chunk)
++    console.log(await output)

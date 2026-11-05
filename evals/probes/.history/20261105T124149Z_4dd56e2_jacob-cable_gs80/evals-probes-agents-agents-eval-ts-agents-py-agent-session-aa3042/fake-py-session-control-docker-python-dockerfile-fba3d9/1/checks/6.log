@@ -1,0 +1,5 @@
+$ PY=$([ -x .venv/bin/python ] && echo .venv/bin/python || echo python3); timeout 300 "$PY" ~/.verify-py-turn.py '5f970839-0e33-4c32-9ff8-fd9e92e0fc6e' 'What order id did I give you earlier? Reply with only the id.'
+exit 0
+--- stdout
+PROBE_RESULT {"reply": "I am sorry, but I do not have access to the order ID you provided earlier in our conversation. I am unable to recall past interactions.", "session": "5f970839-0e33-4c32-9ff8-fd9e92e0fc6e"}
+--- stderr

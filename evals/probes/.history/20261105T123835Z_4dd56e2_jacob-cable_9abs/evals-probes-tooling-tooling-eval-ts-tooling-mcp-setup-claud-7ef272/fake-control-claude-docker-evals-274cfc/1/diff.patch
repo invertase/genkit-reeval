@@ -1,0 +1,21 @@
+diff --git a/.mcp.json b/.mcp.json
+new file mode 100644
+index 0000000..3eb043d
+--- /dev/null
++++ b/.mcp.json
+@@ -0,0 +1,14 @@
++{
++  "mcpServers": {
++    "genkit": {
++      "type": "stdio",
++      "command": "genkit",
++      "args": [
++        "mcp",
++        "--project-root",
++        "."
++      ],
++      "env": {}
++    }
++  }
++}
+\ No newline at end of file

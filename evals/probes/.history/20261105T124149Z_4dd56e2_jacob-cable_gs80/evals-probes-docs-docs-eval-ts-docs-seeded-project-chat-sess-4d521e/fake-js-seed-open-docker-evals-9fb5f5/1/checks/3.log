@@ -1,0 +1,7 @@
+$ ANTHROPIC_API_KEY=unused-by-the-checks timeout 180 node_modules/.bin/tsx ~/.verify-chat.mts - 'Remember this: my locker code is cobalt-obsidian-8573. The shed code is willow-velvet-6746, which is not mine. Reply with OK.'; rc=$?; if [ $rc -eq 124 ]; then echo 'PROBE_RESULT {"ok":false,"error":"turn did not return within 180s"}'; exit 0; fi; exit $rc
+exit 0, passed on try 1 of 3
+
+try 1 of 3: exit 0 after 4s
+--- stdout
+PROBE_RESULT {"ok":true,"reply":"OK.","sessionId":"5ce14f4f-e82b-42c7-b622-2802ddd3d0d7"}
+--- stderr

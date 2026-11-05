@@ -1,0 +1,10 @@
+$ cd '.' && go build ./...
+exit 1
+--- stdout
+--- stderr
+main.go:8:2: missing go.sum entry for module providing package github.com/genkit-ai/genkit/go/ai (imported by example.com/hello); to add:
+	go get example.com/hello
+main.go:9:2: missing go.sum entry for module providing package github.com/genkit-ai/genkit/go/genkit (imported by example.com/hello); to add:
+	go get example.com/hello
+main.go:10:2: missing go.sum entry for module providing package github.com/genkit-ai/genkit/go/plugins/googlegenai (imported by example.com/hello); to add:
+	go get example.com/hello

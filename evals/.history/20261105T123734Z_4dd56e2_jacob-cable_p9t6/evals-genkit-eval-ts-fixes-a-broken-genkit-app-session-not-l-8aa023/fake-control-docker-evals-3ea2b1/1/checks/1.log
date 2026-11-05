@@ -1,0 +1,35 @@
+$ node_modules/.bin/tsx --test --test-name-pattern '^session-not-loaded$' ~/.verify.mts
+exit 1
+--- stdout
+✖ session-not-loaded (1268.027791ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2077.028418
+
+✖ failing tests:
+
+test at ../../home/reeval/.verify.mts:71:1
+✖ session-not-loaded (1268.027791ms)
+  Error [GenkitError]: FAILED_PRECONDITION: getSnapshotData requires a persistent store. Provide a 'store' when defining 'triage'.
+      at requireStore (/reeval/workspace/node_modules/@genkit-ai/ai/src/agent.ts:239:11)
+      at resolveSnapshot (/reeval/workspace/node_modules/@genkit-ai/ai/src/agent.ts:1331:5)
+      at actionFn.getSnapshotData (/reeval/workspace/node_modules/@genkit-ai/ai/src/agent.ts:1390:54)
+      at Object.getSnapshot (/reeval/workspace/node_modules/@genkit-ai/ai/src/agent.ts:1428:24)
+      at actionFn.loadChat (/reeval/workspace/node_modules/@genkit-ai/ai/src/agent-core.ts:1014:41)
+      at TestContext.<anonymous> (/home/reeval/.verify.mts:74:33)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    source: undefined,
+    status: 'FAILED_PRECONDITION',
+    detail: undefined,
+    code: 400,
+    responseMetadata: undefined,
+    originalMessage: "getSnapshotData requires a persistent store. Provide a 'store' when defining 'triage'."
+  }
+--- stderr

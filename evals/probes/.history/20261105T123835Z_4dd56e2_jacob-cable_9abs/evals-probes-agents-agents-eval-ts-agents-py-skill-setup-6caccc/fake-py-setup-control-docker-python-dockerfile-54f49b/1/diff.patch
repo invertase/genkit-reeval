@@ -1,0 +1,53 @@
+diff --git a/AGENTS.md b/AGENTS.md
+new file mode 100644
+index 0000000..22549d3
+--- /dev/null
++++ b/AGENTS.md
+@@ -0,0 +1,26 @@
++# Genkit Python
++
++Use the Genkit Python SDK (`genkit` and `genkit-google-genai` on PyPI).
++
++```python
++from genkit import Genkit
++from genkit_google_genai import GoogleAI
++
++ai = Genkit(plugins=[GoogleAI()], model='googleai/gemini-2.5-flash')
++
++
++@ai.tool()
++async def lookup(order_id: str) -> str: ...
++
++
++async def main():
++    res = await ai.generate(prompt='Hello', tools=[lookup])
++    print(res.text)
++
++
++if __name__ == '__main__':
++    ai.run_main(main())
++```
++
++- Agents live on `genkit.exp`: `from genkit.exp import Genkit` gives `ai.define_agent`.
++- Set `GEMINI_API_KEY`. Run with `uv run main.py`.
+diff --git a/app.py b/app.py
+new file mode 100644
+index 0000000..6257be5
+--- /dev/null
++++ b/app.py
+@@ -0,0 +1,15 @@
++from pydantic import BaseModel
++
++from genkit import Genkit
++from genkit_google_genai import GoogleAI
++
++ai = Genkit(plugins=[GoogleAI()], model='googleai/gemini-2.5-flash')
++
++
++class Celsius(BaseModel):
++    degrees: float
++
++
++@ai.tool(name='celsiusToFahrenheit', description='Converts a temperature from Celsius to Fahrenheit.')
++async def celsius_to_fahrenheit(input: Celsius) -> float:
++    return input.degrees * 9 / 5 + 32

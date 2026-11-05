@@ -1,0 +1,30 @@
+$ node_modules/.bin/tsx --test --test-name-pattern '^stop-sequence$' ~/.verify.mts
+exit 1
+--- stdout
+✖ stop-sequence (3510.226835ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4156.562336
+
+✖ failing tests:
+
+test at ../../home/reeval/.verify.mts:57:1
+✖ stop-sequence (3510.226835ms)
+  AssertionError [ERR_ASSERTION]: reply is 6 characters (stop): "Hello!"
+      at TestContext.<anonymous> (/home/reeval/.verify.mts:62:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+--- stderr

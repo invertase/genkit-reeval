@@ -1,0 +1,50 @@
+[reeval: dropped package-lock.json: lockfile, 7113 changed lines]
+diff --git a/package.json b/package.json
+index e41aac9..f693991 100644
+--- a/package.json
++++ b/package.json
+@@ -10,5 +10,9 @@
+     "@types/node": "22.20.5",
+     "tsx": "4.23.15",
+     "typescript": "5.9.3"
++  },
++  "dependencies": {
++    "genkit": "1.43.0",
++    "@genkit-ai/google-genai": "1.43.0"
+   }
+ }
+diff --git a/src/flows.ts b/src/flows.ts
+new file mode 100644
+index 0000000..4089e4c
+--- /dev/null
++++ b/src/flows.ts
+@@ -0,0 +1,29 @@
++import { genkit, z } from 'genkit'
++import { googleAI } from '@genkit-ai/google-genai'
++
++const ai = genkit({ plugins: [googleAI()] })
++
++export const speak = ai.defineFlow(
++  { name: 'speak', inputSchema: z.string(), outputSchema: z.string() },
++  async (text) => {
++    const { media } = await ai.generate({
++      model: googleAI.model('gemini-2.5-flash-preview-tts'),
++      prompt: text,
++      config: { speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } } } },
++    })
++    if (!media) throw new Error('The model returned no audio')
++    return media.url
++  },
++)
++
++export const drawImage = ai.defineFlow(
++  { name: 'drawImage', inputSchema: z.string(), outputSchema: z.string() },
++  async (description) => {
++    const { media } = await ai.generate({
++      model: googleAI.model('imagen-3.0-generate-002'),
++      prompt: description,
++    })
++    if (!media) throw new Error('The model returned no image')
++    return media.url
++  },
++)

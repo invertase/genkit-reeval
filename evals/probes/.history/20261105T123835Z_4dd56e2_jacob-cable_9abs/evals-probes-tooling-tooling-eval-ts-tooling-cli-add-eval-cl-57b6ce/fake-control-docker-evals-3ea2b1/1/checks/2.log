@@ -1,0 +1,12 @@
+$ rm -f ~/.eval-out.json; timeout 170 genkit --non-interactive eval:flow summarizeTicket '[{"testCaseId":"late-order","input":{"text":"My order never arrived and I need it for Friday."}}]' -f -o ~/.eval-out.json -- npm run dev
+exit 0, passed on try 1 of 2
+
+try 1 of 2: exit 0 after 5s
+--- stdout
+Indexed 0 traces in 0ms in /reeval/workspace/.genkit/traces_idx
+Telemetry API running on http://127.0.0.1:4033
+Using evaluators: genkitEval/faithfulness
+Trace ID: 6dda08f58f3d573f5d027188e8eb523d
+Writing json results to '/home/reeval/.eval-out.json'...
+Evaluation ID: 8ea9b6c3-6e93-4056-b369-595ade1a12c9
+--- stderr

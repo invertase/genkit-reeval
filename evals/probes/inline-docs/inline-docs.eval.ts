@@ -10,9 +10,9 @@ import { stock, tsdoc } from './environments.ts'
 
 const verify = readFileSync(new URL('../../verify-build.mts', import.meta.url), 'utf8')
 
-evaluate.each(PROBES)(
-  'inline-docs: $name',
-  { compare: { baseline: stock, variants: [tsdoc], gate }, tags: ['agents-tsdoc'] },
+evaluate(
+  'inline-docs',
+  { cases: PROBES, compare: { control: stock, variants: [tsdoc], gate }, tags: ['agents-tsdoc'] },
   async (c, probe) => {
     for (const [file, text] of Object.entries(TASK.start)) {
       if (text === null) throw new Error(`${TASK.name}: removes ${file}, which this eval does not place`)

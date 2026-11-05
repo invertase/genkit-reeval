@@ -1,0 +1,15 @@
+diff --git a/answer.txt b/answer.txt
+new file mode 100644
+index 0000000..a51e75e
+--- /dev/null
++++ b/answer.txt
+@@ -0,0 +1 @@
++Hi Dana, welcome to Contoso Cables!
+diff --git a/second-app/node_modules b/second-app/node_modules
+new file mode 120000
+index 0000000..68a084a
+--- /dev/null
++++ b/second-app/node_modules
+@@ -0,0 +1 @@
++../node_modules
+\ No newline at end of file

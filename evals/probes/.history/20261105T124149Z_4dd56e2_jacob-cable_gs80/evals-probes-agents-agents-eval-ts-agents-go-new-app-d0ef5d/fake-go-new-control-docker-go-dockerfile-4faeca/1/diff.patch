@@ -1,0 +1,41 @@
+diff --git a/go.mod b/go.mod
+new file mode 100644
+index 0000000..017702d
+--- /dev/null
++++ b/go.mod
+@@ -0,0 +1,5 @@
++module example.com/hello
++
++go 1.25.0
++
++require github.com/genkit-ai/genkit/go v1.14.0
+diff --git a/main.go b/main.go
+new file mode 100644
+index 0000000..617afc5
+--- /dev/null
++++ b/main.go
+@@ -0,0 +1,24 @@
++package main
++
++import (
++	"context"
++	"fmt"
++	"log"
++
++	"github.com/genkit-ai/genkit/go/ai"
++	"github.com/genkit-ai/genkit/go/genkit"
++	"github.com/genkit-ai/genkit/go/plugins/googlegenai"
++)
++
++func main() {
++	ctx := context.Background()
++	g := genkit.Init(ctx, genkit.WithPlugins(&googlegenai.GoogleAI{}))
++	answer, err := genkit.GenerateText(ctx, g,
++		ai.WithModelName("googleai/gemini-2.5-flash"),
++		ai.WithPrompt("What is Genkit? Answer in one line."),
++	)
++	if err != nil {
++		log.Fatal(err)
++	}
++	fmt.Println(answer)
++}

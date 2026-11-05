@@ -1,0 +1,13 @@
+$ node_modules/.bin/tsx --test --test-name-pattern '^delegation-dropped$' ~/.verify.mts
+exit 0
+--- stdout
+✔ delegation-dropped (4937.481335ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5777.646711
+--- stderr

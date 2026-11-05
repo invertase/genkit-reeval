@@ -1,0 +1,27 @@
+[
+  {
+    "question": "Did the agent build the conversation with Genkit's agents API (an agent defined with a session store, such as `define_agent` in Python or `genkitx.DefineAgent` in Go) rather than a hand-rolled loop over `generate` calls that stores the history itself?",
+    "model": "fake",
+    "stateOptions": {
+      "task": true,
+      "output": false,
+      "files": false,
+      "diff": [
+        "*.go"
+      ],
+      "contents": [],
+      "transcript": "tools",
+      "turns": "last",
+      "checks": false
+    },
+    "state": {
+      "task": "Build a customer support Genkit agent in this directory, as a Go module with `package main` in the project root. It answers customers' questions about their orders with Gemini and has a tool that looks an order up by id; `orders.json` in this directory maps each order id to its `status` and `eta`. The Gemini API key is in the GEMINI_API_KEY environment variable.\nThe agent keeps a persistent session per customer, so that a conversation continues after the process restarts. Expose this in `package main`:\n`func Ask(ctx context.Context, sessionID string, message string) (reply string, newSessionID string, err error)`\nAn empty `sessionID` starts a new conversation; an id that an earlier call returned continues that conversation, even from a new process. `Ask` sets up everything it needs itself. `main` may chat with the agent however you like.",
+      "diff": "diff --git a/main.go b/main.go\nnew file mode 100644\nindex 0000000..7ea8575\n--- /dev/null\n+++ b/main.go\n@@ -0,0 +1,81 @@\n+package main\n+\n+import (\n+\t\"context\"\n+\t\"encoding/json\"\n+\t\"fmt\"\n+\t\"os\"\n+\n+\t\"github.com/firebase/genkit/go/ai\"\n+\taix \"github.com/firebase/genkit/go/ai/exp\"\n+\t\"github.com/firebase/genkit/go/ai/exp/localstore\"\n+\t\"github.com/firebase/genkit/go/genkit\"\n+\tgenkitx \"github.com/firebase/genkit/go/genkit/exp\"\n+\t\"github.com/firebase/genkit/go/plugins/googlegenai\"\n+)\n+\n+type orderInput struct {\n+\tOrderID string `json:\"orderId\" jsonschema_description:\"The order id, for example A-7731\"`\n+}\n+\n+type order struct {\n+\tStatus string `json:\"status\"`\n+\tETA    string `json:\"eta\"`\n+}\n+\n+// Ask sends message to the support agent; an empty sessionID starts a conversation.\n+func Ask(ctx context.Context, sessionID string, message string) (string, string, error) {\n+\tg := genkit.Init(ctx, genkit.WithPlugins(&googlegenai.GoogleAI{}), genkit.WithExperimental())\n+\n+\tlookupOrder := genkit.DefineTool(g, \"lookupOrder\", \"Looks up the status and delivery ETA of an order by its id.\",\n+\t\tfunc(_ *ai.ToolContext, in orderInput) (order, error) {\n+\t\t\traw, err := os.ReadFile(\"orders.json\")\n+\t\t\tif err != nil {\n+\t\t\t\treturn order{}, err\n+\t\t\t}\n+\t\t\torders := map[string]order{}\n+\t\t\tif err := json.Unmarshal(raw, &orders); err != nil {\n+\t\t\t\treturn order{}, err\n+\t\t\t}\n+\t\t\to, ok := orders[in.OrderID]\n+\t\t\tif !ok {\n+\t\t\t\treturn order{}, fmt.Errorf(\"no order %s\", in.OrderID)\n+\t\t\t}\n+\t\t\treturn o, nil\n+\t\t})\n+\n+\tstore, err := localstore.NewInMemorySessionStore[any](), error(nil)\n+\tif err != nil {\n+\t\treturn \"\", \"\", err\n+\t}\n+\tagent := genkitx.DefineAgent(g, \"support\",\n+\t\taix.InlinePrompt{\n+\t\t\tai.WithModelName(\"googleai/gemini-2.5-flash\"),\n+\t\t\tai.WithSystem(\"You are a support agent. Use lookupOrder for order questions and answer briefly. The conversation so far holds what the customer already told you, such as their order id; use it and never ask for it again.\"),\n+\t\t\tai.WithTools(lookupOrder),\n+\t\t},\n+\t\taix.WithSessionStore(store),\n+\t)\n+\n+\tvar opts []aix.InvocationOption[any]\n+\tif sessionID != \"\" {\n+\t\topts = append(opts, aix.WithSessionID[any](sessionID))\n+\t}\n+\tout, err := agent.RunText(ctx, message, opts...)\n+\tif err != nil {\n+\t\treturn \"\", \"\", err\n+\t}\n+\tif out.Error != nil {\n+\t\treturn \"\", \"\", out.Error\n+\t}\n+\treturn out.Message.Text(), out.SessionID, nil\n+}\n+\n+func main() {\n+\treply, id, err := Ask(context.Background(), \"\", \"Where is order A-7731?\")\n+\tif err != nil {\n+\t\tfmt.Fprintln(os.Stderr, err)\n+\t\tos.Exit(1)\n+\t}\n+\tfmt.Println(id, reply)\n+}\n",
+      "transcript": "tool shell: sh ~/.probe/run.sh cheat → ok · 389ms"
+    },
+    "dropped": [
+      "go.mod: not in diff's patterns",
+      "go.sum: not in diff's patterns"
+    ]
+  }
+]

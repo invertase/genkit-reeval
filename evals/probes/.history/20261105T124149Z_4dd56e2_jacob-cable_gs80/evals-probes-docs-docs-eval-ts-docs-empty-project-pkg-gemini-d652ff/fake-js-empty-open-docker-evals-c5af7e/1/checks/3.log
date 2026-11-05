@@ -1,0 +1,56 @@
+$ ANTHROPIC_API_KEY=unused-by-the-checks timeout 120 npm start --silent
+exit 1, failed all 2 tries
+
+try 1 of 2: exit 1 after 3s
+--- stdout
+--- stderr
+/reeval/workspace/node_modules/@google/generative-ai/dist/index.js:434
+    throw new GoogleGenerativeAIFetchError(`Error fetching from ${url.toString()}: [${response.status} ${response.statusText}] ${message}`, response.status, response.statusText, errorDetails);
+          ^
+
+GoogleGenerativeAIFetchError: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent: [404 ] This model models/gemini-2.5-flash-lite is no longer available to new users. Please update your code to use models/gemini-3.5-flash-lite for the latest features and improvements. We recommend you to use the Interactions API (https://ai.google.dev/gemini-api/docs/get-started).
+    at handleResponseNotOk (/reeval/workspace/node_modules/@google/generative-ai/dist/index.js:434:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async makeRequest (/reeval/workspace/node_modules/@google/generative-ai/dist/index.js:403:9)
+    at async generateContent (/reeval/workspace/node_modules/@google/generative-ai/dist/index.js:867:22)
+    at async ChatSession.sendMessage (/reeval/workspace/node_modules/@google/generative-ai/dist/index.js:1210:9)
+    at async callGemini (/reeval/workspace/node_modules/@genkit-ai/googleai/src/gemini.ts:1492:26)
+    at async <anonymous> (/reeval/workspace/node_modules/@genkit-ai/googleai/src/gemini.ts:1553:11)
+    at async <anonymous> (/reeval/workspace/node_modules/@genkit-ai/core/src/action.ts:727:12)
+    at async <anonymous> (/reeval/workspace/node_modules/@genkit-ai/core/src/action.ts:602:26)
+    at async runWithGenkitState (/reeval/workspace/node_modules/@genkit-ai/core/src/tracing/instrumentation.ts:280:20) {
+  status: 404,
+  statusText: '',
+  errorDetails: undefined,
+  traceId: '00000000000000000000000000000000',
+  ignoreFailedSpan: true
+}
+
+Node.js v26.13.0
+
+try 2 of 2: exit 1 after 930ms
+--- stdout
+--- stderr
+/reeval/workspace/node_modules/@google/generative-ai/dist/index.js:434
+    throw new GoogleGenerativeAIFetchError(`Error fetching from ${url.toString()}: [${response.status} ${response.statusText}] ${message}`, response.status, response.statusText, errorDetails);
+          ^
+
+GoogleGenerativeAIFetchError: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent: [404 ] This model models/gemini-2.5-flash-lite is no longer available to new users. Please update your code to use models/gemini-3.5-flash-lite for the latest features and improvements. We recommend you to use the Interactions API (https://ai.google.dev/gemini-api/docs/get-started).
+    at handleResponseNotOk (/reeval/workspace/node_modules/@google/generative-ai/dist/index.js:434:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async makeRequest (/reeval/workspace/node_modules/@google/generative-ai/dist/index.js:403:9)
+    at async generateContent (/reeval/workspace/node_modules/@google/generative-ai/dist/index.js:867:22)
+    at async ChatSession.sendMessage (/reeval/workspace/node_modules/@google/generative-ai/dist/index.js:1210:9)
+    at async callGemini (/reeval/workspace/node_modules/@genkit-ai/googleai/src/gemini.ts:1492:26)
+    at async <anonymous> (/reeval/workspace/node_modules/@genkit-ai/googleai/src/gemini.ts:1553:11)
+    at async <anonymous> (/reeval/workspace/node_modules/@genkit-ai/core/src/action.ts:727:12)
+    at async <anonymous> (/reeval/workspace/node_modules/@genkit-ai/core/src/action.ts:602:26)
+    at async runWithGenkitState (/reeval/workspace/node_modules/@genkit-ai/core/src/tracing/instrumentation.ts:280:20) {
+  status: 404,
+  statusText: '',
+  errorDetails: undefined,
+  traceId: '00000000000000000000000000000000',
+  ignoreFailedSpan: true
+}
+
+Node.js v26.13.0

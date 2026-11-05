@@ -1,0 +1,7 @@
+$ timeout 120 node_modules/.bin/tsx ~/.verify-models.mts 'gemini-3.8-flash-tts' 'gemini-nano-banana-2.1'
+exit 0, passed on try 1 of 3
+
+try 1 of 3: exit 0 after 586ms
+--- stdout
+PROBE_RESULT {"ok":true,"missing":[]}
+--- stderr

@@ -1,0 +1,32 @@
+[reeval: dropped package-lock.json: lockfile, 74 changed lines]
+diff --git a/package.json b/package.json
+index e41aac9..9601196 100644
+--- a/package.json
++++ b/package.json
+@@ -10,5 +10,8 @@
+     "@types/node": "22.20.5",
+     "tsx": "4.23.15",
+     "typescript": "5.9.3"
++  },
++  "dependencies": {
++    "@anthropic-ai/sdk": "0.97.1"
+   }
+ }
+diff --git a/src/flows.ts b/src/flows.ts
+new file mode 100644
+index 0000000..0974e83
+--- /dev/null
++++ b/src/flows.ts
+@@ -0,0 +1,12 @@
++import Anthropic from '@anthropic-ai/sdk'
++
++const client = new Anthropic()
++
++export async function askClaude(question: string): Promise<string> {
++  const message = await client.messages.create({
++    model: 'claude-3-haiku-20240307',
++    max_tokens: 1024,
++    messages: [{ role: 'user', content: question }],
++  })
++  return message.content.flatMap((block) => (block.type === 'text' ? [block.text] : [])).join('')
++}

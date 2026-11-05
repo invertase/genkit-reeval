@@ -1,0 +1,24 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..8a93f78
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,6 @@
++{
++  "file": "src/agents.ts",
++  "snippet": "earlier in the conversation.',\n  maxTurns:",
++  "cause": "triage no longer passes the FileSessionStore as store, so its sessions are client-managed and loadChat({ sessionId }) throws instead of continuing the conversation.",
++  "evidence": "src/agents.ts contains \"earlier in the conversation.',\\n  maxTurns:\"; the working text is \"earlier in the conversation.',\\n  store,\\n  maxTurns:\"."
++}
+diff --git a/src/agents.ts b/src/agents.ts
+index 7846cdb..f915c9e 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -59,6 +59,7 @@ export const triage = ai.defineAgent({
+   system:
+     'Delegate order questions to orderAgent and refund requests to refundAgent. Do not answer them yourself. ' +
+     'Always put the order id in the delegated task; when the customer does not name an order, use the order id from earlier in the conversation.',
++  store,
+   maxTurns: 5,
+   toolChoice: 'auto',
+   use: [agents({ agents: ['orderAgent', 'refundAgent'], maxDelegations: 3, historyLength: 4 })],

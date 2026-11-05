@@ -1,0 +1,19 @@
+diff --git a/src/agents.ts b/src/agents.ts
+index 433ce08..b895123 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -11,9 +11,12 @@ const issueRefund = ai.defineTool(
+     name: 'issueRefund',
+     description: 'Refunds an amount to the customer for an order. Only call this after approveRefund returned approved.',
+     inputSchema: z.object({ orderId: z.string(), amount: z.number() }),
+-    outputSchema: z.object({ refundId: z.string() }),
++    outputSchema: z.object({ refundId: z.string(), receipt: z.string() }),
++  },
++  async ({ orderId, amount }) => {
++    const refundId = createRefund(orderId, amount);
++    return { refundId, receipt: `receipt-${refundId}: ${amount} refunded for ${orderId}` };
+   },
+-  async ({ orderId, amount }) => ({ refundId: createRefund(orderId, amount) }),
+ );
+ 
+ const approveRefund = ai.defineInterrupt({

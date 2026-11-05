@@ -1,0 +1,6 @@
+$ cd '.' && go list -m -f '{{.Version}}' github.com/firebase/genkit/go
+exit 1
+--- stdout
+--- stderr
+go: github.com/genkit-ai/genkit/go@v1.14.0: missing go.sum entry for go.mod file; to add it:
+	go mod download github.com/genkit-ai/genkit/go

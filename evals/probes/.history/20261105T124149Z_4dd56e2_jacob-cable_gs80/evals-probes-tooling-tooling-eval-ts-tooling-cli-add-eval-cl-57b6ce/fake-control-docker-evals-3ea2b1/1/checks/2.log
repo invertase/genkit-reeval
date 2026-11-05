@@ -1,0 +1,19 @@
+$ rm -f ~/.eval-out.json; timeout 170 genkit --non-interactive eval:flow summarizeTicket '[{"testCaseId":"late-order","input":{"text":"My order never arrived and I need it for Friday."}}]' -f -o ~/.eval-out.json -- npm run dev
+exit 1, failed all 2 tries
+
+try 1 of 2: exit 1 after 1s
+--- stdout
+Indexed 0 traces in 0ms in /reeval/workspace/.genkit/traces_idx
+Telemetry API running on http://127.0.0.1:4033
+Error: Command exited with an Error:
+Error: 	Message: No evaluators found in your app
+
+--- stderr
+
+try 2 of 2: exit 1 after 1s
+--- stdout
+Telemetry API running on http://127.0.0.1:4033
+Error: Command exited with an Error:
+Error: 	Message: No evaluators found in your app
+
+--- stderr

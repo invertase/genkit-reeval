@@ -1,0 +1,9 @@
+$ PROBE_ORDER_ID=A-4621 go test -count=1 -timeout 300s -run '^TestProbeTwoProcesses$' .
+exit 1
+--- stdout
+--- FAIL: TestProbeTwoProcesses (18.24s)
+    zz_probe_test.go:97: the second process does not recall A-4621: ""
+FAIL
+FAIL	example.com/support	18.244s
+FAIL
+--- stderr

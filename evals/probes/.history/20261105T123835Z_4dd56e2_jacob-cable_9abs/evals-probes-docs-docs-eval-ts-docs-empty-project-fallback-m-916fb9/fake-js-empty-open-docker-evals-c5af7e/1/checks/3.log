@@ -1,0 +1,9 @@
+$ ANTHROPIC_API_KEY=unused-by-the-checks timeout 120 npm start --silent
+exit 0, passed on try 1 of 2
+
+try 1 of 2: exit 0 after 5s
+--- stdout
+Why do programmers prefer dark mode?
+
+Because light attracts bugs.
+--- stderr

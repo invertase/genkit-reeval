@@ -1,0 +1,14 @@
+diff --git a/answer.md b/answer.md
+new file mode 100644
+index 0000000..afb3c2a
+--- /dev/null
++++ b/answer.md
+@@ -0,0 +1,8 @@
++# Streaming a flow
++
++Declare `streamSchema` on the flow and call `sendChunk(chunk)` from the flow function. See the docs for error handling.
++
++The caller uses `flow.stream(input)`, iterates `stream` and awaits `output`:
++
++    const { stream, output } = f.stream('x')
++    for await (const chunk of stream) console.log(chunk)

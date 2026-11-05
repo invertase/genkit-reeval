@@ -1,0 +1,5 @@
+$  node_modules/.bin/tsx ~/.verify-versions.mts
+exit 0
+--- stdout
+PROBE_RESULT {"one":["@genkit-ai/google-genai is 1.42.0, genkit is 1.43.0: not the same major.minor","@genkit-ai/middleware 0.10.0 is older than 0.11.0"],"tree":[]}
+--- stderr

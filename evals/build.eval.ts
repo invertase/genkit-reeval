@@ -8,7 +8,7 @@ import { requirementErrors, TASKS, verifyErrors } from './tasks.ts'
 const verify = fs.readFileSync(new URL('./verify-build.mts', import.meta.url), 'utf8')
 
 // Set by reeval.oracle.config.ts: gates the control cell so a failing oracle sets the exit code; evals/canary-check.ts judges the canary.
-const gate = process.env.GENKIT_EVAL_GATE === 'all' ? 'all' : 'none'
+const gate = process.env.GENKIT_EVAL_GATE === 'all' ? 'all' : 'observe'
 
 const IDIOM_QUESTION =
   "Did the agent build the feature with Genkit's agents API (`ai.defineAgent`, `ai.defineInterrupt` for the approval step, the `agents()` middleware from `@genkit-ai/middleware` for delegation, a session store such as `FileSessionStore` for resumable conversations) " +
@@ -22,12 +22,13 @@ const PAIR_QUESTION =
   'Idiomatic means `ai.defineAgent`, `ai.defineInterrupt` for a human approval step, the `agents()` middleware from `@genkit-ai/middleware` (a real package, already in package.json) for delegation, ' +
   'and a session store such as `FileSessionStore` for resumable conversations. Tools that wrap another agent\'s `.chat()`, hand-rolled `ai.generate` loops, and `ai.chat()` (removed from Genkit) are not idiomatic.'
 
-// One family of 7 cases: the arms get one lift, paired by task.
-evaluate.each(TASKS)(
-  'builds a Genkit feature: $name',
+// One eval over 7 cases: the arms get one lift, paired by task.
+evaluate(
+  'builds a Genkit feature',
   {
+    cases: TASKS,
     compare: {
-      baseline: control,
+      control,
       variants: [rules, mcp, directed, skill],
       gate,
     },

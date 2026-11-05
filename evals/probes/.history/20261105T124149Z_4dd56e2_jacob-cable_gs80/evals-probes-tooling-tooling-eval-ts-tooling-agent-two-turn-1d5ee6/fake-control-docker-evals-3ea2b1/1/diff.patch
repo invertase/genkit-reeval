@@ -1,0 +1,10 @@
+diff --git a/answer.json b/answer.json
+new file mode 100644
+index 0000000..2313e69
+--- /dev/null
++++ b/answer.json
+@@ -0,0 +1,4 @@
++{
++  "turn1": "Order A-1001 has shipped.",
++  "turn2": "The tracking code is NW-7F3K2Q."
++}

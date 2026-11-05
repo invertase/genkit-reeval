@@ -1,0 +1,13 @@
+$ node_modules/.bin/tsx --test --test-name-pattern '^session-not-loaded$' ~/.verify.mts
+exit 0
+--- stdout
+✔ session-not-loaded (4603.055252ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5418.965252
+--- stderr

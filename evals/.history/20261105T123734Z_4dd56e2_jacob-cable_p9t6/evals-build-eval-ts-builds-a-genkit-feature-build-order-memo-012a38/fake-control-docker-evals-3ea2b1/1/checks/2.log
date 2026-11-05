@@ -1,0 +1,62 @@
+$ node_modules/.bin/tsx --test --test-reporter=tap --test-name-pattern '^build-order-memory:' ~/.verify-build.mts
+exit 1
+--- stdout
+TAP version 13
+# Subtest: build-order-memory: resumes by session id
+not ok 1 - build-order-memory: resumes by session id
+  ---
+  duration_ms: 2873.120501
+  type: 'test'
+  location: '/home/reeval/.verify-build.mts:226:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    the later request failed: Error: Snapshot session 6b2c5caa-05fc-4b7d-8af0-8b1d80cd719e not found.
+        at actionFn.loadChat (/reeval/workspace/node_modules/@genkit-ai/ai/src/agent-core.ts:1020:15)
+        at async <anonymous> (/tmp/later-request-qjS5Xz/request.mts:5:14)
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  operator: 'fail'
+  stack: |-
+    actionFn.loadChat (/reeval/workspace/node_modules/@genkit-ai/ai/src/agent-core.ts:1020:15)
+    async <anonymous> (/tmp/later-request-qjS5Xz/request.mts:5:14)
+    inLaterRequest (/home/reeval/.verify-build.mts:210:12)
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async sendLater (/home/reeval/.verify-build.mts:220:4)
+    async TestContext.<anonymous> (/home/reeval/.verify-build.mts:229:18)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+# Subtest: build-order-memory: keeps sessions apart
+not ok 2 - build-order-memory: keeps sessions apart
+  ---
+  duration_ms: 4280.027419
+  type: 'test'
+  location: '/home/reeval/.verify-build.mts:234:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    the later request failed: Error: Snapshot session c2158116-43cb-487e-a98e-a7a5e2579dfb not found.
+        at actionFn.loadChat (/reeval/workspace/node_modules/@genkit-ai/ai/src/agent-core.ts:1020:15)
+        at async <anonymous> (/tmp/later-request-RlELxe/request.mts:5:14)
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  operator: 'fail'
+  stack: |-
+    actionFn.loadChat (/reeval/workspace/node_modules/@genkit-ai/ai/src/agent-core.ts:1020:15)
+    async <anonymous> (/tmp/later-request-RlELxe/request.mts:5:14)
+    inLaterRequest (/home/reeval/.verify-build.mts:210:12)
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async sendLater (/home/reeval/.verify-build.mts:220:4)
+    async TestContext.<anonymous> (/home/reeval/.verify-build.mts:239:17)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 0
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 7831.502254
+--- stderr

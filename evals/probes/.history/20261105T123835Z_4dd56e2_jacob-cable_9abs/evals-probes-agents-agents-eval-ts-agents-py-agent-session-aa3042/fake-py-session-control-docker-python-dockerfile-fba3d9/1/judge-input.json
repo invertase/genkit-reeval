@@ -1,0 +1,26 @@
+[
+  {
+    "question": "Did the agent build the conversation with Genkit's agents API (an agent defined with a session store, such as `define_agent` in Python or `genkitx.DefineAgent` in Go) rather than a hand-rolled loop over `generate` calls that stores the history itself?",
+    "model": "fake",
+    "stateOptions": {
+      "task": true,
+      "output": false,
+      "files": false,
+      "diff": [
+        "*.py"
+      ],
+      "contents": [],
+      "transcript": "tools",
+      "turns": "last",
+      "checks": false
+    },
+    "state": {
+      "task": "Build a customer support Genkit agent in this directory, in Python. It answers customers' questions about their orders with Gemini and has a tool that looks an order up by id; `orders.json` in this directory maps each order id to its `status` and `eta`. The Gemini API key is in the GEMINI_API_KEY environment variable.\nThe agent keeps a persistent session per customer, so that a conversation continues after the process restarts. Expose this in `app.py`:\n`async def ask(session_id: str | None, message: str) -> tuple[str, str]`, returning the reply and the conversation's session id.\nWith `None` it starts a new conversation; an id that an earlier call returned continues that conversation, even from a new process. Install the dependencies in this directory (a `.venv` here is fine) so that `python3 -c 'import app'` works when run from it.",
+      "diff": {
+        "$ref": "diff.patch",
+        "sha256": "05be8a55ab7201d20864135160d57ff509afec71288965182ea9a942bf156e12"
+      },
+      "transcript": "tool shell: sh ~/.probe/run.sh good → ok · 12s"
+    }
+  }
+]

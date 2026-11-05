@@ -1,0 +1,19 @@
+diff --git a/src/agents.ts b/src/agents.ts
+index a5733cb..0a1cd1a 100644
+--- a/src/agents.ts
++++ b/src/agents.ts
+@@ -1,5 +1,5 @@
+ import { agents } from '@genkit-ai/middleware';
+-import { FileSessionStore, z } from 'genkit/beta';
++import { FileSessionStore, InMemorySessionStore, z } from 'genkit/beta';
+ import { ai } from './ai.js';
+ import { createRefund } from './db.js';
+ import { lookupOrder } from './tools.js';
+@@ -37,6 +37,7 @@ export const orderAgent = ai.defineAgent({
+     'When the customer does not name an order, use the order id from earlier in the conversation; ask for one only when the conversation has none.',
+   tools: [lookupOrder],
+   maxTurns: 4,
++  store: new InMemorySessionStore(),
+ });
+ 
+ /** Handles refund requests and pauses for human approval before refunding. */

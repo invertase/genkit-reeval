@@ -6,7 +6,7 @@ import { docker } from 'reeval/sandbox'
 export const sandbox = docker({ dockerfile: './evals/Dockerfile' })
 
 /** The five agents every study and probe run compares. */
-export const harness = [
+export const harnesses = [
   claudeCode({ model: 'claude-sonnet-5' }),
   claudeCode({ model: 'claude-haiku-5-5' }),
   antigravity({ model: 'gemini-3.8-flash-medium' }),
@@ -23,14 +23,14 @@ export const analysis = { model: 'google/gemini-3.8-flash' }
 export default defineConfig({
   include: ['evals/*.eval.ts'],
   sandbox,
-  harness,
+  harnesses,
   timeout: '15m',
   judge,
   analysis,
   profiles: {
-    smoke: { limit: { runs: 1, harness: ['claude-code:claude-sonnet-5'] } },
-    haiku: { limit: { runs: 1, harness: ['claude-code:claude-haiku-5-5'] } },
-    antigravity: { limit: { runs: 1, harness: ['antigravity:gemini-3.8-flash-medium'] } },
+    smoke: { limit: { runs: 1, harnesses: ['claude-code:claude-sonnet-5'] } },
+    haiku: { limit: { runs: 1, harnesses: ['claude-code:claude-haiku-5-5'] } },
+    antigravity: { limit: { runs: 1, harnesses: ['antigravity:gemini-3.8-flash-medium'] } },
     full: { defaults: { runs: 5 }, record: 'always', budget: { attempts: 2500, duration: '16h' } },
   },
 })

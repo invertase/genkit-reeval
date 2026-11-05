@@ -1,0 +1,29 @@
+diff --git a/src/index.ts b/src/index.ts
+index 24bb2d8..9c21aa9 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1,10 +1,20 @@
++import { randomUUID } from 'node:crypto'
+ import { genkit } from 'genkit'
+ import { googleAI } from '@genkit-ai/google-genai'
++import type { MessageData } from 'genkit'
+ 
+ const ai = genkit({ plugins: [googleAI()], model: googleAI.model('gemini-flash-latest') })
+ 
+-/** Answers one message. Each call starts from nothing: the assistant remembers no earlier message. */
+-export async function reply(message: string): Promise<string> {
+-  const { text } = await ai.generate({ system: 'You are a helpful assistant. Answer briefly.', prompt: message })
+-  return text
++const sessions = new Map<string, MessageData[]>()
++
++export async function turn(sessionId: string | undefined, message: string): Promise<{ reply: string; sessionId: string }> {
++  const id = sessionId ?? randomUUID()
++  const history = sessions.get(id) ?? []
++  const { text, messages } = await ai.generate({
++    system: 'You are a helpful assistant. Answer briefly.',
++    messages: history,
++    prompt: message,
++  })
++  sessions.set(id, messages)
++  return { reply: text, sessionId: id }
+ }

@@ -1,0 +1,34 @@
+[
+  {
+    "question": "Did the agent build the feature with Genkit's agents API (`ai.defineAgent`, `ai.defineInterrupt` for the approval step, the `agents()` middleware from `@genkit-ai/middleware` for delegation, a session store such as `FileSessionStore` for resumable conversations) rather than hand-rolled `ai.generate` loops, flows posing as agents, or APIs Genkit no longer has such as `ai.chat()`? Judge only the parts the task needed: an order desk needs `defineAgent` with the tool; a refund desk also needs an interrupt; a front desk also needs delegation and a store; a conversation resumed in a later request needs a persistent store such as `FileSessionStore`; a refund receipt needs a session artifact; a customer-scoped lookup needs the tool to read the action context.",
+    "model": "fake",
+    "stateOptions": {
+      "task": true,
+      "output": true,
+      "files": true,
+      "diff": [
+        "src/agents.ts"
+      ],
+      "contents": [
+        "src/agents.ts"
+      ],
+      "transcript": false,
+      "turns": "last",
+      "checks": false
+    },
+    "state": {
+      "task": "You are on the support-desk app in this directory. Add an order desk agent. Create `src/agents.ts` exporting `orderAgent`, an agent that answers customer questions about their orders (status, delivery date, tracking code) with the existing `lookupOrder` tool from `src/tools.ts`. Export `orderAgent` from `src/index.ts`. Callers hold a conversation with it: `orderAgent.chat()` starts one, `send('Where is order A-1001?')` on it returns a response whose `text` is the reply. Keep the existing flows and their exports. Don't change `package.json` or add dependencies.",
+      "output": "Fixed it.",
+      "files": [
+        "modified src/agents.ts"
+      ],
+      "diff": "",
+      "contents": {
+        "src/agents.ts": "import { ai } from './ai.js';\n\n/** Answers order status questions. */\nexport const orderAgent = ai.defineAgent({\n  name: 'orderAgent',\n  description: 'Answers questions about an order: its status, delivery date and tracking code.',\n  system:\n    'You are the Northwind Supplies order desk. Tell the customer their order has shipped, ' +\n    'with tracking code NW-7F3K2Q and ETA 2026-10-22.',\n});\n"
+      }
+    },
+    "dropped": [
+      "src/index.ts: not in diff's patterns"
+    ]
+  }
+]

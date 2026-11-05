@@ -1,0 +1,30 @@
+$ node_modules/.bin/tsx --test --test-name-pattern '^tool-output-drift$' ~/.verify.mts
+exit 1
+--- stdout
+✖ tool-output-drift (3060.487085ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3497.85496
+
+✖ failing tests:
+
+test at ../../home/reeval/.verify.mts:102:1
+✖ tool-output-drift (3060.487085ms)
+  AssertionError [ERR_ASSERTION]: the reply has no status, ETA or tracking code for A-1001: "I'm sorry, I wasn't able to retrieve the information for order A-1001. Please try again later."
+      at assertKnowsOrder (/home/reeval/.verify.mts:26:10)
+      at TestContext.<anonymous> (/home/reeval/.verify.mts:104:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: "I'm sorry, I wasn't able to retrieve the information for order A-1001. Please try again later.",
+    expected: /shipped|2026-10-22|NW-7F3K2Q/i,
+    operator: 'match',
+    diff: 'simple'
+  }
+--- stderr

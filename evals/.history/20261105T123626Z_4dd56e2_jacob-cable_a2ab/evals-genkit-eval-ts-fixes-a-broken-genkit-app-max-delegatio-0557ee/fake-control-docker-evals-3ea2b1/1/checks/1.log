@@ -1,0 +1,13 @@
+$ node_modules/.bin/tsx --test --test-name-pattern '^max-delegations-zero$' ~/.verify.mts
+exit 0
+--- stdout
+✔ max-delegations-zero (2968.729168ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3554.136752
+--- stderr

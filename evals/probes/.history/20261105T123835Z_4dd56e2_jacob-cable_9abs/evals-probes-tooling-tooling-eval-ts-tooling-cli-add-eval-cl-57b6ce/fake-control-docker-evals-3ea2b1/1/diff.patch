@@ -1,0 +1,30 @@
+[reeval: dropped package-lock.json: lockfile, 65 changed lines]
+diff --git a/package.json b/package.json
+index 6f0d003..2a2dd4c 100644
+--- a/package.json
++++ b/package.json
+@@ -7,6 +7,7 @@
+     "dev": "tsx src/index.ts"
+   },
+   "dependencies": {
++    "@genkit-ai/evaluator": "1.42.0",
+     "@genkit-ai/google-genai": "1.42.0",
+     "@genkit-ai/middleware": "0.10.0",
+     "genkit": "1.42.0"
+diff --git a/src/ai.ts b/src/ai.ts
+index c2a3600..09d9b5f 100644
+--- a/src/ai.ts
++++ b/src/ai.ts
+@@ -1,10 +1,11 @@
++import { GenkitMetric, genkitEval } from '@genkit-ai/evaluator';
+ import { fileURLToPath } from 'node:url';
+ import { googleAI } from '@genkit-ai/google-genai';
+ import { genkit } from 'genkit/beta';
+ 
+ /** The Genkit instance every flow and agent in this app shares. */
+ export const ai = genkit({
+-  plugins: [googleAI({ apiKey: process.env.SUPPORT_DESK_GEMINI_API_KEY })],
++  plugins: [googleAI({ apiKey: process.env.SUPPORT_DESK_GEMINI_API_KEY }), genkitEval({ judge: googleAI.model('gemini-2.5-flash'), metrics: [GenkitMetric.FAITHFULNESS] })],
+   // Thinking tokens count against maxOutputTokens, so thinking is off to let a token cap cut the reply itself.
+   model: googleAI.model('gemini-2.5-flash', { temperature: 0, thinkingConfig: { thinkingBudget: 0 } }),
+   promptDir: fileURLToPath(new URL('../prompts/', import.meta.url)),

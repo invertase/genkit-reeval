@@ -1,0 +1,12 @@
+diff --git a/package.json b/package.json
+index 6f0d003..2a2dd4c 100644
+--- a/package.json
++++ b/package.json
+@@ -7,6 +7,7 @@
+     "dev": "tsx src/index.ts"
+   },
+   "dependencies": {
++    "@genkit-ai/evaluator": "1.42.0",
+     "@genkit-ai/google-genai": "1.42.0",
+     "@genkit-ai/middleware": "0.10.0",
+     "genkit": "1.42.0"
